@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * AWK v7.0 CLI — Antigravity Workflow Kit
+ * AWK v1.0 CLI — Antigravity Workflow Kit
  * Unified installer, updater, and manager for AI agent workflows.
  * 
  * Usage:
- *   awk install        Install AWK into ~/.gemini/antigravity/
- *   awk uninstall      Remove AWK from system
- *   awk update         Update to latest version
- *   awk sync           Harvest from ~/.gemini/ then install (full sync)
- *   awk status         Compare repo vs installed files (diff view)
- *   awk harvest        Pull from ~/.gemini/antigravity/ into repo
- *   awk doctor         Check installation health
- *   awk enable-pack    Enable a skill pack
- *   awk disable-pack   Disable a skill pack
- *   awk list-packs     List available skill packs
- *   awk version        Show current version
+ *   awkit install        Install AWK into ~/.gemini/antigravity/
+ *   awkit uninstall      Remove AWK from system
+ *   awkit update         Update to latest version
+ *   awkit sync           Harvest from ~/.gemini/ then install (full sync)
+ *   awkit status         Compare repo vs installed files (diff view)
+ *   awkit harvest        Pull from ~/.gemini/antigravity/ into repo
+ *   awkit doctor         Check installation health
+ *   awkit enable-pack    Enable a skill pack
+ *   awkit disable-pack   Disable a skill pack
+ *   awkit list-packs     List available skill packs
+ *   awkit version        Show current version
  * 
  * Created by Kien AI
  */
@@ -725,16 +725,16 @@ function cmdHelp() {
     log(line);
     log(`  ${C.cyan}# First time setup${C.reset}`);
     log(`  ${C.gray}npm install -g github:babyskill/awk${C.reset}`);
-    log(`  ${C.gray}awk install${C.reset}`);
-    log(`  ${C.gray}awk doctor${C.reset}`);
+    log(`  ${C.gray}awkit install${C.reset}`);
+    log(`  ${C.gray}awkit doctor${C.reset}`);
     log('');
     log(`  ${C.cyan}# Daily usage${C.reset}`);
-    log(`  ${C.gray}awk status       # What's out of sync?${C.reset}`);
-    log(`  ${C.gray}awk harvest      # Pull live edits → repo${C.reset}`);
-    log(`  ${C.gray}awk sync         # harvest + install in one shot${C.reset}`);
+    log(`  ${C.gray}awkit status       # What's out of sync?${C.reset}`);
+    log(`  ${C.gray}awkit harvest      # Pull live edits → repo${C.reset}`);
+    log(`  ${C.gray}awkit sync         # harvest + install in one shot${C.reset}`);
     log('');
     log(`  ${C.cyan}# Enable NeuralMemory${C.reset}`);
-    log(`  ${C.gray}awk enable-pack neural-memory${C.reset}`);
+    log(`  ${C.gray}awkit enable-pack neural-memory${C.reset}`);
     log('');
     log(`  ${C.cyan}# Repo${C.reset}`);
     log(`  ${C.gray}https://github.com/babyskill/awk${C.reset}`);

@@ -4,7 +4,8 @@
   "description": "AWK v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
   "bin": {
-    "awk": "bin/awk.js"
+    "awkit": "bin/awk.js",
+    "ag": "bin/awk.js"
   },
   "scripts": {
     "install-global": "node bin/awk.js install",
