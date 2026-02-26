@@ -1,0 +1,24 @@
+{
+  "projectName": "MyBackendAPI",
+  "projectType": "backend",
+  "primaryLanguage": "en",
+  "techStack": {
+    "platform": "Backend",
+    "language": "TypeScript",
+    "framework": "NestJS",
+    "database": "PostgreSQL + Prisma",
+    "auth": "JWT + Passport",
+    "validation": "class-validator",
+    "testing": "Jest",
+    "deployment": "Docker + Cloud Run"
+  },
+  "projectStage": "planning",
+  "codingStandards": {
+    "language": "en",
+    "namingConvention": "camelCase",
+    "indentation": "spaces-2",
+    "lineLength": 100
+  },
+  "createdDate": "{{DATE}}",
+  "lastUpdated": "{{DATE}}"
+}

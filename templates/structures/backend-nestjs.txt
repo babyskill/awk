@@ -1,0 +1,6 @@
+src/
+├── modules/
+├── shared/
+├── tests/
+├── docs/
+├── .project-identity

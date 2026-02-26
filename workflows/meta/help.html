@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy Trình Phát Triển Antigravity High-End</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --heading-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --secondary-accent: #f472b6;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(148, 163, 184, 0.1);
+            --code-bg: #1e293b;
+            --success-color: #4ade80;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 2rem;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding: 2rem;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            color: var(--heading-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            animation: fadeIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        section:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        section:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        section:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .workflow-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .workflow-item.master {
+            border-left-color: var(--secondary-accent);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3 {
+            font-family: monospace;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        code {
+            font-family: monospace;
+            color: var(--secondary-accent);
+            background: rgba(244, 114, 182, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+
+        .step-container {
+            padding-left: 2rem;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
+        .step-number {
+            position: absolute;
+            left: -2.9rem;
+            top: 0;
+            width: 1.8rem;
+            height: 1.8rem;
+            background: var(--bg-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(90deg, var(--accent-color), #a855f7);
+            color: white;
+            text-decoration: none;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Antigravity Development</h1>
+            <div class="subtitle">AI-First Spec-Driven Workflow System</div>
+            <a href="workflow.zip" download class="download-btn">📥 Tải về Workflow.zip</a>
+        </header>
+
+        <section>
+            <h2>🌟 Các Quy Trình Cốt Lõi (Core Workflows)</h2>
+            <div class="workflow-grid">
+                <div class="workflow-item master">
+                    <h3>/master-code-workflow</h3>
+                    <p><strong>Master Workflow.</strong> Quy trình toàn diện từ A-Z để thiết kế và hiện thực hóa tính
+                        năng chuẩn Clean Architecture & Kiro-style specs.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/app-screen-analyzer</h3>
+                    <p><strong>"God Mode" Planning.</strong> Phân tích ý tưởng/ảnh chụp màn hình và tự động tạo toàn bộ
+                        specs (Requirements/Design/Tasks) cho TẤT CẢ màn hình.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/create-spec-architect</h3>
+                    <p><strong>Single Feature Design.</strong> Tạo specs chi tiết cho một tính năng lẻ cụ thể (VD: chỉ
+                        làm tính năng Chat).</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/auto-implement</h3>
+                    <p><strong>The Builder.</strong> Tự động code và test dựa trên các file specs đã có (đọc file
+                        tasks.md).</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🎨 UI & Implementation</h2>
+            <div class="workflow-grid">
+                <div class="workflow-item">
+                    <h3>/design-to-ui</h3>
+                    <p>Chuyển đổi trực tiếp từ ý tưởng/ảnh thiết kế sang code UI Swift/SwiftUI/Kotlin.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/ui-first-methodology</h3>
+                    <p>Phương pháp phát triển ưu tiên giao diện trước, logic sau. Đảm bảo UX mượt mà.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/create-feature</h3>
+                    <p>Xây dựng tính năng hoàn chỉnh với logic chặt chẽ và trải nghiệm Premium.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/init & /structure</h3>
+                    <p><code>/init</code>: Khởi tạo dự án Mobile chuẩn.<br>
+                    <code>/structure-clean-architect</code>: Tạo cấu trúc Clean Architecture.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🕵️ Quality Assurance & Debugging</h2>
+            <div class="workflow-grid">
+                <div class="workflow-item">
+                    <h3>/bug-hunter</h3>
+                    <p>Quy trình tìm, tái hiện và sửa lỗi dựa trên log hoặc báo cáo chi tiết.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/visual-debug</h3>
+                    <p>Phân tích ảnh chụp màn hình để phát hiện lỗi giao diện, lệch layout.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/maestro-test-workflow</h3>
+                    <p>Tạo và chạy bài kiểm tra giao diện tự động (E2E) với Maestro.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>/code-review-workflow</h3>
+                    <p>Review code chuyên sâu: Bảo mật, hiệu năng, Clean Code.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🛠️ Operations & Maintenance</h2>
+            <div class="workflow-grid">
+                <div class="workflow-item">
+                    <h3>DevOps & Git</h3>
+                    <p><code>/deploy</code>: Đẩy app lên TestFlight/Play Store.<br>
+                    <code>/smart-git-ops</code>: Quản lý flows git và commit chuẩn.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>Maintenance</h3>
+                    <p><code>/refactor</code>: Tối ưu cấu trúc code an toàn.<br>
+                    <code>/code-janitor</code>: Dọn dẹp code rác & chuẩn hóa.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>Knowledge</h3>
+                    <p><code>/save-brain</code>: Lưu kiến thức dự án.<br>
+                    <code>/recap</code>: Khôi phục ngữ cảnh làm việc.</p>
+                </div>
+                <div class="workflow-item">
+                    <h3>Roles</h3>
+                    <p><code>/product-manager-workflow</code><br>
+                    <code>/tech-lead-workflow</code><br>
+                    <code>/ui-ux-designer-workflow</code></p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🚀 Hướng Dẫn Kịch Bản Sử Dụng</h2>
+            <div class="card">
+                <h3>Kịch bản 1: Bắt đầu dự án mới (Khuyên dùng)</h3>
+                <br>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Thiết lập cấu trúc & Định hướng</h3>
+                        <p>Chạy <code>/master-code-workflow</code> để thiết lập nền móng chuẩn chỉnh hoặc <code>/init</code> để tạo dự án mới.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Phân tích toàn bộ ứng dụng</h3>
+                        <p>Ra lệnh: <em>"Analyze app: [Mô tả ý tưởng app]"</em>. Hệ thống sẽ kích hoạt
+                            <code>/app-screen-analyzer</code> để tạo hàng loạt specs cho 20+ màn hình.
+                        </p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Hiện thực hóa từng phần</h3>
+                        <p>Dùng <code>/auto-implement docs/specs/auth</code>, sau đó đến
+                            <code>/auto-implement docs/specs/home</code>... theo lộ trình trong
+                            <code>_overview.md</code>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Kịch bản 2: Làm tính năng lẻ (Feature nhỏ)</h3>
+                <br>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Thiết kế Specs</h3>
+                        <p>Chạy <code>/create-spec-architect</code> để tạo bộ hồ sơ cho tính năng mới.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Thực thi</h3>
+                        <p>Chạy <code>/auto-implement [tên-feature]</code> để AI tự động code.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Antigravity System © 2026 - Spec-Driven Development</p>
+        </footer>
+    </div>
+</body>
+
+</html>

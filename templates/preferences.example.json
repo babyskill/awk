@@ -1,0 +1,21 @@
+{
+  "updatedAt": "2026-01-17T18:30:00Z",
+  "communication": {
+    "tone": "friendly",
+    "persona": "assistant"
+  },
+  "technical": {
+    "detailLevel": "simple",
+    "autonomy": "ask_often",
+    "quality": "production"
+  },
+  "workingStyle": {
+    "pace": "careful",
+    "feedback": "gentle"
+  },
+  "customRules": [
+    "Always use TypeScript instead of JavaScript",
+    "Include unit tests when writing code",
+    "Prefer performance over clean code"
+  ]
+}

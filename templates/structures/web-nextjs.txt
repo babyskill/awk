@@ -1,0 +1,6 @@
+app/
+├── components/
+├── lib/
+├── services/
+├── docs/
+├── .project-identity

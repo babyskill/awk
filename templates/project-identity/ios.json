@@ -1,0 +1,27 @@
+{
+  "projectName": "MyiOSApp",
+  "projectType": "ios",
+  "bundleIdentifier": "com.company.myiosapp",
+  "primaryLanguage": "en",
+  "techStack": {
+    "platform": "iOS",
+    "language": "Swift",
+    "minVersion": "iOS 17.0",
+    "framework": "SwiftUI",
+    "architecture": "MVVM + Clean Architecture",
+    "dependencyInjection": "Manual DI",
+    "networking": "URLSession + async/await",
+    "storage": "SwiftData",
+    "testing": "XCTest",
+    "packageManager": "SPM"
+  },
+  "projectStage": "planning",
+  "codingStandards": {
+    "language": "en",
+    "namingConvention": "camelCase",
+    "indentation": "spaces-4",
+    "lineLength": 120
+  },
+  "createdDate": "{{DATE}}",
+  "lastUpdated": "{{DATE}}"
+}

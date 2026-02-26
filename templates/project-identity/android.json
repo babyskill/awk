@@ -1,0 +1,28 @@
+{
+  "projectName": "MyAndroidApp",
+  "projectType": "android",
+  "packageName": "com.company.myandroidapp",
+  "primaryLanguage": "en",
+  "techStack": {
+    "platform": "Android",
+    "language": "Kotlin",
+    "minSdk": "24",
+    "targetSdk": "34",
+    "framework": "Jetpack Compose",
+    "architecture": "MVVM + Clean Architecture",
+    "dependencyInjection": "Hilt",
+    "networking": "Retrofit + Coroutines",
+    "storage": "Room",
+    "testing": "JUnit + Espresso",
+    "buildSystem": "Gradle (KTS)"
+  },
+  "projectStage": "planning",
+  "codingStandards": {
+    "language": "en",
+    "namingConvention": "camelCase",
+    "indentation": "spaces-4",
+    "lineLength": 120
+  },
+  "createdDate": "{{DATE}}",
+  "lastUpdated": "{{DATE}}"
+}
