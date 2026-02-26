@@ -1,7 +1,7 @@
 {
-  "name": "@leejungkiin/awk",
+  "name": "@leejungkiin/awkit",
   "version": "1.0.0",
-  "description": "AWK v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
+  "description": "AWKit v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
   "bin": {
     "awkit": "bin/awk.js",
@@ -17,6 +17,7 @@
     "harvest-dry": "node scripts/harvest.js --dry-run"
   },
   "keywords": [
+    "awkit",
     "awk",
     "antigravity-workflow-kit",
     "ai-agent",

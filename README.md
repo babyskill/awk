@@ -1,8 +1,8 @@
-# AWK — Antigravity Workflow Kit v1.0
+# AWKit — Antigravity Workflow Kit v1.0
 
 > **v1.0.0** · Single Source of Truth · Beads-First · Ambient Memory
 
-AWK là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy nhất** chứa toàn bộ workflows, skills, GEMINI.md và cấu hình — không còn phân tán giữa nhiều repo.
+AWKit là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy nhất** chứa toàn bộ workflows, skills, GEMINI.md và cấu hình — không còn phân tán giữa nhiều repo.
 
 ---
 
@@ -11,8 +11,8 @@ AWK là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy
 ### Cách 1 — Cài qua GitHub (khuyên dùng, không cần npm account)
 ```bash
 npm install -g github:babyskill/awk
-awk install
-awk doctor
+awkit install
+awkit doctor
 ```
 
 ### Cách 2 — Clone & install thủ công
@@ -30,40 +30,40 @@ node bin/awk.js doctor
 
 | Command | Description |
 |---------|-------------|
-| `awk install` | Deploy AWK vào `~/.gemini/antigravity/` |
-| `awk update` | Update lên version mới nhất |
-| `awk sync` | Full sync: harvest + install (one shot) |
-| `awk status` | So sánh repo vs installed (diff view) |
-| `awk harvest` | Pull từ `~/.gemini/antigravity/` về repo |
-| `awk doctor` | Kiểm tra sức khoẻ installation |
-| `awk enable-pack <name>` | Kích hoạt skill pack |
-| `awk disable-pack <name>` | Vô hiệu skill pack |
-| `awk list-packs` | Xem danh sách skill packs |
-| `awk version` | Show version |
+| `awkit install` | Deploy AWKit vào `~/.gemini/antigravity/` |
+| `awkit update` | Update lên version mới nhất |
+| `awkit sync` | Full sync: harvest + install (one shot) |
+| `awkit status` | So sánh repo vs installed (diff view) |
+| `awkit harvest` | Pull từ `~/.gemini/antigravity/` về repo |
+| `awkit doctor` | Kiểm tra sức khoẻ installation |
+| `awkit enable-pack <name>` | Kích hoạt skill pack |
+| `awkit disable-pack <name>` | Vô hiệu skill pack |
+| `awkit list-packs` | Xem danh sách skill packs |
+| `awkit version` | Show version |
 
 ### Typical Workflow
 
 ```bash
 # 1. Check what's out of sync
-awk status
+awkit status
 
 # 2a. You edited in ~/.gemini/ → pull back to repo
-awk harvest
+awkit harvest
 
 # 2b. You edited in repo → deploy to ~/.gemini/
-awk install
+awkit install
 
 # 2c. Both directions (full round-trip)
-awk sync
+awkit sync
 
 # 3. Commit the snapshot
-git add -A && git commit -m "chore: sync AWK v7.0"
+git add -A && git commit -m "chore: sync AWKit v7.0"
 ```
 
 
 
 ```
-main-awf/ (AWK v7.0 — Source of Truth)
+main-awf/ (AWKit v7.0 — Source of Truth)
 ├── bin/
 │   ├── awk.js                  ← CLI entry point
 │   └── awf.js                  ← (legacy, kept for reference)
@@ -95,10 +95,9 @@ main-awf/ (AWK v7.0 — Source of Truth)
 ├── schemas/                    ← JSON schemas
 ├── templates/                  ← Project templates
 ├── scripts/
-│   ├── harvest.js              ← Migration: pull from ~/.gemini/
-│   └── rename-to-awk.js        ← One-time rename script
-├── VERSION                     → 7.0.0
-└── package.json                (@zeroteam/awk)
+│   └── harvest.js              ← Migration: pull from ~/.gemini/
+├── VERSION                     → 1.0.0
+└── package.json                (@leejungkiin/awkit)
 ```
 
 ## 🌾 Harvest (Migration)
@@ -118,7 +117,7 @@ node scripts/harvest.js
 ```
 main-awf/ (edit here)
     │
-    ▼  awk install
+    ▼  awkit install
 ~/.gemini/antigravity/ (runtime)
     │
     ▼  AI reads from here
@@ -128,9 +127,9 @@ Gemini / Claude / Any AI
 ## 📦 Skill Packs
 
 ```bash
-awk list-packs
-awk enable-pack neural-memory   # Phase 3
-awk enable-pack ios-dev
+awkit list-packs
+awkit enable-pack neural-memory
+awkit enable-pack ios-dev
 ```
 
 ## 🏗️ Versioning
@@ -140,8 +139,8 @@ awk enable-pack ios-dev
 | 4.x | AWF v4 | Shell-based, `awf-` prefix skills |
 | 5.x | Antigravity v5 | Node.js, Beads integration |
 | 6.x | AWF v6 | main-awf, multiple sources |
-| **7.0** | **AWK v7** | **Single source of truth, this repo** |
+| **1.0** | **AWKit v1.0** | **Single source of truth, this repo** |
 
 ---
 
-*AWK v7.0 — Antigravity Workflow Kit · Created by Kien AI*
+*AWKit v1.0 — Antigravity Workflow Kit · Created by Kien AI*

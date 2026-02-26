@@ -23,7 +23,7 @@ qua mạng neuron. Skill pack này tích hợp NeuralMemory engine vào AWK fram
 ## Install
 
 ```bash
-awk enable-pack neural-memory
+awkit enable-pack neural-memory
 ```
 
 Installs 4 skills into `~/.gemini/antigravity/skills/`:
@@ -47,6 +47,8 @@ pip install neural-memory
 # 3. Initialize a brain
 nmem init
 ```
+
+> 💡 Tip: Chạy `awkit enable-pack neural-memory` để tự động cài pip + chạy nmem init.
 
 ---
 
@@ -106,4 +108,4 @@ NEW: spreading activation → associative reflex recall
 
 ---
 
-*NeuralMemory Skill Pack for AWK v7.0 · Created by Kien AI*
+*NeuralMemory Skill Pack for AWKit v1.0 · Created by Kien AI*

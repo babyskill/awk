@@ -6,7 +6,7 @@ description: Import project knowledge into NeuralMemory (decisions, errors, patt
 
 ## When to use
 - Bắt đầu NeuralMemory trên project đã có sẵn
-- Sau khi `awk enable-pack neural-memory` lần đầu
+- Sau khi `awkit enable-pack neural-memory` lần đầu
 - Muốn bulk-import từ brain/ Markdown files (legacy)
 
 ## What to import
