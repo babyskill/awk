@@ -1,5 +1,5 @@
 {
-  "name": "@zeroteam/awk",
+  "name": "@leejungkiin/awk",
   "version": "1.0.0",
   "description": "AWK v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
@@ -25,7 +25,6 @@
   ],
   "author": "Kien AI",
   "license": "MIT",
-  "private": true,
   "engines": {
     "node": ">=18.0.0"
   },
