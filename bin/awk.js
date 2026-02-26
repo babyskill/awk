@@ -592,6 +592,7 @@ function handlePackRequirements(packSrc, packName) {
                     || r1.stderr.includes('break-system-packages');
 
                 if (isPep668) {
+                    // Step 2: retry with --user
                     warn('System Python is externally managed (PEP 668). Retrying with --user...');
                     log('');
                     const userCmd = `${installCmd} --user`;
@@ -610,13 +611,37 @@ function handlePackRequirements(packSrc, packName) {
                             log(`${C.gray}   Then: source ~/.zshrc && nmem init${C.reset}`);
                         }
                     } else {
-                        err(`Installation failed even with --user.`);
-                        log('');
-                        log(`${C.yellow}   Options:${C.reset}`);
-                        log(`${C.gray}   1. ${installCmd} --break-system-packages${C.reset}`);
-                        log(`${C.gray}   2. brew install pipx && pipx install ${req.package}${C.reset}`);
-                        log(`${C.gray}   3. python3 -m venv ~/.venv && source ~/.venv/bin/activate${C.reset}`);
-                        log(`${C.gray}      pip install ${req.package}${C.reset}`);
+                        // Step 3: try pipx (best for Homebrew Python environments)
+                        let pipxAvailable = false;
+                        try { execSync('which pipx', { stdio: 'ignore' }); pipxAvailable = true; } catch (_) { }
+
+                        if (pipxAvailable) {
+                            warn('Trying pipx (recommended for Homebrew Python)...');
+                            const pipxCmd = `pipx install ${req.package}`;
+                            log('');
+                            info(`Running: ${pipxCmd}`);
+                            const r3 = runPipCmd(pipxCmd);
+                            if (r3.success) {
+                                ok(`${req.package} installed via pipx ✨`);
+                                dim(`Commands like 'nmem' are now globally available via pipx.`);
+                            } else {
+                                err(`pipx install also failed.`);
+                                log('');
+                                log(`${C.yellow}   Manual options:${C.reset}`);
+                                log(`${C.gray}   1. ${installCmd} --break-system-packages${C.reset}`);
+                                log(`${C.gray}   2. python3 -m venv ~/.venv && source ~/.venv/bin/activate${C.reset}`);
+                                log(`${C.gray}      pip install ${req.package}${C.reset}`);
+                            }
+                        } else {
+                            // pipx not available — show all options
+                            err(`Installation failed even with --user.`);
+                            log('');
+                            log(`${C.yellow}   Options (pick one):${C.reset}`);
+                            log(`${C.gray}   1. brew install pipx && pipx install ${req.package}  ← recommended${C.reset}`);
+                            log(`${C.gray}   2. ${installCmd} --break-system-packages${C.reset}`);
+                            log(`${C.gray}   3. python3 -m venv ~/.venv && source ~/.venv/bin/activate${C.reset}`);
+                            log(`${C.gray}      pip install ${req.package}${C.reset}`);
+                        }
                     }
                 } else {
                     err(`Installation failed. Try manually: ${installCmd}`);
