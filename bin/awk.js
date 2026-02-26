@@ -8,6 +8,7 @@
  *   awkit install        Install AWK into ~/.gemini/antigravity/
  *   awkit uninstall      Remove AWK from system
  *   awkit update         Update to latest version
+ *   awkit init           Init a new mobile project with Firebase setup
  *   awkit sync           Harvest from ~/.gemini/ then install (full sync)
  *   awkit status         Compare repo vs installed files (diff view)
  *   awkit harvest        Pull from ~/.gemini/antigravity/ into repo
@@ -1062,6 +1063,15 @@ function cmdHelp() {
     log(`  ${C.green}doctor${C.reset}              Check installation health`);
     log('');
 
+    // Project Init
+    log(`${C.bold}✨  Project${C.reset}`);
+    log(line);
+    log(`  ${C.green}init${C.reset}                Init mobile project (Firebase) in CWD`);
+    log(`  ${C.gray}  --force${C.reset}            Overwrite existing files`);
+    log(`  ${C.gray}  Generates: .project-identity, <Name>.code-workspace,${C.reset}`);
+    log(`  ${C.gray}             CODEBASE.md, .beads/ (Beads task DB)${C.reset}`);
+    log('');
+
     // Sync
     log(`${C.bold}🔄  Sync${C.reset}`);
     log(line);
@@ -1126,12 +1136,406 @@ function cmdHelp() {
     log('');
 }
 
+// ─── Init: Mobile Project Initializer ───────────────────────────────────────
+
+/**
+ * Detect project type from CWD by inspecting known file signatures.
+ * Returns: 'ios' | 'android' | 'expo' | 'flutter' | 'mobile-firebase'
+ */
+function detectProjectType(cwd) {
+    const entries = fs.readdirSync(cwd);
+
+    // iOS: .xcworkspace or .xcodeproj folder
+    if (entries.some(e => e.endsWith('.xcworkspace') || e.endsWith('.xcodeproj'))) {
+        return 'ios';
+    }
+    // Android: build.gradle or settings.gradle
+    if (entries.includes('build.gradle') || entries.includes('settings.gradle') || entries.includes('build.gradle.kts')) {
+        return 'android';
+    }
+    // Expo: app.json with expo key, or expo.json, or app.config.ts
+    if (entries.includes('app.json') || entries.includes('expo.json') || entries.includes('app.config.ts') || entries.includes('app.config.js')) {
+        try {
+            if (entries.includes('app.json')) {
+                const appJson = JSON.parse(fs.readFileSync(path.join(cwd, 'app.json'), 'utf8'));
+                if (appJson.expo) return 'expo';
+            }
+        } catch (_) { /* continue */ }
+        return 'expo';
+    }
+    // Flutter: pubspec.yaml
+    if (entries.includes('pubspec.yaml')) {
+        return 'flutter';
+    }
+    // Default: generic mobile-firebase
+    return 'mobile-firebase';
+}
+
+/**
+ * Build .project-identity object from detected type + project name.
+ */
+function buildProjectIdentity(projectName, projectType, cwd, date) {
+    const bundleBase = projectName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const identityMap = {
+        ios: {
+            projectType: 'ios',
+            bundleIdentifier: `com.company.${bundleBase}`,
+            techStack: {
+                platform: 'iOS',
+                language: 'Swift',
+                minVersion: 'iOS 17.0',
+                framework: 'SwiftUI',
+                architecture: 'MVVM + Clean Architecture',
+                dependencyInjection: 'Manual DI',
+                networking: 'URLSession + async/await',
+                storage: 'SwiftData',
+                testing: 'XCTest',
+                packageManager: 'SPM',
+                backend: 'Firebase',
+            },
+            codingStandards: { language: 'en', namingConvention: 'camelCase', indentation: 'spaces-4', lineLength: 120 },
+            architecture: 'MVVM + Clean Architecture',
+            stateManagement: 'ObservableObject / @State',
+            networking: 'URLSession + async/await',
+            storage: 'SwiftData',
+            featuresDir: 'Sources/Features',
+            sharedUIDir: 'Sources/Shared/UI',
+            servicesDir: 'Sources/Shared/Services',
+            modelsDir: 'Sources/Shared/Models',
+        },
+        android: {
+            projectType: 'android',
+            packageName: `com.company.${bundleBase}`,
+            techStack: {
+                platform: 'Android',
+                language: 'Kotlin',
+                minSdk: '24',
+                targetSdk: '35',
+                framework: 'Jetpack Compose',
+                architecture: 'MVVM + Clean Architecture',
+                dependencyInjection: 'Hilt',
+                networking: 'Retrofit + Coroutines',
+                storage: 'Room',
+                testing: 'JUnit + Espresso',
+                buildSystem: 'Gradle (KTS)',
+                backend: 'Firebase',
+            },
+            codingStandards: { language: 'en', namingConvention: 'camelCase', indentation: 'spaces-4', lineLength: 120 },
+            architecture: 'MVVM + Clean Architecture',
+            stateManagement: 'ViewModel + StateFlow',
+            networking: 'Retrofit + Coroutines',
+            storage: 'Room',
+            featuresDir: 'app/src/main/java/.../features',
+            sharedUIDir: 'app/src/main/java/.../ui/components',
+            servicesDir: 'app/src/main/java/.../data',
+            modelsDir: 'app/src/main/java/.../model',
+        },
+        expo: {
+            projectType: 'expo',
+            bundleIdentifier: `com.company.${bundleBase}`,
+            techStack: {
+                platform: 'Expo / React Native',
+                language: 'TypeScript',
+                framework: 'Expo SDK 52+',
+                router: 'Expo Router',
+                styling: 'NativeWind (Tailwind)',
+                stateManagement: 'Zustand',
+                networking: 'TanStack Query',
+                storage: 'Expo SQLite',
+                testing: 'Jest + Detox',
+                build: 'EAS Build',
+                backend: 'Firebase',
+            },
+            codingStandards: { language: 'en', namingConvention: 'camelCase', indentation: 'spaces-2', lineLength: 100 },
+            architecture: 'Feature-based',
+            stateManagement: 'Zustand',
+            networking: 'TanStack Query + Axios',
+            storage: 'Expo SQLite / AsyncStorage',
+            featuresDir: 'src/features',
+            sharedUIDir: 'src/components',
+            servicesDir: 'src/services',
+            modelsDir: 'src/models',
+        },
+        flutter: {
+            projectType: 'flutter',
+            bundleIdentifier: `com.company.${bundleBase}`,
+            techStack: {
+                platform: 'Flutter',
+                language: 'Dart',
+                framework: 'Flutter 3+',
+                architecture: 'BLoC + Clean Architecture',
+                stateManagement: 'BLoC / Riverpod',
+                networking: 'Dio + FutureBuilder',
+                storage: 'Hive / SQLite',
+                testing: 'flutter_test',
+                backend: 'Firebase',
+            },
+            codingStandards: { language: 'en', namingConvention: 'camelCase', indentation: 'spaces-2', lineLength: 100 },
+            architecture: 'BLoC + Clean Architecture',
+            stateManagement: 'BLoC / Riverpod',
+            networking: 'Dio + FutureBuilder',
+            storage: 'Hive / SQLite',
+            featuresDir: 'lib/features',
+            sharedUIDir: 'lib/shared/widgets',
+            servicesDir: 'lib/shared/services',
+            modelsDir: 'lib/shared/models',
+        },
+    };
+
+    // Fallback: generic mobile-firebase
+    const cfg = identityMap[projectType] || {
+        projectType: 'mobile-firebase',
+        bundleIdentifier: `com.company.${bundleBase}`,
+        techStack: { platform: 'Mobile', backend: 'Firebase' },
+        codingStandards: { language: 'en', namingConvention: 'camelCase', indentation: 'spaces-4', lineLength: 120 },
+        architecture: 'MVVM',
+        stateManagement: 'Custom',
+        networking: 'Custom',
+        storage: 'Custom',
+        featuresDir: 'src/features',
+        sharedUIDir: 'src/components',
+        servicesDir: 'src/services',
+        modelsDir: 'src/models',
+    };
+
+    return {
+        projectName,
+        projectType: cfg.projectType,
+        ...(cfg.bundleIdentifier && { bundleIdentifier: cfg.bundleIdentifier }),
+        ...(cfg.packageName && { packageName: cfg.packageName }),
+        primaryLanguage: 'en',
+        techStack: cfg.techStack,
+        services: {
+            firebase: {
+                enabled: true,
+                features: ['analytics', 'crashlytics', 'remote-config', 'auth'],
+            },
+        },
+        projectStage: 'development',
+        codingStandards: cfg.codingStandards,
+        projectGoals: [],
+        createdDate: date,
+        lastUpdated: date,
+    };
+}
+
+/**
+ * Build VS Code .code-workspace JSON for the given project type.
+ */
+function buildWorkspace(projectName, projectType) {
+    const extensionsByType = {
+        ios: [
+            'sweetpad.sweetpad',
+            'sswg.swift-lang',
+            'aaron-bond.better-comments',
+            'github.copilot',
+        ],
+        android: [
+            'fwcd.kotlin',
+            'mathiasfrohlich.Kotlin',
+            'redhat.java',
+            'github.copilot',
+        ],
+        expo: [
+            'expo.vscode-expo-tools',
+            'dsznajder.es7-react-js-snippets',
+            'dbaeumer.vscode-eslint',
+            'esbenp.prettier-vscode',
+            'github.copilot',
+        ],
+        flutter: [
+            'dart-code.dart-code',
+            'dart-code.flutter',
+            'github.copilot',
+        ],
+    };
+
+    return {
+        folders: [{ path: '.' }],
+        settings: {
+            'editor.formatOnSave': true,
+            'editor.tabSize': (projectType === 'expo' || projectType === 'flutter') ? 2 : 4,
+            'files.exclude': {
+                '**/.DS_Store': true,
+                '**/node_modules': true,
+                '**/.git': true,
+                '**/build': projectType === 'android',
+                '**/.gradle': projectType === 'android',
+                '**/DerivedData': projectType === 'ios',
+            },
+            'files.watcherExclude': {
+                '**/node_modules/**': true,
+                '**/build/**': true,
+                '**/DerivedData/**': true,
+            },
+        },
+        extensions: {
+            recommendations: extensionsByType[projectType] || ['github.copilot'],
+        },
+    };
+}
+
+/**
+ * Build CODEBASE.md content from template file.
+ */
+function buildCodebaseMd(projectName, projectType, identity) {
+    const tmplPath = path.join(AWK_ROOT, 'templates', 'CODEBASE.md');
+    let content = fs.existsSync(tmplPath)
+        ? fs.readFileSync(tmplPath, 'utf8')
+        : '# {{PROJECT_NAME}}\n\n> Auto-generated by awkit init\n';
+
+    const techSummary = Object.entries(identity.techStack || {})
+        .map(([k, v]) => v)
+        .slice(0, 4)
+        .join(' + ');
+
+    const dirStructure = {
+        ios: `Sources/\n├── Features/        ← Feature modules (one dir per feature)\n├── Shared/\n│   ├── UI/          ← Reusable SwiftUI components\n│   ├── Services/    ← Firebase, API, business logic\n│   ├── Models/      ← Data models & DTOs\n│   └── Extensions/  ← Swift extensions\n├── Resources/       ← Assets, fonts, localization\n└── Tests/           ← XCTest unit & UI tests`,
+        android: `app/src/main/java/…/\n├── features/        ← Feature modules (one dir per feature)\n├── ui/\n│   └── components/  ← Reusable Compose components\n├── data/            ← Repositories, data sources\n├── model/           ← Data classes & DTOs\n└── di/              ← Hilt modules`,
+        expo: `app/                 ← Expo Router screens\n├── (tabs)/          ← Tab navigation\n├── (auth)/          ← Auth screens\nsrc/\n├── features/        ← Feature modules\n├── components/      ← Shared UI components\n├── services/        ← Firebase, API clients\n├── hooks/           ← Custom React hooks\n├── models/          ← TypeScript interfaces\n└── constants/       ← App constants & theme`,
+        flutter: `lib/\n├── features/        ← Feature modules (BLoC pattern)\n├── shared/\n│   ├── widgets/     ← Reusable Flutter widgets\n│   ├── services/    ← Firebase, API services\n│   └── models/      ← Dart model classes\n└── core/            ← App config, routing, DI`,
+    };
+
+    content = content
+        .replace(/{{PROJECT_NAME}}/g, projectName)
+        .replace(/{{PROJECT_TYPE}}/g, identity.projectType)
+        .replace(/{{PROJECT_STAGE}}/g, identity.projectStage || 'development')
+        .replace(/{{TECH_STACK_SUMMARY}}/g, techSummary)
+        .replace(/{{DATE}}/g, new Date().toISOString().split('T')[0])
+        .replace(/{{DIR_STRUCTURE}}/g, dirStructure[projectType] || `src/\n├── features/\n├── services/\n└── models/`)
+        .replace(/{{ARCHITECTURE}}/g, identity.techStack?.architecture || 'MVVM')
+        .replace(/{{STATE_MANAGEMENT}}/g, identity.techStack?.stateManagement || identity.stateManagement || 'Custom')
+        .replace(/{{NETWORKING}}/g, identity.techStack?.networking || 'Custom')
+        .replace(/{{STORAGE}}/g, identity.techStack?.storage || 'Custom')
+        .replace(/{{FEATURES_DIR}}/g, identity.featuresDir || 'src/features')
+        .replace(/{{SHARED_UI_DIR}}/g, identity.sharedUIDir || 'src/components')
+        .replace(/{{SERVICES_DIR}}/g, identity.servicesDir || 'src/services')
+        .replace(/{{MODELS_DIR}}/g, identity.modelsDir || 'src/models');
+
+    return content;
+}
+
+/**
+ * awkit init — Initialize a new mobile project with Firebase.
+ * Runs from CWD. Zero prompts. Auto-detects project type.
+ *
+ * Creates:
+ *   .project-identity
+ *   <ProjectName>.code-workspace
+ *   CODEBASE.md
+ *   .beads/ (via bd init)
+ */
+function cmdInit(forceFlag = false) {
+    const cwd = process.cwd();
+    const dirName = path.basename(cwd);
+    // Convert dir name to PascalCase project name: my-app → MyApp, fitbite → Fitbite
+    const projectName = dirName
+        .split(/[-_\s]+/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join('');
+    const date = new Date().toISOString().split('T')[0];
+
+    log('');
+    log(`${C.cyan}${C.bold}╔══════════════════════════════════════════════════════════╗${C.reset}`);
+    log(`${C.cyan}${C.bold}║     ✨ awkit init — Mobile Project Setup                 ║${C.reset}`);
+    log(`${C.cyan}${C.bold}╚══════════════════════════════════════════════════════════╝${C.reset}`);
+    log('');
+    log(`${C.gray}   Directory: ${cwd}${C.reset}`);
+    log(`${C.gray}   Project:   ${projectName}${C.reset}`);
+
+    // ── 1. Detect project type ────────────────────────────────────────────────
+    info('Detecting project type...');
+    const projectType = detectProjectType(cwd);
+    ok(`Detected: ${projectType}`);
+
+    // ── 2. .project-identity ──────────────────────────────────────────────────
+    const identityPath = path.join(cwd, '.project-identity');
+    if (fs.existsSync(identityPath) && !forceFlag) {
+        warn('.project-identity already exists — skipping (use --force to overwrite)');
+    } else {
+        info('Creating .project-identity...');
+        const identity = buildProjectIdentity(projectName, projectType, cwd, date);
+        fs.writeFileSync(identityPath, JSON.stringify(identity, null, 2) + '\n');
+        ok('.project-identity created');
+    }
+
+    // Read identity back for use in other files
+    let identity;
+    try {
+        identity = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+    } catch (_) {
+        identity = { projectName, projectType, techStack: {}, projectStage: 'development' };
+    }
+
+    // ── 3. .code-workspace ───────────────────────────────────────────────────
+    const workspaceName = `${projectName}.code-workspace`;
+    const workspacePath = path.join(cwd, workspaceName);
+    if (fs.existsSync(workspacePath) && !forceFlag) {
+        warn(`${workspaceName} already exists — skipping (use --force to overwrite)`);
+    } else {
+        info(`Creating ${workspaceName}...`);
+        const workspace = buildWorkspace(projectName, projectType);
+        fs.writeFileSync(workspacePath, JSON.stringify(workspace, null, 2) + '\n');
+        ok(`${workspaceName} created`);
+    }
+
+    // ── 4. CODEBASE.md ────────────────────────────────────────────────────────
+    const codebasePath = path.join(cwd, 'CODEBASE.md');
+    if (fs.existsSync(codebasePath) && !forceFlag) {
+        warn('CODEBASE.md already exists — skipping (use --force to overwrite)');
+    } else {
+        info('Creating CODEBASE.md...');
+        const mdContent = buildCodebaseMd(projectName, projectType, identity);
+        fs.writeFileSync(codebasePath, mdContent);
+        ok('CODEBASE.md created');
+    }
+
+    // ── 5. Beads init ─────────────────────────────────────────────────────────
+    const beadsDir = path.join(cwd, '.beads');
+    if (fs.existsSync(beadsDir) && !forceFlag) {
+        warn('.beads/ already exists — skipping bd init');
+    } else {
+        info('Initializing Beads task database...');
+        try {
+            execSync('bd init', { cwd, stdio: 'pipe' });
+            ok('Beads database initialized (.beads/)');
+        } catch (e) {
+            const msg = (e.stderr || e.stdout || e.message || '').toString().trim();
+            if (msg.includes('already')) {
+                warn('Beads already initialized — skipping');
+            } else {
+                warn(`bd init failed: ${msg || e.message}`);
+                dim('Install beads: npm install -g beads-cli');
+            }
+        }
+    }
+
+    // ── 6. Summary ─────────────────────────────────────────────────────────────
+    log('');
+    log(`${C.gray}${'─'.repeat(56)}${C.reset}`);
+    log(`${C.yellow}${C.bold}🎉 ${projectName} initialized!${C.reset}`);
+    log('');
+    dim(`Type:       ${projectType}`);
+    dim(`Firebase:   analytics, crashlytics, remote-config, auth`);
+    dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md`);
+    dim(`Beads:      .beads/ (task tracking ready)`);
+    log('');
+    log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
+    log(`${C.cyan}👉 Run '/codebase-sync' in AI chat to keep CODEBASE.md updated.${C.reset}`);
+    log(`${C.cyan}👉 Run 'bd list' to manage tasks.${C.reset}`);
+    log('');
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 
 const [, , command, ...args] = process.argv;
 
 switch (command) {
+    case 'init':
+        cmdInit(args.includes('--force'));
+        break;
     case 'install':
         cmdInstall();
         break;
