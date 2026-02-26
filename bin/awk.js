@@ -22,7 +22,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -569,13 +569,58 @@ function handlePackRequirements(packSrc, packName) {
         const doInstall = promptYN(`   Install now? (${installCmd})`);
         if (doInstall) {
             log('');
+
+            // runPipCmd: streams output to terminal + captures stderr for PEP 668 detection
+            const runPipCmd = (cmd) => {
+                const parts = cmd.split(' ');
+                const result = spawnSync(parts[0], parts.slice(1), {
+                    encoding: 'utf8',
+                    stdio: ['inherit', 'pipe', 'pipe'],
+                });
+                if (result.stdout) process.stdout.write(result.stdout);
+                if (result.stderr) process.stderr.write(result.stderr);
+                return { success: result.status === 0, stderr: result.stderr || '' };
+            };
+
             info(`Running: ${installCmd}`);
-            try {
-                execSync(installCmd, { stdio: 'inherit' });
+            const r1 = runPipCmd(installCmd);
+
+            if (r1.success) {
                 ok(`${req.package} installed successfully`);
-            } catch (e) {
-                err(`Installation failed: ${e.message}`);
-                warn(`Try manually: ${installCmd}`);
+            } else {
+                const isPep668 = r1.stderr.includes('externally-managed-environment')
+                    || r1.stderr.includes('break-system-packages');
+
+                if (isPep668) {
+                    warn('System Python is externally managed (PEP 668). Retrying with --user...');
+                    log('');
+                    const userCmd = `${installCmd} --user`;
+                    info(`Running: ${userCmd}`);
+                    const r2 = runPipCmd(userCmd);
+
+                    if (r2.success) {
+                        ok(`${req.package} installed to user directory`);
+                        const pyVer = installCmd.match(/python(\d+\.\d+)/)?.[1] || '';
+                        if (pyVer) {
+                            log('');
+                            log(`${C.yellow}   ⚠️  PATH hint:${C.reset}`);
+                            log(`${C.gray}   The 'nmem' command lives in your user bin dir.${C.reset}`);
+                            log(`${C.gray}   Add to ~/.zshrc:${C.reset}`);
+                            log(`${C.gray}   export PATH="$PATH:$HOME/Library/Python/${pyVer}/bin"${C.reset}`);
+                            log(`${C.gray}   Then: source ~/.zshrc && nmem init${C.reset}`);
+                        }
+                    } else {
+                        err(`Installation failed even with --user.`);
+                        log('');
+                        log(`${C.yellow}   Options:${C.reset}`);
+                        log(`${C.gray}   1. ${installCmd} --break-system-packages${C.reset}`);
+                        log(`${C.gray}   2. brew install pipx && pipx install ${req.package}${C.reset}`);
+                        log(`${C.gray}   3. python3 -m venv ~/.venv && source ~/.venv/bin/activate${C.reset}`);
+                        log(`${C.gray}      pip install ${req.package}${C.reset}`);
+                    }
+                } else {
+                    err(`Installation failed. Try manually: ${installCmd}`);
+                }
             }
         } else {
             warn(`Skipped. Run manually: ${installCmd}`);
