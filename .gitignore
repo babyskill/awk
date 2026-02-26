@@ -1,0 +1,15 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Brain data (per-project, not in framework)
+brain/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

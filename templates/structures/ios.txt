@@ -1,0 +1,9 @@
+App/
+├── Features/
+├── Shared/
+│   ├── UI/
+│   ├── Services/
+│   ├── Models/
+├── Tests/
+├── docs/
+├── .project-identity

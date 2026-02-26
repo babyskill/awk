@@ -1,0 +1,10 @@
+app/
+├── src/main/
+│   ├── features/
+│   ├── shared/
+│   │   ├── ui/
+│   │   ├── services/
+│   │   ├── models/
+├── tests/
+├── docs/
+├── .project-identity

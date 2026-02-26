@@ -1,0 +1,53 @@
+“CK có gì đặc biệt hơn mấy cái bộ open source ngoài kia?”
+Câu hỏi này tui nhận được nhiều nhất kể từ khi bắt đầu build ClaudeKit. Tuần nào cũng có người hỏi. 
+Hôm thì “So sánh CK với BMAD đi”, hôm thì “Superpowers free mà, sao phải mua CK?”, hôm thì “carlrannaberg cũng có claudekit kìa, CK thì khác gì?”
+Mỗi khi ai hỏi câu đó, tui đều trả lời y chang một câu:
+CHẤT LƯỢNG > SỐ LƯỢNG.
+--
+Bạn không cần 100K skills đâu
+Nồồồ... tui nói thiệt. Bạn không cần 100,000 cái skills rời rạc đâu. Bạn chỉ cần 1 hệ sinh thái - nơi mà các skills liên kết chặt chẽ với nhau để hoàn thành công việc tốt hơn mà thôi.
+Đây là vấn đề mà hầu hết mấy bộ open source ngoài kia mắc phải: skills của họ hoạt động độc lập. Mỗi skill là một ốc đảo riêng. Skill A không biết skill B tồn tại. Skill B không gọi được skill C. Bạn phải tự tay "nối dây" mọi thứ lại với nhau.
+Còn CK thì khác. 54 skills. 80+ connections. Mỗi skill gọi chéo nhau để hoàn thành nhiệm vụ tốt nhất có thể.
+--
+Tại sao "liên kết" lại quan trọng hơn "số lượng"?
+Lấy ví dụ nè. Bạn dùng /cook để implement một feature mới. Đằng sau hậu trường, cook không làm một mình đâu - nó orchestrate cả một dàn skills:
+1/ plan lên kiến trúc và phân tích → gọi research để thu thập thông tin → gọi scout để quét codebase hiện tại 
+2/ debug khi gặp lỗi → gọi docs-seeker tra tài liệu, repomix pack repo, chrome-devtools kiểm tra browser, problem-solving phân tích nguyên nhân gốc 
+3/ fix sửa bug → gọi debug tìm root cause, code-review kiểm tra chất lượng, brainstorm nếu cần giải pháp sáng tạo 
+4/ test validate → gọi ai-multimodal test visual, chrome-devtools test trên browser 
+5/ code-review đánh giá → gọi scout tìm edge cases 6/ git commit và push → gọi context-engineering quản lý context
+Tất cả xảy ra tự động. Bạn chỉ cần gõ /cook "implement feature X" - phần còn lại CK tự lo.
+So sánh với BMAD - 9 skills, 15 commands, focus chính vào quy trình agile planning (PRD, architecture, sprint). Tốt cho planning, nhưng khi vào giai đoạn implementation thì bạn phải tự xử. Ngoài ra, nó còn quá over-engineered, dùng mất thời gian khiếp, learning curve cũng lớn nữa. Superpowers - focus vào TDD workflow và brainstorming, 42K+ stars trên GitHub, cũng rất hay. Nhưng nó vẫn là một linear pipeline: brainstorm → plan → implement → review → merge.
+CK không phải pipeline. CK là mesh network. 
+Skills gọi qua gọi lại, tạo thành một mạng lưới resilient. Fix gọi debug, debug gọi docs-seeker, brainstorm gọi plan, plan gọi research. Không phải rigid tree - mà là living mesh.
+--
+Ví dụ khác nha: tui vừa build banner-design skill cho CK Marketing
+Nghe tên thì biết làm gì rồi đúng hông - tạo banner. Nhưng quan trọng là cách làm như thế nào.
+Đây là workflow sơ bộ của nó:
+1/ Tui cho Claude Code mở Claude in Chrome (extension), browse Canva, Pinterest với Dribbble để cập nhật design trends mới nhất & best practices. 
+Không phải random browse đâu - nó phân loại thành nhiều categories khác nhau theo phong cách thiết kế (minimalism, glassmorphism, bold typography...) và mục đích sử dụng (social media, hero banner, ad creative...)
+Extract trực tiếp từ case studies design thực tế luôn!
+2/ Sau khi có trends data, skill gọi ui-ux-pro-max (skill design intelligence của Việt) để thiết kế banner ở định dạng HTML - với đầy đủ design tokens, color palette, typography phù hợp thông qua skills `system-design` và `brand-guidelines`
+3/ Trong quá trình thiết kế, kết hợp với ai-multimodal và ai-artist skills để tạo hình ảnh minh hoạ hoặc design elements với Gemini Nano Banana Pro model
+4/ Cuối cùng export outcome ra JPG/PNG/PDF với skill `chrome-devtools`
+Bạn thấy không? Một cái skill `banner-design` thôi mà đã gọi tới 5-6 skills khác chồng chéo nhau. Nếu cài mỗi skill từ nhiều nguồn khác nhau thì làm sao có được sự liên kết đó?
+�> Hình banner bài này tạo bằng `banner-design` skill luôn nè! 😜
+--
+Kiến trúc 4 tầng
+Tui thiết kế CK theo mô hình hub-and-spoke, chia 4 tầng rõ ràng:
+Tầng 1 - Orchestrators: cook, team, bootstrap - mấy ông chỉ huy, điều phối mọi thứ
+Tầng 2 - Workflow hubs: plan, scout, debug, fix, test, code-review, brainstorm - mấy ông quản lý trung gian, vừa nhận lệnh từ tầng 1 vừa gọi tầng 3
+Tầng 3 - Utility providers: research, docs-seeker, sequential-thinking, problem-solving, ai-multimodal, chrome-devtools, repomix, context-engineering, mermaidjs-v11, ui-ux-pro-max, media-processing - cung cấp capability thuần tuý, stateless, không gọi skill khác
+Tầng 4 - Standalone skills: 27 domain-specific skills hoạt động độc lập - agent-browser, backend-development, databases, devops, shopify, threejs...
+Cái hay ở đây là cross-hub references - tầng 2 gọi chéo nhau. fix gọi debug, test gọi debug, brainstorm gọi plan. Nó tạo thành một resilient mesh, không phải rigid tree. Nếu một đường gãy, vẫn còn đường khác.
+Và team - meta-orchestrator - wrap tất cả lại cho multi-session parallel work. Nhiều agent chạy song song, mỗi agent một nhiệm vụ, tất cả phối hợp với nhau, nhưng vẫn đảm bảo không giẫm chân nhau.
+--
+Quan trọng hơn hết:
+Tất cả các skills của CK đều an toàn và bảo mật, không lo bị prompt injection, malware hay lỗ hổng này kia 😉
+--
+Tóm lại
+Mấy bộ open source ngoài kia đều tốt cả. BMAD tốt cho planning. Superpowers tốt cho TDD. `carlrannaberg/claudekit` với last commit từ 6-7 tháng trước (hmm...) - Không ai sai cả.
+Nhưng CK chơi một game khác. CK không cố gắng có nhiều skills nhất. CK cố gắng liên kết tốt nhất và đào sâu nhất vào ngách của mình.
+54 skills liên kết chặt chẽ > 540 skills rời rạc.
+Đó là câu trả lời cho câu hỏi “CK có gì đặc biệt hơn mấy cái open source ngoài kia”.
+> Disclaimers: mấy bộ open source kia đều đáng trân trọng và tui respect tất cả builders trong community, chính CK đã học hỏi được rất nhiều từ những bộ opensource đó (không vì frustration với BMAD chắc đã không có CK ngày hôm nay 😂). Mỗi công cụ phù hợp với nhu cầu khác nhau, mỗi nhu cầu cần phải đào thật sâu thì mới ra được kết quả đủ chất lượng. Tui tin vào triết lý "chất lượng > số lượng" và CK đang được build theo hướng đó 😁

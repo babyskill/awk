@@ -1,0 +1,9 @@
+app/
+├── (tabs)/
+├── features/
+├── components/
+├── services/
+├── hooks/
+├── constants/
+├── docs/
+├── .project-identity

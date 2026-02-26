@@ -1,0 +1,45 @@
+{
+  "name": "@zeroteam/awk",
+  "version": "1.0.0",
+  "description": "AWK v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
+  "main": "bin/awk.js",
+  "bin": {
+    "awk": "bin/awk.js"
+  },
+  "scripts": {
+    "install-global": "node bin/awk.js install",
+    "uninstall-global": "node bin/awk.js uninstall",
+    "update": "node bin/awk.js update",
+    "lint": "echo 'No lint configured'",
+    "test": "node bin/awk.js doctor",
+    "harvest": "node scripts/harvest.js",
+    "harvest-dry": "node scripts/harvest.js --dry-run"
+  },
+  "keywords": [
+    "awk",
+    "antigravity-workflow-kit",
+    "ai-agent",
+    "workflow",
+    "gemini",
+    "claude"
+  ],
+  "author": "Kien AI",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "core/",
+    "workflows/",
+    "skills/",
+    "skill-packs/",
+    "schemas/",
+    "templates/",
+    "docs/",
+    "README.md",
+    "CHANGELOG.md",
+    "VERSION"
+  ]
+}

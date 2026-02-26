@@ -1,0 +1,28 @@
+{
+  "projectName": "AWF - Antigravity Workflow Framework",
+  "projectType": "library",
+  "primaryLanguage": "en",
+  "techStack": {
+    "runtime": ["Node.js 18+"],
+    "languages": ["JavaScript", "Markdown"],
+    "distribution": ["npm"],
+    "targets": ["Gemini Code Assist", "Claude Code", "Cursor AI"]
+  },
+  "projectStage": "development",
+  "targetAudience": "Internal AI agent developers who need structured workflows, persistent context, and curated skills for multi-platform development",
+  "projectGoals": [
+    "Unify AWF v4 and Antigravity v5 into single coherent framework",
+    "Curate skills to reduce noise and improve quality",
+    "Distribute via npm for easy install and update",
+    "Maintain zero-context-loss philosophy"
+  ],
+  "codingStandards": {
+    "language": "en",
+    "namingConvention": "kebab-case",
+    "indentation": "spaces",
+    "lineLength": 120
+  },
+  "documentationLanguage": "en",
+  "createdDate": "2026-02-22",
+  "lastUpdated": "2026-02-22"
+}

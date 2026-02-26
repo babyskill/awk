@@ -1,0 +1,27 @@
+{
+  "projectName": "MyExpoApp",
+  "projectType": "expo",
+  "bundleIdentifier": "com.company.myexpoapp",
+  "primaryLanguage": "en",
+  "techStack": {
+    "platform": "Expo",
+    "language": "TypeScript",
+    "framework": "Expo SDK 51+",
+    "router": "Expo Router",
+    "styling": "NativeWind (Tailwind)",
+    "stateManagement": "Zustand",
+    "networking": "TanStack Query",
+    "storage": "Expo SQLite",
+    "testing": "Jest + Detox",
+    "build": "EAS Build"
+  },
+  "projectStage": "planning",
+  "codingStandards": {
+    "language": "en",
+    "namingConvention": "camelCase",
+    "indentation": "spaces-2",
+    "lineLength": 100
+  },
+  "createdDate": "{{DATE}}",
+  "lastUpdated": "{{DATE}}"
+}
