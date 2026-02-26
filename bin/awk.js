@@ -463,8 +463,45 @@ function cmdDoctor() {
 }
 
 /**
+ * Find a compatible Python interpreter meeting the minimum version requirement.
+ * Tries python3.13, python3.12, python3.11, python3, python in order.
+ * Returns { cmd, version } or null if none found.
+ */
+function findCompatiblePython(minVersion) {
+    if (!minVersion) {
+        // No version constraint — just return first python found
+        for (const cmd of ['python3', 'python']) {
+            try {
+                execSync(`${cmd} --version`, { stdio: 'ignore' });
+                return { cmd, version: 'any' };
+            } catch (_) { }
+        }
+        return null;
+    }
+
+    const [minMajor, minMinor] = minVersion.split('.').map(Number);
+    // Prefer newest first
+    const candidates = ['python3.13', 'python3.12', 'python3.11', 'python3', 'python'];
+
+    for (const cmd of candidates) {
+        try {
+            const out = execSync(`${cmd} --version 2>&1`, { stdio: ['ignore', 'pipe', 'pipe'] })
+                .toString().trim();
+            const match = out.match(/(\d+)\.(\d+)/);
+            if (!match) continue;
+            const major = parseInt(match[1]);
+            const minor = parseInt(match[2]);
+            if (major > minMajor || (major === minMajor && minor >= minMinor)) {
+                return { cmd, version: `${major}.${minor}` };
+            }
+        } catch (_) { /* not installed */ }
+    }
+    return null;
+}
+
+/**
  * Handle pack requirements defined in pack.json:
- * - Check pip packages
+ * - Check pip packages (with Python version detection)
  * - Prompt to install if missing
  * - Run post_install steps
  * - Show MCP setup instructions
@@ -509,19 +546,39 @@ function handlePackRequirements(packSrc, packName) {
         if (req.description) dim(req.description);
         log('');
 
-        const doInstall = promptYN(`   Install now? (${req.install_cmd})`);
+        // Build actual install command — detect correct Python if needed
+        let installCmd = req.install_cmd;
+        if (req.type === 'pip') {
+            const pyInfo = findCompatiblePython(req.python_min || null);
+            if (pyInfo) {
+                installCmd = `${pyInfo.cmd} -m pip install ${req.package}`;
+                dim(`Using: ${pyInfo.cmd} (Python ${pyInfo.version})`);
+            } else if (req.python_min) {
+                err(`Requires Python >= ${req.python_min}, but none found on this system.`);
+                log('');
+                log(`${C.yellow}   Fix options:${C.reset}`);
+                log(`${C.gray}   1. brew install python@${req.python_min}${C.reset}`);
+                log(`${C.gray}   2. pyenv install ${req.python_min} && pyenv global ${req.python_min}${C.reset}`);
+                log(`${C.gray}   3. Download from https://www.python.org/downloads/${C.reset}`);
+                log('');
+                log(`${C.gray}   Then re-run: awkit enable-pack ${packName}${C.reset}`);
+                continue;
+            }
+        }
+
+        const doInstall = promptYN(`   Install now? (${installCmd})`);
         if (doInstall) {
             log('');
-            info(`Running: ${req.install_cmd}`);
+            info(`Running: ${installCmd}`);
             try {
-                execSync(req.install_cmd, { stdio: 'inherit' });
+                execSync(installCmd, { stdio: 'inherit' });
                 ok(`${req.package} installed successfully`);
             } catch (e) {
                 err(`Installation failed: ${e.message}`);
-                warn(`Try manually: ${req.install_cmd}`);
+                warn(`Try manually: ${installCmd}`);
             }
         } else {
-            warn(`Skipped. Run manually: ${req.install_cmd}`);
+            warn(`Skipped. Run manually: ${installCmd}`);
         }
     }
 
@@ -539,6 +596,20 @@ function handlePackRequirements(packSrc, packName) {
 
         log('');
         info(`Post-install: ${step.description || step.cmd}`);
+
+        // Check if the command is actually available before running
+        const cmdName = step.cmd.split(' ')[0];
+        let cmdAvailable = false;
+        try {
+            execSync(`which ${cmdName}`, { stdio: 'ignore' });
+            cmdAvailable = true;
+        } catch (_) { cmdAvailable = false; }
+
+        if (!cmdAvailable) {
+            warn(`Skipped: '${cmdName}' not found. Complete the install above first.`);
+            dim(`Then run: ${step.cmd}`);
+            continue;
+        }
 
         if (step.optional) {
             const doRun = promptYN(`   Run now? (${step.cmd})`);

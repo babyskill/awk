@@ -6,6 +6,7 @@
         {
             "type": "pip",
             "package": "neural-memory",
+            "python_min": "3.11",
             "check_cmd": "nmem --version",
             "install_cmd": "pip install neural-memory",
             "description": "NeuralMemory Python engine (SQLite graph + MCP server)"
