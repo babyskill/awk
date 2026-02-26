@@ -196,6 +196,45 @@ function syncGeminiMd() {
 
 // ─── Commands ────────────────────────────────────────────────────────────────
 
+/**
+ * Ensure 'bd' (Beads) is installed. Install via Homebrew if missing.
+ * Returns true if bd is available after the call.
+ */
+function installBeads({ silent = false } = {}) {
+    // Check if bd already installed
+    try {
+        execSync('which bd', { stdio: 'ignore' });
+        if (!silent) ok('bd (Beads) already installed');
+        return true;
+    } catch (_) { /* not installed */ }
+
+    if (!silent) info('bd (Beads) not found — installing via Homebrew...');
+
+    // Check if brew is available
+    let brewAvailable = false;
+    try { execSync('which brew', { stdio: 'ignore' }); brewAvailable = true; } catch (_) { }
+
+    if (!brewAvailable) {
+        warn('Homebrew not found. Please install bd manually:');
+        dim('  brew install beads');
+        dim('  or visit: https://github.com/steveyegge/beads');
+        return false;
+    }
+
+    try {
+        if (!silent) info('Running: brew install beads');
+        execSync('brew install beads', { stdio: silent ? 'pipe' : 'inherit' });
+        // Verify install
+        execSync('which bd', { stdio: 'ignore' });
+        if (!silent) ok('bd (Beads) installed successfully ✨');
+        return true;
+    } catch (e) {
+        warn(`Failed to install bd via brew: ${e.message}`);
+        dim('Try manually: brew install beads');
+        return false;
+    }
+}
+
 function cmdInstall() {
     log('');
     log(`${C.cyan}${C.bold}╔══════════════════════════════════════════════════════════╗${C.reset}`);
@@ -204,6 +243,11 @@ function cmdInstall() {
     log('');
 
     const target = TARGETS.antigravity;
+
+    // 0. Install bd (Beads) if missing
+    log('');
+    info('Checking dependencies...');
+    installBeads();
 
     // 1. Ensure target dirs exist
     info('Creating directories...');
@@ -300,8 +344,11 @@ function cmdInstall() {
     if (defaultPacks.length > 0) {
         dim(`Packs:      ${defaultPacks.join(', ')} (auto-enabled)`);
     }
+    const bdVer = (() => { try { return execSync('bd --version', { encoding: 'utf8' }).trim().split('\n')[0]; } catch (_) { return 'installed'; } })();
+    dim(`Beads:      ${bdVer} — task tracking ready`);
     log('');
     log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
+    log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
     log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
     log('');
 }
@@ -1497,16 +1544,23 @@ function cmdInit(forceFlag = false) {
         warn('.beads/ already exists — skipping bd init');
     } else {
         info('Initializing Beads task database...');
-        try {
-            execSync('bd init', { cwd, stdio: 'pipe' });
-            ok('Beads database initialized (.beads/)');
-        } catch (e) {
-            const msg = (e.stderr || e.stdout || e.message || '').toString().trim();
-            if (msg.includes('already')) {
-                warn('Beads already initialized — skipping');
-            } else {
-                warn(`bd init failed: ${msg || e.message}`);
-                dim('Install beads: npm install -g beads-cli');
+        // Ensure bd is installed (auto-install silently if missing)
+        const bdReady = installBeads({ silent: true });
+        if (!bdReady) {
+            warn('bd not available — skipping bd init');
+            dim('Install manually: brew install beads');
+        } else {
+            try {
+                execSync('bd init', { cwd, stdio: 'pipe' });
+                ok('Beads database initialized (.beads/)');
+            } catch (e) {
+                const msg = (e.stderr || e.stdout || e.message || '').toString().trim();
+                if (msg.includes('already')) {
+                    warn('Beads already initialized — skipping');
+                } else {
+                    warn(`bd init failed: ${msg || e.message}`);
+                    dim('Try manually: cd <project> && bd init');
+                }
             }
         }
     }
