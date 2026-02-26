@@ -661,32 +661,88 @@ function cmdSync() {
 }
 
 function cmdHelp() {
+    const line = `${C.gray}${'─'.repeat(56)}${C.reset}`;
     log('');
-    log(`${C.cyan}${C.bold}AWK v${AWK_VERSION} — Antigravity Workflow Kit${C.reset}`);
+    log(`${C.cyan}${C.bold}╔═══════════════════════════════════════════════════════╗${C.reset}`);
+    log(`${C.cyan}${C.bold}║    🚀 AWK v${AWK_VERSION} — Antigravity Workflow Kit       ║${C.reset}`);
+    log(`${C.cyan}${C.bold}╚═══════════════════════════════════════════════════════╝${C.reset}`);
     log('');
-    log('Commands:');
-    log(`  ${C.green}install${C.reset}        Deploy AWK into ~/.gemini/antigravity/`);
-    log(`  ${C.green}uninstall${C.reset}      Remove AWK (preserves custom files)`);
-    log(`  ${C.green}update${C.reset}         Update to latest version`);
-    log(`  ${C.green}sync${C.reset}           Full sync: harvest + install`);
-    log(`  ${C.green}status${C.reset}         Compare repo vs installed (diff view)`);
-    log(`  ${C.green}harvest${C.reset}        Pull from ~/.gemini/ into repo`);
-    log(`  ${C.green}doctor${C.reset}         Check installation health`);
-    log(`  ${C.green}enable-pack${C.reset}    Enable a skill pack`);
-    log(`  ${C.green}disable-pack${C.reset}   Disable a skill pack`);
-    log(`  ${C.green}list-packs${C.reset}     List available skill packs`);
-    log(`  ${C.green}version${C.reset}        Show version`);
-    log(`  ${C.green}help${C.reset}           Show this help`);
+
+    // Install
+    log(`${C.bold}⚙️  Setup${C.reset}`);
+    log(line);
+    log(`  ${C.green}install${C.reset}             Deploy AWK into ~/.gemini/antigravity/`);
+    log(`  ${C.green}uninstall${C.reset}           Remove AWK (preserves custom files)`);
+    log(`  ${C.green}update${C.reset}              Pull latest + reinstall`);
+    log(`  ${C.green}doctor${C.reset}              Check installation health`);
     log('');
-    log(`${C.gray}Typical workflow:${C.reset}`);
-    log(`  ${C.gray}awk status      # Check what's out of sync${C.reset}`);
-    log(`  ${C.gray}awk harvest     # Pull live edits back into repo${C.reset}`);
-    log(`  ${C.gray}awk install     # Deploy repo to ~/.gemini/${C.reset}`);
-    log(`  ${C.gray}awk sync        # harvest + install in one shot${C.reset}`);
+
+    // Sync
+    log(`${C.bold}🔄  Sync${C.reset}`);
+    log(line);
+    log(`  ${C.green}status${C.reset}              Compare repo vs installed (diff view)`);
+    log(`  ${C.green}harvest${C.reset}             Pull live edits from ~/.gemini/ → repo`);
+    log(`  ${C.green}sync${C.reset}                Full sync: harvest + install (one shot)`);
+    log('');
+
+    // Packs
+    log(`${C.bold}📦  Skill Packs${C.reset}`);
+    log(line);
+    log(`  ${C.green}list-packs${C.reset}          List available skill packs`);
+    log(`  ${C.green}enable-pack${C.reset} <name>  Install a skill pack`);
+    log(`  ${C.green}disable-pack${C.reset} <name> Uninstall a skill pack (backed up)`);
+    log('');
+
+    // Available packs
+    const packsDir = path.join(AWK_ROOT, 'skill-packs');
+    if (fs.existsSync(packsDir)) {
+        const packs = fs.readdirSync(packsDir, { withFileTypes: true }).filter(d => d.isDirectory());
+        if (packs.length) {
+            log(`  Available packs:`);
+            for (const p of packs) {
+                const readmePath = path.join(packsDir, p.name, 'README.md');
+                let tagline = '';
+                if (fs.existsSync(readmePath)) {
+                    const content = fs.readFileSync(readmePath, 'utf8');
+                    const match = content.match(/^>\s*(.+)/m);
+                    if (match) tagline = `— ${match[1].trim().substring(0, 42)}`;
+                }
+                log(`  ${C.gray}  • ${p.name} ${tagline}${C.reset}`);
+            }
+        }
+    }
+    log('');
+
+    // Info
+    log(`${C.bold}ℹ️   Info${C.reset}`);
+    log(line);
+    log(`  ${C.green}version${C.reset}             Show current version`);
+    log(`  ${C.green}help${C.reset}                Show this help`);
+    log('');
+
+    // Typical workflow
+    log(`${C.bold}💡  Typical Workflow${C.reset}`);
+    log(line);
+    log(`  ${C.cyan}# First time setup${C.reset}`);
+    log(`  ${C.gray}npm install -g github:babyskill/awk${C.reset}`);
+    log(`  ${C.gray}awk install${C.reset}`);
+    log(`  ${C.gray}awk doctor${C.reset}`);
+    log('');
+    log(`  ${C.cyan}# Daily usage${C.reset}`);
+    log(`  ${C.gray}awk status       # What's out of sync?${C.reset}`);
+    log(`  ${C.gray}awk harvest      # Pull live edits → repo${C.reset}`);
+    log(`  ${C.gray}awk sync         # harvest + install in one shot${C.reset}`);
+    log('');
+    log(`  ${C.cyan}# Enable NeuralMemory${C.reset}`);
+    log(`  ${C.gray}awk enable-pack neural-memory${C.reset}`);
+    log('');
+    log(`  ${C.cyan}# Repo${C.reset}`);
+    log(`  ${C.gray}https://github.com/babyskill/awk${C.reset}`);
     log('');
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
+
 
 const [, , command, ...args] = process.argv;
 
