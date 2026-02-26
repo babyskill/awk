@@ -301,7 +301,7 @@ function cmdInstall() {
     }
     log('');
     log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
-    log(`${C.cyan}👉 Run 'awk doctor' to verify installation.${C.reset}`);
+    log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
     log('');
 }
 
@@ -446,10 +446,10 @@ function cmdDoctor() {
         const v = fs.readFileSync(TARGETS.versionFile, 'utf8').trim();
         ok(`AWK version: ${v}`);
         if (v !== AWK_VERSION) {
-            warn(`Package version (${AWK_VERSION}) differs from installed (${v}). Run 'awk update'.`);
+            warn(`Package version (${AWK_VERSION}) differs from installed (${v}). Run 'awkit update'.`);
         }
     } else {
-        warn('Version file missing. Run "awk install" first.'); issues++;
+        warn('Version file missing. Run "awkit install" first.'); issues++;
     }
 
     // Summary
@@ -457,7 +457,7 @@ function cmdDoctor() {
     if (issues === 0) {
         log(`${C.green}${C.bold}✅ All checks passed! AWK is healthy.${C.reset}`);
     } else {
-        log(`${C.yellow}${C.bold}⚠️  ${issues} issue(s) found. Run 'awk install' to fix.${C.reset}`);
+        log(`${C.yellow}${C.bold}⚠️  ${issues} issue(s) found. Run 'awkit install' to fix.${C.reset}`);
     }
     log('');
 }
@@ -703,7 +703,7 @@ function handlePackRequirements(packSrc, packName) {
 
 function cmdEnablePack(packName) {
     if (!packName) {
-        err('Usage: awk enable-pack <pack-name>');
+        err('Usage: awkit enable-pack <pack-name>');
         log('');
         cmdListPacks();
         return;
@@ -759,12 +759,12 @@ function cmdEnablePack(packName) {
     log('');
     log(`${C.cyan}👉 Skills available: type skill name in your AI chat.${C.reset}`);
     log(`${C.cyan}👉 Workflows available: use /nm-recall, /memory-audit, etc.${C.reset}`);
-    log(`${C.cyan}👉 Run 'awk doctor' to verify installation.${C.reset}`);
+    log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
 }
 
 function cmdDisablePack(packName) {
     if (!packName) {
-        err('Usage: awk disable-pack <pack-name>');
+        err('Usage: awkit disable-pack <pack-name>');
         return;
     }
 
@@ -827,7 +827,7 @@ function cmdListPacks() {
     }
 
     log('');
-    log(`${C.cyan}Usage: awk enable-pack <name>${C.reset}`);
+    log(`${C.cyan}Usage: awkit enable-pack <name>${C.reset}`);
     log('');
 }
 
@@ -875,11 +875,11 @@ function cmdStatus() {
 
     log(`  ${C.green}✅ In sync:${C.reset}        ${inBoth.length} workflows`);
     if (onlyInRepo.length > 0) {
-        log(`  ${C.yellow}⬆  Repo only:${C.reset}      ${onlyInRepo.length} → run 'awk install' to deploy`);
+        log(`  ${C.yellow}⬆  Repo only:${C.reset}      ${onlyInRepo.length} → run 'awkit install' to deploy`);
         onlyInRepo.forEach(f => log(`${C.gray}     + ${f}${C.reset}`));
     }
     if (onlyInLive.length > 0) {
-        log(`  ${C.cyan}⬇  Live only:${C.reset}      ${onlyInLive.length} → run 'awk harvest' to pull`);
+        log(`  ${C.cyan}⬇  Live only:${C.reset}      ${onlyInLive.length} → run 'awkit harvest' to pull`);
         onlyInLive.forEach(f => log(`${C.gray}     - ${f}${C.reset}`));
     }
     if (onlyInRepo.length === 0 && onlyInLive.length === 0) {
@@ -903,11 +903,11 @@ function cmdStatus() {
 
     log(`  ${C.green}✅ In sync:${C.reset}        ${skillsInBoth.length} skills`);
     if (skillsOnlyRepo.length > 0) {
-        log(`  ${C.yellow}⬆  Repo only:${C.reset}      ${skillsOnlyRepo.length} → run 'awk install'`);
+        log(`  ${C.yellow}⬆  Repo only:${C.reset}      ${skillsOnlyRepo.length} → run 'awkit install'`);
         skillsOnlyRepo.forEach(s => log(`${C.gray}     + ${s}${C.reset}`));
     }
     if (skillsOnlyLive.length > 0) {
-        log(`  ${C.cyan}⬇  Live only:${C.reset}      ${skillsOnlyLive.length} → run 'awk harvest'`);
+        log(`  ${C.cyan}⬇  Live only:${C.reset}      ${skillsOnlyLive.length} → run 'awkit harvest'`);
         skillsOnlyLive.forEach(s => log(`${C.gray}     - ${s}${C.reset}`));
     }
     if (skillsOnlyRepo.length === 0 && skillsOnlyLive.length === 0) {
@@ -924,11 +924,11 @@ function cmdStatus() {
     log(`  Repo:      ${C.cyan}${AWK_VERSION}${C.reset}`);
     log(`  Installed: ${installedVer === AWK_VERSION ? C.green : C.yellow}${installedVer}${C.reset}`);
     if (installedVer !== AWK_VERSION) {
-        log(`  ${C.yellow}⚠️  Run 'awk install' to sync versions.${C.reset}`);
+        log(`  ${C.yellow}⚠️  Run 'awkit install' to sync versions.${C.reset}`);
     }
 
     log('');
-    log(`${C.gray}Tip: 'awk sync' = harvest (pull live→repo) + install (push repo→live)${C.reset}`);
+    log(`${C.gray}Tip: 'awkit sync' = harvest (pull live→repo) + install (push repo→live)${C.reset}`);
     log('');
 }
 
