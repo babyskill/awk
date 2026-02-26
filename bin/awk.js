@@ -283,7 +283,10 @@ function cmdInstall() {
     fs.writeFileSync(TARGETS.versionFile, AWK_VERSION);
     ok(`Version ${AWK_VERSION} saved`);
 
-    // 10. Summary
+    // 10. Install default skill packs
+    const defaultPacks = installDefaultPacks();
+
+    // 11. Summary
     log('');
     log(`${C.gray}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
     log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed successfully!${C.reset}`);
@@ -293,10 +296,55 @@ function cmdInstall() {
     dim(`Schemas:    ${path.join(target, 'schemas')}`);
     dim(`Templates:  ${path.join(target, 'templates')}`);
     dim(`GEMINI.md:  ${TARGETS.geminiMd}`);
+    if (defaultPacks.length > 0) {
+        dim(`Packs:      ${defaultPacks.join(', ')} (auto-enabled)`);
+    }
     log('');
     log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
     log(`${C.cyan}👉 Run 'awk doctor' to verify installation.${C.reset}`);
     log('');
+}
+
+/**
+ * Scan skill-packs/ for packs with "auto_install": true in pack.json
+ * and enable each of them (copy files + handle requirements).
+ * Returns array of enabled pack names.
+ */
+function installDefaultPacks() {
+    const packsDir = path.join(AWK_ROOT, 'skill-packs');
+    if (!fs.existsSync(packsDir)) return [];
+
+    const enabled = [];
+
+    const packs = fs.readdirSync(packsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+
+    const defaultPacks = packs.filter(d => {
+        const cfgPath = path.join(packsDir, d.name, 'pack.json');
+        if (!fs.existsSync(cfgPath)) return false;
+        try {
+            const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+            return cfg.auto_install === true;
+        } catch (_) {
+            return false;
+        }
+    });
+
+    if (defaultPacks.length === 0) return [];
+
+    log('');
+    log(`${C.cyan}${C.bold}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
+    log(`${C.cyan}${C.bold}📦 Installing default skill packs...${C.reset}`);
+    log('');
+
+    for (const pack of defaultPacks) {
+        log(`${C.yellow}▶ ${pack.name}${C.reset}`);
+        cmdEnablePack(pack.name);
+        enabled.push(pack.name);
+        log('');
+    }
+
+    return enabled;
 }
 
 function cmdUninstall() {

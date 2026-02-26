@@ -1,5 +1,6 @@
 {
     "name": "neural-memory",
+    "auto_install": true,
     "description": "NeuralMemory-powered ambient brain sync with spreading activation recall",
     "requires": [
         {
