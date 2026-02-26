@@ -1,6 +1,6 @@
-# AWK — Antigravity Workflow Kit v7.0
+# AWK — Antigravity Workflow Kit v1.0
 
-> **v7.0.0** · Single Source of Truth · Beads-First · Ambient Memory
+> **v1.0.0** · Single Source of Truth · Beads-First · Ambient Memory
 
 AWK là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy nhất** chứa toàn bộ workflows, skills, GEMINI.md và cấu hình — không còn phân tán giữa nhiều repo.
 
@@ -8,15 +8,23 @@ AWK là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy
 
 ## 🚀 Quick Start
 
+### Cách 1 — Cài qua GitHub (khuyên dùng, không cần npm account)
 ```bash
-# Clone và install
-git clone <repo-url> ~/Dev/NodeJS/main-awf
+npm install -g github:babyskill/awk
+awk install
+awk doctor
+```
+
+### Cách 2 — Clone & install thủ công
+```bash
+git clone https://github.com/babyskill/awk.git ~/Dev/NodeJS/main-awf
 cd ~/Dev/NodeJS/main-awf
 node bin/awk.js install
 
 # Verify
 node bin/awk.js doctor
 ```
+
 
 ## 📦 Commands
 
