@@ -339,7 +339,7 @@ function installDefaultPacks() {
 
     for (const pack of defaultPacks) {
         log(`${C.yellow}▶ ${pack.name}${C.reset}`);
-        cmdEnablePack(pack.name);
+        cmdEnablePack(pack.name, { autoMode: true });
         enabled.push(pack.name);
         log('');
     }
@@ -500,13 +500,45 @@ function findCompatiblePython(minVersion) {
 }
 
 /**
+ * Auto-update mcp_config.json with absolute path to the MCP server command.
+ * Resolves `<serverName>-mcp` via `which`, patches the matching mcpServer entry.
+ */
+function autoUpdateMcpConfig(serverName) {
+    const mcpConfigPath = path.join(TARGETS.antigravity, 'mcp_config.json');
+    if (!fs.existsSync(mcpConfigPath)) return;
+
+    // Resolve command path (e.g. neural-memory-mcp → nmem-mcp)
+    const candidates = [`${serverName}-mcp`, serverName, 'nmem-mcp'];
+    let absPath = '';
+    for (const c of candidates) {
+        try { absPath = execSync(`which ${c}`, { encoding: 'utf8' }).trim(); break; } catch (_) { }
+    }
+    if (!absPath) {
+        dim(`Could not resolve MCP command for '${serverName}' — skipping config update.`);
+        return;
+    }
+
+    try {
+        const cfg = JSON.parse(fs.readFileSync(mcpConfigPath, 'utf8'));
+        if (!cfg.mcpServers) cfg.mcpServers = {};
+        if (!cfg.mcpServers[serverName]) cfg.mcpServers[serverName] = {};
+        cfg.mcpServers[serverName].command = absPath;
+        delete cfg.mcpServers[serverName].disabled; // enable it
+        fs.writeFileSync(mcpConfigPath, JSON.stringify(cfg, null, 2) + '\n');
+        ok(`MCP config updated: "${serverName}" → ${absPath}`);
+    } catch (e) {
+        warn(`Could not update mcp_config.json: ${e.message}`);
+    }
+}
+
+/**
  * Handle pack requirements defined in pack.json:
  * - Check pip packages (with Python version detection)
- * - Prompt to install if missing
+ * - Prompt to install if missing (or auto-install in autoMode)
  * - Run post_install steps
  * - Show MCP setup instructions
  */
-function handlePackRequirements(packSrc, packName) {
+function handlePackRequirements(packSrc, packName, { autoMode = false } = {}) {
     const packConfigPath = path.join(packSrc, 'pack.json');
     if (!fs.existsSync(packConfigPath)) return; // No requirements defined
 
@@ -566,7 +598,8 @@ function handlePackRequirements(packSrc, packName) {
             }
         }
 
-        const doInstall = promptYN(`   Install now? (${installCmd})`);
+        const doInstall = autoMode ? true : promptYN(`   Install now? (${installCmd})`);
+        if (autoMode) info(`Auto-installing: ${installCmd}`);
         if (doInstall) {
             log('');
 
@@ -615,6 +648,19 @@ function handlePackRequirements(packSrc, packName) {
                         let pipxAvailable = false;
                         try { execSync('which pipx', { stdio: 'ignore' }); pipxAvailable = true; } catch (_) { }
 
+                        // autoMode: if pipx not found, try to install it via brew
+                        if (!pipxAvailable && autoMode) {
+                            let brewAvailable = false;
+                            try { execSync('which brew', { stdio: 'ignore' }); brewAvailable = true; } catch (_) { }
+                            if (brewAvailable) {
+                                info('pipx not found. Auto-installing via brew...');
+                                const rb = runPipCmd('brew install pipx');
+                                if (rb.success) {
+                                    try { execSync('which pipx', { stdio: 'ignore' }); pipxAvailable = true; } catch (_) { }
+                                }
+                            }
+                        }
+
                         if (pipxAvailable) {
                             warn('Trying pipx (recommended for Homebrew Python)...');
                             const pipxCmd = `pipx install ${req.package}`;
@@ -624,6 +670,10 @@ function handlePackRequirements(packSrc, packName) {
                             if (r3.success) {
                                 ok(`${req.package} installed via pipx ✨`);
                                 dim(`Commands like 'nmem' are now globally available via pipx.`);
+                                // Auto-update mcp_config.json with absolute path
+                                if (autoMode && config.mcp_setup?.server_name) {
+                                    autoUpdateMcpConfig(config.mcp_setup.server_name);
+                                }
                             } else {
                                 err(`pipx install also failed.`);
                                 log('');
@@ -681,12 +731,14 @@ function handlePackRequirements(packSrc, packName) {
             continue;
         }
 
-        if (step.optional) {
+        if (step.optional && !autoMode) {
             const doRun = promptYN(`   Run now? (${step.cmd})`);
             if (!doRun) {
                 dim(`Skipped. Run manually: ${step.cmd}`);
                 continue;
             }
+        } else if (step.optional && autoMode) {
+            info(`Auto-running post-install: ${step.cmd}`);
         }
 
         try {
@@ -726,7 +778,7 @@ function handlePackRequirements(packSrc, packName) {
     }
 }
 
-function cmdEnablePack(packName) {
+function cmdEnablePack(packName, { autoMode = false } = {}) {
     if (!packName) {
         err('Usage: awkit enable-pack <pack-name>');
         log('');
@@ -779,7 +831,7 @@ function cmdEnablePack(packName) {
     ok(`${totalCount} files from "${packName}" pack installed`);
 
     // Handle pack.json requirements (pip deps, post-install, MCP setup)
-    handlePackRequirements(packSrc, packName);
+    handlePackRequirements(packSrc, packName, { autoMode });
 
     log('');
     log(`${C.cyan}👉 Skills available: type skill name in your AI chat.${C.reset}`);
