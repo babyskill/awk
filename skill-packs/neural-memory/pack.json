@@ -1,0 +1,33 @@
+{
+    "name": "neural-memory",
+    "description": "NeuralMemory-powered ambient brain sync with spreading activation recall",
+    "requires": [
+        {
+            "type": "pip",
+            "package": "neural-memory",
+            "check_cmd": "nmem --version",
+            "install_cmd": "pip install neural-memory",
+            "description": "NeuralMemory Python engine (SQLite graph + MCP server)"
+        }
+    ],
+    "post_install": [
+        {
+            "cmd": "nmem init",
+            "description": "Initialize NeuralMemory database (~/.nmem/brain.db)",
+            "optional": true,
+            "skip_if_exists": "~/.nmem/brain.db"
+        }
+    ],
+    "mcp_setup": {
+        "description": "Add NeuralMemory MCP server to your AI editor config",
+        "server_name": "neural-memory",
+        "config_json": {
+            "command": "nmem-mcp"
+        },
+        "editors": {
+            "Gemini (GEMINI.md)": "Not required — skills use nmem_* tools via MCP auto-discovery",
+            "Cursor / Windsurf": "Add to .cursor/mcp.json or mcp_config.json",
+            "Claude Code": "Run: /plugin install neural-memory"
+        }
+    }
+}

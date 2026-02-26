@@ -67,6 +67,22 @@ function err(msg) { log(`${C.red}❌ ${msg}${C.reset}`); }
 function info(msg) { log(`${C.cyan}ℹ️  ${msg}${C.reset}`); }
 function dim(msg) { log(`${C.gray}   ${msg}${C.reset}`); }
 
+/**
+ * Prompt user for Y/N input synchronously (macOS/Linux only).
+ * Returns true if user answers 'y' or 'yes'.
+ */
+function promptYN(question) {
+    try {
+        const answer = execSync(
+            `bash -c 'read -p "${question} [y/N]: " ans; echo $ans'`,
+            { stdio: ['inherit', 'pipe', 'inherit'] }
+        ).toString().trim().toLowerCase();
+        return answer === 'y' || answer === 'yes';
+    } catch (e) {
+        return false;
+    }
+}
+
 // ─── Utility Functions ──────────────────────────────────────────────────────
 
 /**
@@ -398,6 +414,129 @@ function cmdDoctor() {
     log('');
 }
 
+/**
+ * Handle pack requirements defined in pack.json:
+ * - Check pip packages
+ * - Prompt to install if missing
+ * - Run post_install steps
+ * - Show MCP setup instructions
+ */
+function handlePackRequirements(packSrc, packName) {
+    const packConfigPath = path.join(packSrc, 'pack.json');
+    if (!fs.existsSync(packConfigPath)) return; // No requirements defined
+
+    let config;
+    try {
+        config = JSON.parse(fs.readFileSync(packConfigPath, 'utf8'));
+    } catch (e) {
+        warn(`Could not parse pack.json: ${e.message}`);
+        return;
+    }
+
+    // ── 1. Check pip/npm dependencies ─────────────────────────────────────
+    const requires = config.requires || [];
+    if (requires.length > 0) {
+        log('');
+        log(`${C.cyan}${C.bold}📦 Dependencies${C.reset}`);
+    }
+
+    for (const req of requires) {
+        const label = `${req.type === 'pip' ? '🐍 pip' : '📦 npm'}: ${req.package}`;
+
+        // Check if already installed
+        let installed = false;
+        try {
+            execSync(req.check_cmd, { stdio: 'ignore' });
+            installed = true;
+        } catch (_) {
+            installed = false;
+        }
+
+        if (installed) {
+            ok(`${req.package} already installed`);
+            continue;
+        }
+
+        warn(`${req.package} not found — required for this pack to work`);
+        if (req.description) dim(req.description);
+        log('');
+
+        const doInstall = promptYN(`   Install now? (${req.install_cmd})`);
+        if (doInstall) {
+            log('');
+            info(`Running: ${req.install_cmd}`);
+            try {
+                execSync(req.install_cmd, { stdio: 'inherit' });
+                ok(`${req.package} installed successfully`);
+            } catch (e) {
+                err(`Installation failed: ${e.message}`);
+                warn(`Try manually: ${req.install_cmd}`);
+            }
+        } else {
+            warn(`Skipped. Run manually: ${req.install_cmd}`);
+        }
+    }
+
+    // ── 2. Post-install steps ──────────────────────────────────────────────
+    const postInstall = config.post_install || [];
+    for (const step of postInstall) {
+        // Skip if artifact already exists
+        if (step.skip_if_exists) {
+            const expandedPath = step.skip_if_exists.replace('~', process.env.HOME || '');
+            if (fs.existsSync(expandedPath)) {
+                dim(`Already exists, skipping: ${step.cmd}`);
+                continue;
+            }
+        }
+
+        log('');
+        info(`Post-install: ${step.description || step.cmd}`);
+
+        if (step.optional) {
+            const doRun = promptYN(`   Run now? (${step.cmd})`);
+            if (!doRun) {
+                dim(`Skipped. Run manually: ${step.cmd}`);
+                continue;
+            }
+        }
+
+        try {
+            execSync(step.cmd, { stdio: 'inherit' });
+            ok(`Done: ${step.cmd}`);
+        } catch (e) {
+            warn(`Step failed: ${e.message}`);
+            dim(`Try manually: ${step.cmd}`);
+        }
+    }
+
+    // ── 3. MCP Setup Instructions ──────────────────────────────────────────
+    const mcp = config.mcp_setup;
+    if (mcp) {
+        log('');
+        log(`${C.cyan}${C.bold}🔌 MCP Server Setup${C.reset}`);
+        log(`${C.gray}   ${mcp.description}${C.reset}`);
+        log('');
+
+        if (mcp.config_json) {
+            log(`${C.gray}   Add to your editor's MCP config:${C.reset}`);
+            log(`${C.gray}   {${C.reset}`);
+            log(`${C.gray}     "mcpServers": {${C.reset}`);
+            log(`${C.gray}       "${mcp.server_name}": ${JSON.stringify(mcp.config_json)}${C.reset}`);
+            log(`${C.gray}     }${C.reset}`);
+            log(`${C.gray}   }${C.reset}`);
+            log('');
+        }
+
+        if (mcp.editors) {
+            log(`${C.cyan}   Editor-specific setup:${C.reset}`);
+            for (const [editor, instruction] of Object.entries(mcp.editors)) {
+                log(`${C.gray}   • ${editor}:${C.reset}`);
+                log(`${C.gray}     ${instruction}${C.reset}`);
+            }
+        }
+    }
+}
+
 function cmdEnablePack(packName) {
     if (!packName) {
         err('Usage: awk enable-pack <pack-name>');
@@ -449,9 +588,14 @@ function cmdEnablePack(packName) {
     }
 
     ok(`${totalCount} files from "${packName}" pack installed`);
+
+    // Handle pack.json requirements (pip deps, post-install, MCP setup)
+    handlePackRequirements(packSrc, packName);
+
     log('');
     log(`${C.cyan}👉 Skills available: type skill name in your AI chat.${C.reset}`);
-    log(`${C.cyan}👉 Workflows available: type /nm-recall, /memory-audit, etc.${C.reset}`);
+    log(`${C.cyan}👉 Workflows available: use /nm-recall, /memory-audit, etc.${C.reset}`);
+    log(`${C.cyan}👉 Run 'awk doctor' to verify installation.${C.reset}`);
 }
 
 function cmdDisablePack(packName) {
