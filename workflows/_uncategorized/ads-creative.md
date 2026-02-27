@@ -228,7 +228,6 @@ Sử dụng `IMAGE_GENERATION_GUIDE.md` để lấy prompt chi tiết cho từng
 3.  **Execute (Sử dụng `VideoAdEngine`):**
     
 ```python
-# VideoAdEngine location: /Users/trungkientn/Dev2/Python/mcp-google-ads/video_ad_engine.py
 from video_ad_engine import VideoAdEngine
 
 engine = VideoAdEngine()
