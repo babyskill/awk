@@ -11,7 +11,7 @@
     "install-global": "node bin/awk.js install",
     "uninstall-global": "node bin/awk.js uninstall",
     "update": "node bin/awk.js update",
-    "lint": "echo 'No lint configured'",
+    "lint": "node bin/awk.js lint",
     "test": "node bin/awk.js doctor",
     "harvest": "node scripts/harvest.js",
     "harvest-dry": "node scripts/harvest.js --dry-run"

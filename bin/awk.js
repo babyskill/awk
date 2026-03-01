@@ -960,6 +960,87 @@ function cmdVersion() {
     log(`AWK v${AWK_VERSION}`);
 }
 
+function cmdLint() {
+    log('');
+    log(`${C.cyan}${C.bold}🔍 AWK Lint — Skill & Workflow Guards${C.reset}`);
+    log('');
+
+    const targetDirs = [
+        path.join(TARGETS.antigravity, 'global_workflows'),
+        path.join(TARGETS.antigravity, 'skills')
+    ];
+
+    let fileCount = 0;
+    let issues = 0;
+    const MAX_LINES = 500;
+
+    function checkFile(filePath) {
+        if (!filePath.endsWith('.md')) return;
+        fileCount++;
+        const content = fs.readFileSync(filePath, 'utf8');
+        const lines = content.split('\n');
+
+        const localIssues = [];
+
+        // 1. Check max lines
+        if (lines.length > MAX_LINES) {
+            localIssues.push(`File too large: ${lines.length} lines (max ${MAX_LINES})`);
+        }
+
+        // 2. Check frontmatter / description length
+        const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        if (frontmatterMatch) {
+            const frontmatter = frontmatterMatch[1];
+            const descMatch = frontmatter.match(/description:\s*(.*)/);
+            if (descMatch) {
+                const desc = descMatch[1].trim();
+                // We're lax on description length: warn only if overly verbose
+                if (desc.length > 200) {
+                    localIssues.push(`Description too long: ${desc.length} chars (max 200)`);
+                }
+            } else {
+                // If it has frontmatter but no description, warn them
+                localIssues.push('Missing description field in frontmatter');
+            }
+        }
+
+        // 3. Report if there are local issues
+        if (localIssues.length > 0) {
+            issues += localIssues.length;
+            const relPath = filePath.replace(TARGETS.antigravity + '/', '');
+            log(`${C.red}✖ ${relPath}${C.reset}`);
+            for (const issue of localIssues) {
+                log(`  ${C.yellow}↳ ${issue}${C.reset}`);
+            }
+        }
+    }
+
+    function scanDir(dir) {
+        if (!fs.existsSync(dir)) return;
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                scanDir(fullPath);
+            } else {
+                checkFile(fullPath);
+            }
+        }
+    }
+
+    for (const dir of targetDirs) {
+        scanDir(dir);
+    }
+
+    log('');
+    if (issues === 0) {
+        log(`${C.green}✅ All ${fileCount} files passed linting.${C.reset}`);
+    } else {
+        log(`${C.red}✖ Found ${issues} issue(s) across ${fileCount} files.${C.reset}`);
+        process.exitCode = 1;
+    }
+}
+
 // ─── Status: Diff repo vs installed ──────────────────────────────────────────
 
 /**
@@ -1107,6 +1188,7 @@ function cmdHelp() {
     log(`  ${C.green}install${C.reset}             Deploy AWK into ~/.gemini/antigravity/`);
     log(`  ${C.green}uninstall${C.reset}           Remove AWK (preserves custom files)`);
     log(`  ${C.green}update${C.reset}              Pull latest + reinstall`);
+    log(`  ${C.green}lint${C.reset}                Run skill & workflow guards (check length, frontmatter)`);
     log(`  ${C.green}doctor${C.reset}              Check installation health`);
     log('');
 
@@ -1581,8 +1663,48 @@ function cmdInit(forceFlag = false) {
     log('');
 }
 
+// ─── Auto-Update Checker ──────────────────────────────────────────────────────
+
+function checkAutoUpdate() {
+    const checkFile = path.join(TARGETS.antigravity, '.awk_update_check');
+    const now = Date.now();
+    const ONEDAY = 24 * 60 * 60 * 1000;
+
+    if (fs.existsSync(checkFile)) {
+        try {
+            const lastCheck = parseInt(fs.readFileSync(checkFile, 'utf8'), 10);
+            if (!isNaN(lastCheck) && (now - lastCheck < ONEDAY)) {
+                return; // already checked recently
+            }
+        } catch (_) { }
+    }
+
+    // Touch the file so we don't retry immediately on failure
+    try { fs.writeFileSync(checkFile, now.toString()); } catch (_) { }
+
+    // Check for update using npm registry
+    try {
+        const output = execSync('npm view @leejungkiin/awkit version', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 3000 });
+        const npmVersion = output.trim();
+
+        // Simple string comparison for versions like "1.0.0" (Assumes SemVer)
+        if (npmVersion && npmVersion !== AWK_VERSION) {
+            log('');
+            log(`${C.yellow}${C.bold}🌟 [Thông báo] Có phiên bản mới cho AWKit! (v${npmVersion})${C.reset}`);
+            log(`${C.gray}   Phiên bản hiện tại: v${AWK_VERSION}${C.reset}`);
+            log(`${C.gray}   Chạy lệnh sau để nâng cấp:${C.reset}`);
+            log(`${C.cyan}   npm i -g @leejungkiin/awkit && awkit install${C.reset}`);
+            log('');
+        }
+    } catch (_) {
+        // Fail silently (offline, npm not installed, package not published yet)
+    }
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
+// Check for updates (max once per day) before continuing
+checkAutoUpdate();
 
 const [, , command, ...args] = process.argv;
 
@@ -1624,6 +1746,9 @@ switch (command) {
     case '--version':
     case '-v':
         cmdVersion();
+        break;
+    case 'lint':
+        cmdLint();
         break;
     case 'help':
     case '--help':
