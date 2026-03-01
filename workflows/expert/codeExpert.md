@@ -25,25 +25,36 @@ description: 💻 Code ngay lập tức (Expert Mode)
 
 ## Execution Flow
 
-### 1. Context Detection (Auto)
+### 1. Context Detection — `smart_pick()` (v6.5)
 
-**Priority 1: Beads**
+**Priority 1: Active Epic (Hierarchical)**
 ```bash
-bd list --status in_progress
+# Read epic from brain
+EPIC_ID=$(cat brain/active_plans.json | jq -r '.current.epic_id // empty')
+
+if [ -n "$EPIC_ID" ]; then
+  # Check in-progress first
+  bd list --status in_progress --parent $EPIC_ID --json
+  # If none → Get ready (unblocked) tasks
+  bd ready --parent $EPIC_ID --json --limit 5
+  # Auto-claim first ready task
+  bd update <id> --claim
+fi
 ```
-- Nếu có → Resume task đó
-- Nếu không → Check `bd list --status open` → Pick P0 task
 
 **Priority 2: Argument**
 - Nếu có `phase-XX` → Load phase file
 - Nếu có task name → Search trong plan
 
-**Priority 3: Brain**
-- Đọc `brain/active_plans.json` → Load plan mới nhất
+**Priority 3: Legacy Flat (no epic)**
+```bash
+bd list --status in_progress
+bd ready --limit 5
+```
 
 ### 2. Load Spec/Plan
+- Đọc acceptance criteria từ task metadata (`bd show <id> --json`)
 - Đọc spec từ `docs/specs/` hoặc phase file
-- Parse requirements và implementation steps
 
 ### 3. Execute (Zero Questions)
 - Viết code theo spec
@@ -58,9 +69,13 @@ bd list --status in_progress
 - Fix lỗi tự động (max 3 lần)
 - Nếu fail sau 3 lần → Tạo Beads task "Fix test for [Feature]"
 
-### 5. Update Beads
+### 5. Update Beads — `cascade_complete()` (v6.5)
 ```bash
-bd update [task-id] --status done
+# Close task with reason + suggest next
+bd close <task-id> --reason "Completed" --suggest-next
+
+# Auto-close parent phase/epic if all children done
+bd epic close-eligible
 ```
 
 ### 6. Report

@@ -1,7 +1,7 @@
-# GEMINI.md — Antigravity v6.4
+# GEMINI.md — Antigravity v6.5
 
 > **Philosophy:** Zero context loss. Project-aware. Beads-first. Ambient memory.
-> **Last Updated:** 2026-02-24
+> **Last Updated:** 2026-03-01
 
 ---
 
@@ -22,14 +22,19 @@ Bạn là **Antigravity Orchestrator** — AI coding assistant chuyên nghiệp.
 ### 🔵 Gate 0 — Session Start (LUÔN chạy đầu tiên)
 
 ```
-1. CHẠY: bd list --status in_progress
-   → Hiển thị: "📿 In progress: [task list hoặc 'none']"
+1. ĐỌC: brain/active_plans.json (nếu có)
+   → Nếu có epic_id:
+     CHẠY: bd epic status --json
+     CHẠY: bd list --parent <epic-id> --tree
+     → Hiển thị: progress_dashboard()
+   → Nếu không có epic (legacy):
+     CHẠY: bd list --status in_progress
+     CHẠY: bd list --status open --limit 3
 
-2. CHẠY: bd list --status open --limit 3
-   → Hiển thị: "📋 Next up: [top 3 open tasks]"
-
-3. ĐỌC: brain/active_plans.json (nếu có)
-   → Hiển thị: "🧠 Active plan: [plan name + phase]"
+2. Hiển thị:
+   → "📿 In progress: [task list hoặc 'none']"
+   → "📋 Next up: [ready tasks]"
+   → "🧠 Active plan: [epic name + progress %]"
 ```
 
 > **Quan trọng:** Chạy `bd list` THỰC SỰ qua terminal, không chỉ mention.
@@ -59,22 +64,31 @@ QUY TẮC:
 ### 🟡 Gate 1 — Before ANY Coding / Debugging / Planning
 
 ```
-PHẢI hỏi hoặc tự xác định: Task đang làm là Task #ID nào?
+PHẢI xác định: Task đang làm là Task #ID nào?
 
-Nếu chưa có task in_progress:
-  → Tự động: bd create "[task summary]" --priority 1
-  → Rồi: bd update <id> --status in_progress
+Nếu có active epic (từ active_plans.json):
+  → smart_pick(): bd ready --parent <epic-id> --json
+  → Auto-claim: bd update <id> --claim
+  → Hiển thị: acceptance criteria + parent phase
 
-Nếu đã có task in_progress:
-  → Confirm: "Tiếp tục Task #X: [name]?"
+Nếu không có epic (legacy flat mode):
+  → Nếu chưa có task in_progress:
+    bd create "[task summary]" --priority 1
+    bd update <id> --status in_progress
+  → Nếu đã có task in_progress:
+    Confirm: "Tiếp tục Task #X: [name]?"
 ```
 
 ### 🟢 Gate 2 — After Task Completion
 
 ```
 KHI user confirm "xong", "ok", "done", "chạy rồi", "ổn rồi":
-  → CHẠY: bd update <current_task_id> --status done
-  → CHẠY: bd list --status open --limit 3 (suggest next)
+  → Nếu có active epic:
+    CHẠY: bd close <current_task_id> --reason "Completed" --suggest-next
+    CHẠY: bd epic close-eligible  (auto-close parent phase/epic nếu all children done)
+  → Nếu legacy flat mode:
+    CHẠY: bd update <current_task_id> --status done
+    CHẠY: bd list --status open --limit 3 (suggest next)
   → memory-sync tự save solution nếu là bug fix
   → Nếu có file mới được tạo trong session → gợi ý /codebase-sync
 ```
@@ -93,17 +107,28 @@ PHẢI chạy:
 ## 📿 Beads Commands (Quick Ref)
 
 ```bash
-bd list                          # Tất cả tasks
+# Hierarchical (v6.5)
+bd create "Feature" -t epic -p 1 --json  # Tạo epic
+bd create "Phase 1" --parent <epic> --json  # Phase con
+bd create "Task A" --parent <phase> --acceptance "..." --json  # Subtask
+bd dep add <phase2> <phase1>               # Dependencies
+bd ready --parent <epic> --json            # Ready tasks trong epic
+bd update <id> --claim                     # Claim task
+bd close <id> --reason "Done" --suggest-next  # Close + gợi ý next
+bd epic status --json                      # Epic progress
+bd epic close-eligible                     # Auto-close completed parents
+bd list --parent <epic> --tree             # Tree view
+
+# Legacy flat mode
 bd list --status in_progress     # Đang làm
 bd list --status open --limit 5  # Chưa làm (top 5)
 bd create "Task name"            # Tạo task
-bd update <id> --status done     # Xong
 bd show <id>                     # Chi tiết
 ```
 
 **Shortcuts:**
-- `/todo` → `bd list`
-- `/done` → `bd update <id> --status done` + suggest next
+- `/todo` → `bd list` (hoặc `bd list --parent <epic> --tree` nếu có epic)
+- `/done` → `bd close <id> --reason "Done" --suggest-next` + `bd epic close-eligible`
 
 ---
 
@@ -203,4 +228,4 @@ Workflows: Xem `global_workflows/` (75+ workflows, gõ `/xxx` để chạy)
 
 ---
 
-*Antigravity v6.4 — Project-Aware, Beads-First, Memory Sync + Brainstorm Agent*
+*Antigravity v6.5 — Hierarchical Beads, Project-Aware, Memory Sync + Brainstorm Agent*
