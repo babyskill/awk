@@ -138,6 +138,8 @@ Workflows: Xem `global_workflows/` (75+ workflows, gõ `/xxx` để chạy)
 | `/next` | Gợi ý tiếp theo |
 | `/todo` | Xem tasks hiện tại |
 | `/codebase-sync` | Đồng bộ CODEBASE.md với codebase thực tế |
+| `/reverse-android` | Dịch ngược APK thành mã Kotlin hiện đại |
+| `/reverse-ios` | Dịch ngược IPA thành mã Swift hiện đại |
 
 **Active Skills** (tự động kích hoạt — theo thứ tự ưu tiên):
 
@@ -150,6 +152,8 @@ Workflows: Xem `global_workflows/` (75+ workflows, gõ `/xxx` để chạy)
 | 5 | `brainstorm-agent` | `/brainstorm`, từ khoá ý tưởng | Brainstorm ý tưởng & tạo BRIEF |
 | 6 | `awf-error-translator` | Khi có lỗi | Dịch lỗi dễ hiểu |
 | 7 | `awf-adaptive-language` | Always | Điều chỉnh ngôn ngữ |
+| 8 | `smali-to-kotlin` | `/reverse-android` hoặc từ khóa APK, Smali | Android Reverse Engineering specialist |
+| 9 | `smali-to-swift` | `/reverse-ios` hoặc từ khóa IPA, class-dump | iOS Reverse Engineering specialist |
 
 > ⚠️ **Phân biệt:** `memory-sync` = đọc/ghi bộ nhớ. `brainstorm-agent` = khám phá ý tưởng. Hai skill hoàn toàn độc lập.
 > 📌 **Thứ tự:** `orchestrator` → `awf-session-restore` → `memory-sync` → action. Không được đảo.
