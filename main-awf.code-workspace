@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../../../.gemini/antigravity"
 		}
 	],
 	"settings": {}

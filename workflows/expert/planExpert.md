@@ -42,13 +42,34 @@ description: 📝 Thiết kế tính năng (Expert Mode - Zero Questions)
   - Medium: 6 phases (+ Database + Integration)
   - Complex: 8+ phases (+ Auth + Deploy + Monitoring)
 
-### 4. Sync to Beads
+### 4. Sync to Beads (Hierarchical — v6.5)
 ```bash
+# Step 1: Create epic (1 per plan)
+EPIC_ID=$(bd create "<Feature Name>" -t epic -p 1 \
+  --description "<feature summary>" \
+  --acceptance "<high-level acceptance>" \
+  --design "<architecture approach>" \
+  --json | jq -r '.id')
+
+# Step 2: Create phase tasks as children of epic
 for each phase:
-  bd create "Phase X: [Name]" --priority [0-2]
-  
-for each task in phase:
-  bd create "[Task Name]" --parent [Phase ID]
+  PHASE_ID=$(bd create "Phase X: [Name]" \
+    --parent $EPIC_ID -p 1 \
+    --description "<phase summary>" \
+    --json | jq -r '.id')
+
+  # Step 3: Create subtasks as children of phase
+  for each task in phase:
+    bd create "[Task Name]" \
+      --parent $PHASE_ID -p 2 \
+      --acceptance "<definition of done>" \
+      --json
+
+# Step 4: Set inter-phase dependencies
+bd dep add $PHASE2_ID $PHASE1_ID  # Sequential phases
+
+# Step 5: Save to brain/active_plans.json
+# → { "current": { "epic_id": $EPIC_ID, "feature": "...", "phases": [...] } }
 ```
 
 ### 5. Report
@@ -59,16 +80,17 @@ for each task in phase:
 📋 Spec: docs/specs/shopping-cart_spec.md
 
 📊 **Structure:**
-- 6 Phases
-- 42 Tasks
+- 🏔️ 1 Epic
+- 📦 6 Phases (sequential dependencies)
+- 📝 42 Subtasks (with acceptance criteria)
 - Estimated: 3-4 sessions
 
-📿 **Beads:**
-- Created 6 phase tasks
-- Created 42 sub-tasks
-- Ready to start: bd list
+📿 **Beads (Hierarchical):**
+- Epic: bd-xxxx
+- Tree: bd list --parent bd-xxxx --tree
+- Ready: bd ready --parent bd-xxxx
 
-➡️ **Next:** /codeExpert phase-01
+➡️ **Next:** /codeExpert (auto-picks first ready subtask)
 ```
 
 ---
@@ -107,6 +129,7 @@ Options:
 
 ## Integration
 
-- **Brain:** Auto-save to `brain/active_plans.json`
-- **Beads:** Auto-create tasks with dependencies
+- **Brain:** Auto-save epic mapping to `brain/active_plans.json` (with epic_id + phase IDs)
+- **Beads:** Auto-create epic → phase → subtask hierarchy with dependencies
+- **Skill:** Uses `plan_to_beads()` from `beads-manager` skill v6.5
 - **Git:** Auto-commit plan files (optional)

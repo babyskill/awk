@@ -46,8 +46,10 @@ description: 📝 Thiết kế tính năng (Dual-Mode v5.0)
 ### Phase 3: Plan Generation
 1.  **Action:** Tạo folder structure và file markdown (như v2).
 2.  **Sync Beads:** (Nếu user đồng ý ở Phase 1)
-    -   Loop qua từng Phase -> `bd create "Phase X: [Name]"`
-    -   Loop qua từng Step trong Phase -> `bd dep add [Child] [Parent]`
+    -   `bd create -t epic` → Create root epic
+    -   Loop qua từng Phase → `bd create --parent <epic-id>`
+    -   Loop qua từng Step → `bd create --parent <phase-id> --acceptance "..."`
+    -   `bd dep add` cho inter-phase dependencies
 
 ### Phase 4: Handoff
 1.  **Report:** Hiển thị chi tiết Plan và Link Beads.
@@ -63,15 +65,17 @@ description: 📝 Thiết kế tính năng (Dual-Mode v5.0)
 
 ## 🧠 Brain & Beads Integration Details
 
-### 1. Auto-Sync Logic
-Khi tạo file `phase-01-setup.md`, hệ thống sẽ:
-1.  Parse các dòng `- [ ] Task Name`.
-2.  Chạy `bd create "Task Name"`.
-3.  Ghi lại Bead ID vào cuối dòng trong file MD: `- [ ] Task Name <!-- bead:123 -->`.
+### 1. Auto-Sync Logic (Hierarchical — v6.5)
+Khi tạo plan, hệ thống sẽ:
+1.  `bd create "<Feature>" -t epic --json` → Create root epic
+2.  For each phase: `bd create "Phase X" --parent <epic-id> --json`
+3.  For each task: `bd create "Task" --parent <phase-id> --acceptance "..." --json`
+4.  `bd dep add <phase-N+1> <phase-N>` → Sequential phase dependencies
+5.  Ghi epic mapping → `brain/active_plans.json`
 
 ### 2. Context Retention
--   Lưu đường dẫn Plan vào `brain/active_plans.json`.
--   Khi User gõ `/next`, hệ thống đọc file này để biết đang làm Feature nào.
+-   Lưu `epic_id` + phase IDs vào `brain/active_plans.json`.
+-   Khi User gõ `/next`, hệ thống dùng `bd ready --parent <epic-id>` để suggest task.
 
 ---
 
