@@ -8,14 +8,14 @@ AWKit là framework điều phối AI agent chuyên nghiệp. Đây là **nơi d
 
 ## 🚀 Quick Start
 
-### Cách 1 — Cài qua GitHub (khuyên dùng, không cần npm account)
+### Cài đặt nhanh qua NPM (Khuyên dùng)
 ```bash
-npm install -g github:babyskill/awk
+npm install -g @leejungkiin/awkit
 awkit install
 awkit doctor
 ```
 
-### Cách 2 — Clone & install thủ công
+### Cài đặt từ Source Github (Dành cho Developer)
 ```bash
 git clone https://github.com/babyskill/awk.git ~/Dev/NodeJS/main-awf
 cd ~/Dev/NodeJS/main-awf

@@ -1248,7 +1248,7 @@ function cmdHelp() {
     log(`${C.bold}💡  Typical Workflow${C.reset}`);
     log(line);
     log(`  ${C.cyan}# First time setup${C.reset}`);
-    log(`  ${C.gray}npm install -g github:babyskill/awk${C.reset}`);
+    log(`  ${C.gray}npm install -g @leejungkiin/awkit${C.reset}`);
     log(`  ${C.gray}awkit install${C.reset}`);
     log(`  ${C.gray}awkit doctor${C.reset}`);
     log('');
