@@ -1,6 +1,6 @@
 {
   "name": "@leejungkiin/awkit",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "AWKit v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
   "bin": {
