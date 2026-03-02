@@ -1,7 +1,7 @@
 {
   "name": "@leejungkiin/awkit",
-  "version": "1.0.3",
-  "description": "AWKit v1.0 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
+  "version": "1.0.6",
+  "description": "AWKit v1.0.6 — Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
   "bin": {
     "awkit": "bin/awk.js",
@@ -17,13 +17,7 @@
     "harvest-dry": "node scripts/harvest.js --dry-run"
   },
   "keywords": [
-    "awkit",
-    "awk",
-    "antigravity-workflow-kit",
-    "ai-agent",
-    "workflow",
-    "gemini",
-    "claude"
+    "awkit"
   ],
   "author": "Kien AI",
   "license": "MIT",

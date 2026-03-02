@@ -15,16 +15,6 @@ awkit install
 awkit doctor
 ```
 
-### Cài đặt từ Source Github (Dành cho Developer)
-```bash
-git clone https://github.com/babyskill/awk.git ~/Dev/NodeJS/main-awf
-cd ~/Dev/NodeJS/main-awf
-node bin/awk.js install
-
-# Verify
-node bin/awk.js doctor
-```
-
 
 ## 📦 Commands
 

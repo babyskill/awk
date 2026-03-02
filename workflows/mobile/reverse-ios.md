@@ -1,12 +1,13 @@
 ---
-description: 🍎 Dịch ngược IPA iOS (class-dump, Hopper output) → App Swift hiện đại với SwiftUI, Clean Architecture, và Framework Scanner tự động.
+description: 🍎 Dịch ngược IPA iOS (class-dump, Hopper output) → App Swift hiện đại với SwiftUI, Clean Architecture. Progressive Disclosure: Map → Blueprint → Build.
 skill: smali-to-swift
 ---
 
 # /reverse-ios — iOS IPA Reverse Engineering Workflow
 
-> **Skill:** `smali-to-swift` | **Tech:** Swift + SwiftUI + async/await + URLSession + SwiftData
-> **Philosophy:** "Read ObjC headers to understand WHAT & WHY → Write Swift for HOW"
+> **Skill:** `smali-to-swift` v2.0 | **Tech:** Swift + SwiftUI + async/await + URLSession + SwiftData
+> **Philosophy:** "Treat decompiled code as a MAP, not a TODO list"
+> **Approach:** Map → Blueprint → Build (progressive disclosure)
 > **Sibling:** `/reverse-android`
 
 ---
@@ -14,7 +15,7 @@ skill: smali-to-swift
 ## ⚡ QUICK START
 
 User cung cấp: Decrypted `.app` bundle, class-dump headers, Hopper pseudo-code, hoặc nói "reverse engineer IPA này".
-Workflow dẫn dắt từng bước — **không bao giờ nhảy cóc**.
+Workflow dẫn dắt qua **4 phases** — mỗi phase có zoom level riêng, **không bao giờ nhảy cóc**.
 
 ---
 
@@ -27,18 +28,20 @@ reverse_ios_session:
   project_name: "[TBD - từ Info.plist]"
   app_bundle_dir: "[path]"
   headers_dir: "[class-dump output]"
-  current_step: 0
-  framework_report_done: false
-  plist_analyzed: false
-  completed_screens: []
-  pending_screens: []
+  current_phase: 0
+  current_zoom: 0
+  current_feature: null
+  app_map_done: false
+  architecture_done: false
+  completed_features: []
+  pending_features: []
   decisions: []
 ```
 
 ### Bước 0.2: Xác nhận input
 
 ```
-🍎 iOS Reverse Engineering bắt đầu!
+🍎 iOS Reverse Engineering v2.0 — Map → Blueprint → Build
 
 Em cần biết:
 1. Decrypted .app bundle ở đâu?
@@ -52,25 +55,47 @@ Chưa chuẩn bị?
 
 ---
 
-## 📋 Pipeline Overview (7 Steps)
+## 📋 Pipeline Overview (4 Phases)
 
-| Step | Phase | Sub-workflow | Gate |
-|------|-------|-------------|------|
-| 0 | 📦 Framework Scanner | [`/re-ios-scan`](reverse-ios-scan.md) | User approve report |
-| 1 | 📄 Info.plist & Bootstrap | [`/re-ios-scan`](reverse-ios-scan.md) | Checkpoint |
-| 2 | 💾 Data Layer | [`/re-ios-build`](reverse-ios-build.md) | Checkpoint |
-| 3 | 🧮 Core Logic & Utils | [`/re-ios-build`](reverse-ios-build.md) | Checkpoint |
-| 4 | 🎨 UI & ViewModel | [`/re-ios-build`](reverse-ios-build.md) | Per-screen loop |
-| 5 | 📦 SDK Integration | [`/re-ios-build`](reverse-ios-build.md) | Checkpoint |
-| 6 | ✅ Parity Check | [`/re-ios-build`](reverse-ios-build.md) | Final QA |
+| Phase | Name | Sub-workflow | Zoom | Code? | Gate |
+|-------|------|-------------|------|-------|------|
+| 0 | 🗺️ Discovery | [`/re-ios-discover`](reverse-ios-discover.md) | Satellite | ❌ | User approves Map |
+| 1 | 🏗️ Architecture | [`/re-ios-design`](reverse-ios-design.md) | District | ❌ | User approves Architecture |
+| 2 | 📐 Blueprint | [`/re-ios-build`](reverse-ios-build.md) | Block | Signatures | Per-feature approval |
+| 3 | 🔨 Implementation | [`/re-ios-build`](reverse-ios-build.md) | Ground | Full | Per-feature checkpoint |
 
 ### Execution Flow
 
 ```
-Session Setup → Step 0+1 (/re-ios-scan) → Step 2-6 (/re-ios-build)
+Session Setup
+    ↓
+Phase 0: Discovery (/re-ios-discover) → App Map
+    ↓ [User approves]
+Phase 1: Architecture (/re-ios-design) → Architecture Blueprint
+    ↓ [User approves + picks feature]
+Phase 2+3 Loop (/re-ios-build):
+    → Blueprint Feature X → Build Feature X → Checkpoint
+    → Blueprint Feature Y → Build Feature Y → Checkpoint
+    ↓
+Final: Parity Check & Quality Gate
 ```
 
-**Chạy tuần tự:** Xong `/re-ios-scan` → chuyển sang `/re-ios-build`.
+---
+
+## 🔭 ZOOM CONTROL
+
+```yaml
+pre_output_check:
+  - "Đang ở zoom level nào?"
+  - "Output có đúng zoom level không?"
+  - "Có function body trong Phase 0/1 không? → REMOVE"
+
+zoom_rules:
+  zoom_0: "NO CODE. Only diagrams, tables, maps."
+  zoom_1: "NO CODE BODIES. Only architecture, file lists."
+  zoom_2: "SIGNATURES ONLY. Protocols, structs, enums."
+  zoom_3: "FULL CODE. Implementation for ONE feature."
+```
 
 ---
 
@@ -78,37 +103,38 @@ Session Setup → Step 0+1 (/re-ios-scan) → Step 2-6 (/re-ios-build)
 
 ```yaml
 never_skip:
-  - Step 0 (Framework Scanner) — always first
-  - User approval of Framework Report
-  - Checkpoint after each step
+  - Phase 0 (Discovery) — always first
+  - Phase 1 (Architecture) — design before code
+  - Per-feature Blueprint before Implementation
 
 never_do:
+  - Write code in Phase 0 or Phase 1
   - Mass-copy assets from IPA
   - Use UIKit when SwiftUI equivalent exists
   - Use GCD for new async code (use async/await)
-  - Use ObjC in new code (Swift only, except bridging headers)
-  - Skip crypto parity testing
+  - Use ObjC in new code (Swift only)
+  - Implement multiple features simultaneously
 
 always_do:
-  - Document decisions in session state
-  - Present Framework Report before coding
+  - Start with App Map
+  - Create Blueprint before each feature
   - XCTest all crypto/hash functions
-  - Use @Observable for ViewModels (iOS 17+)
-  - Use NavigationStack for navigation
-  - Use SPM for all dependencies
+  - Use @Observable for ViewModels
+  - Use NavigationStack, SPM
 ```
 
 ---
 
 ## 🔗 Related
 
-- **Sub-workflows:** [`/re-ios-scan`](reverse-ios-scan.md) · [`/re-ios-build`](reverse-ios-build.md)
-- **Skill:** `smali-to-swift` (core knowledge & rules)
-- **Framework DB:** `skills/smali-to-swift/framework-patterns.md`
-- **ObjC Guide:** `skills/smali-to-swift/objc-reading-guide.md`
-- **Sibling:** `/reverse-android` (Android counterpart)
+- **Sub-workflows:**
+  - [`/re-ios-discover`](reverse-ios-discover.md) — Phase 0: Discovery
+  - [`/re-ios-design`](reverse-ios-design.md) — Phase 1: Architecture
+  - [`/re-ios-build`](reverse-ios-build.md) — Phase 2+3: Blueprint + Build
+- **Skill:** `smali-to-swift` v2.0
+- **Sibling:** `/reverse-android`
 - **After RE done:** `/test`, `/deploy`, `/code-janitor`
 
 ---
 
-*reverse-ios workflow v2.0.0 — Modular RE Pipeline*
+*reverse-ios workflow v3.0.0 — Progressive Disclosure RE Pipeline*
