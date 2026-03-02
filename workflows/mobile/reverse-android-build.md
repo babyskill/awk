@@ -1,219 +1,169 @@
 ---
-description: 🏗️ RE Android Phase 2 — Data Layer, Utils, UI, SDK Integration & Parity Check
+description: 🔨 RE Android Phase 2+3 — Per-feature Blueprint → Implementation → Parity Check
 parent: reverse-android
 ---
 
-# /re-android-build — Build & Verify
+# /re-android-build — Blueprint & Build (Per Feature)
 
-> **Parent:** [`/reverse-android`](reverse-android.md) → Step 2-6
-> **Prerequisite:** Hoàn thành [`/re-android-scan`](reverse-android-scan.md)
-> **Skill:** `smali-to-kotlin` | **Smali Guide:** `skills/smali-to-kotlin/smali-reading-guide.md`
+> **Parent:** [`/reverse-android`](reverse-android.md) → Phase 2+3
+> **Prerequisite:** Completed Architecture from [`/re-android-design`](reverse-android-design.md)
+> **Skill:** `smali-to-kotlin` → `phase-2-blueprint.md` + `phase-3-build.md`
 
 ---
 
-## 💾 Step 2: Data Layer Reconstruction
+## 🔄 Feature Loop
 
-> **Input:** Smali files cho network, models, database logic
+```
+For each feature (from Architecture Build Order):
+    Phase 2: Blueprint (Zoom 2 — signatures only)
+        ↓ [User approves]
+    Phase 3: Implementation (Zoom 3 — full code)
+        ↓ [Checkpoint]
+    → Next feature
+```
 
-### 2.1: Network Layer → Retrofit interfaces
+---
+
+## 📐 Phase 2: Feature Blueprint (Zoom 2)
+
+> **Output:** Contracts, interfaces, state design. **Signatures only, no bodies.**
+
+### 2.1: Deep Smali Reading
+
+Read Smali files for the chosen feature. Extract:
+- Class hierarchy, fields, method signatures
+- String constants (URLs, keys, messages)
+- Control flow → business rules (document, don't code)
+
+### 2.2: Contracts
+
+Define for this feature:
 
 ```kotlin
-interface UserApi {
-    @GET("users/{id}")
-    suspend fun getUser(@Path("id") id: String): UserDto
+// Domain Model
+data class [Model](val field1: Type, ...)
 
-    @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): TokenDto
+// Repository Interface
+interface [Feature]Repository {
+    suspend fun [method](...): Result<[Type]>
+    fun [stream](): Flow<[Type]>
+}
+
+// API Interface
+interface [Feature]Api {
+    @[METHOD]("[endpoint]")
+    suspend fun [method](...): [Response]
+}
+
+// UseCase
+class [Action]UseCase(repo: [Feature]Repository) {
+    suspend operator fun invoke(...): Result<[Type]> // TODO()
 }
 ```
 
-### 2.2: DTOs (Kotlin Serialization)
+### 2.3: UI State Design
 
 ```kotlin
-@Serializable
-data class UserDto(
-    @SerialName("user_id") val userId: String,
-    @SerialName("full_name") val fullName: String,
-    @SerialName("email") val email: String,
+data class [Screen]UiState(
+    val field: Type = default,
+    val isLoading: Boolean = false,
+    val error: String? = null
 )
-```
 
-### 2.3: Room Database (nếu có local DB)
-
-- Entity với `@Entity` + `@PrimaryKey`
-- DAO với `@Dao` + `Flow<>` return types
-- `OnConflictStrategy.REPLACE` cho upsert
-
-### 2.4: Repository Pattern
-
-- Domain: `interface UserRepository` (Flows + Results)
-- Data: `UserRepositoryImpl @Inject constructor(api, dao)` — offline-first
-
-### ✅ Checkpoint Step 2
-
----
-
-## 🧮 Step 3: Core Logic & Utils
-
-> **CRITICAL:** Output phải match 100% với app gốc
-
-### 3.1: Nhận diện từ Smali
-
-```
-javax/crypto/Cipher       → AES/DES encryption
-java/security/MessageDigest → MD5/SHA hashing
-android/util/Base64        → Base64 encoding
-Custom XOR/shift loops     → Custom obfuscation
-```
-
-### 3.2: Kotlin objects
-
-```kotlin
-object CryptoUtils {
-    fun hashMd5(input: String): String {
-        val md = MessageDigest.getInstance("MD5")
-        return md.digest(input.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-    }
-    fun encryptAes(data: String, key: String): String { /* from Smali */ }
-}
-```
-
-### 3.3: Unit Test verification (BẮT BUỘC cho crypto)
-
-```kotlin
-class CryptoUtilsTest {
-    @Test
-    fun `md5 hash matches original`() {
-        assertEquals("expected_hash", CryptoUtils.hashMd5("test_input"))
-    }
-}
-```
-
-### ✅ Checkpoint Step 3
-
----
-
-## 🎨 Step 4: UI & ViewModel (Per Screen — Loop)
-
-> **Input:** `res/layout/*.xml` + Activity/Fragment Smali
-> **Lặp lại** cho MỌI màn hình từ Step 1
-
-### 4.0: Thứ tự ưu tiên
-
-1. SplashScreen → 2. Auth → 3. Home → 4. Detail → 5. Settings/Profile
-
-### 4.1: Resource Extraction (On-Demand only)
-
-Chỉ copy resources cho màn hình hiện tại: drawables, strings, colors, dimens, fonts.
-
-### 4.2: XML Layout → Compose
-
-Pattern cho mỗi screen:
-
-```kotlin
-@Composable
-fun [Screen]Screen(
-    viewModel: [Screen]ViewModel = hiltViewModel(),
-    onNavigateTo[Next]: () -> Unit
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // LaunchedEffect for events
-    // Scaffold with content
-}
-```
-
-### 4.3: ViewModel Pattern
-
-```kotlin
-@HiltViewModel
-class [Screen]ViewModel @Inject constructor(
-    private val useCase: [Feature]UseCase
-) : ViewModel() {
-    private val _uiState = MutableStateFlow([Screen]UiState())
-    val uiState = _uiState.asStateFlow()
-    
-    private val _events = MutableSharedFlow<[Screen]Event>()
-    val events = _events.asSharedFlow()
-}
-
-data class [Screen]UiState(val isLoading: Boolean = false, val error: String? = null)
 sealed interface [Screen]Event { /* navigation, snackbar */ }
+sealed interface [Screen]Action { /* user interactions */ }
 ```
 
-### ✅ Checkpoint Step 4 (Per Screen)
+### 2.4: Wireframe + File List
 
-> **Loop:** Quay lại 4.0 cho screen tiếp. Hết screen → Step 5.
+ASCII wireframe + list of files to create.
+
+### ✅ Blueprint Gate
+
+```
+"📐 Blueprint cho [Feature] xong. Anh xem OK không? → Em bắt đầu code."
+```
 
 ---
 
-## 📦 Step 5: SDK & Native Library Integration
+## 🔨 Phase 3: Implementation (Zoom 3)
 
-> **Input:** Library Report từ Step 0
+> **Output:** Full production-quality Kotlin code for THIS feature only.
 
-### 5.1: Native Libraries (.so) → JNI Bridge
+### 3.1: Domain Layer
 
-```kotlin
-class NativeBridge {
-    companion object { init { System.loadLibrary("name") } }
-    external fun nativeMethod(param: String): ByteArray
-}
-```
+- Models (data classes from Blueprint)
+- Repository interfaces (from Blueprint)
+- UseCases (implement invoke with repo calls)
 
-### 5.2: Application class
+### 3.2: Data Layer
 
-```kotlin
-@HiltAndroidApp
-class App : Application() {
-    override fun onCreate() { super.onCreate(); setupTimber(); setupFirebase() }
-}
-```
+- DTOs (@Serializable)
+- Retrofit API interface
+- Room entities + DAOs (if applicable)
+- Repository implementation (offline-first)
 
-### 5.3: Hilt DI Modules
+### 3.3: DI Module
 
-- `NetworkModule`: OkHttpClient + Retrofit + Interceptors
-- `DatabaseModule`: Room database + DAOs
-- `RepositoryModule`: Bind implementations
+- Hilt @Module with @Binds for repository
 
-### ✅ Checkpoint Step 5
+### 3.4: ViewModel
 
----
+- @HiltViewModel with StateFlow + SharedFlow
+- Implement onAction() handler from Blueprint actions
 
-## ✅ Step 6: Parity Check & Quality Gate
+### 3.5: Compose Screen
 
-### 6.1: Edge Case checklist (từ Smali branches)
+- Collect state with collectAsStateWithLifecycle()
+- UI from wireframe
+- LaunchedEffect for events
 
-```markdown
-- [ ] Login empty/invalid input
-- [ ] Network timeout/offline
-- [ ] Empty list states
-- [ ] Null server responses
-- [ ] App lifecycle (bg/fg)
-```
-
-### 6.2: API Parity
-
-- [ ] Base URL, headers, body format matches
-- [ ] Response parsing correct
-- [ ] Error handling matches
-
-### 6.3: Data Parity
-
-- [ ] Encryption/hash output matches
-- [ ] Date formatting matches
-- [ ] Local storage works correctly
-
-### 6.4: Build & Test
+### 3.6: Resource Extraction (On-Demand only)
 
 ```bash
-./gradlew assembleDebug && ./gradlew test && ./gradlew lint
+# Only resources for THIS screen
+grep -o '@drawable/[a-z_]*' [apktool_dir]/res/layout/activity_[screen].xml | sort -u
 ```
+
+### 🔒 Crypto Utils (Special)
+
+If feature involves crypto/hashing:
+1. Read Smali carefully (exact algorithm)
+2. Implement in Kotlin
+3. Unit test IMMEDIATELY with known pairs
+
+> ⚠️ Crypto MUST produce identical output to original app.
+
+### ✅ Feature Checkpoint
+
+```markdown
+## ✅ Feature Complete: [Name]
+
+### Files created: [list]
+### Resources extracted: [only needed]
+### Tests: [crypto verified? API matches?]
+
+### ⏭️ Next Feature: [Name]
+→ Return to Phase 2 (Blueprint) for next feature
+```
+
+---
+
+## ✅ Final Parity Check (After ALL features)
+
+### Checklist
+- [ ] API Parity — all endpoints match (headers, body, encoding)
+- [ ] Data Parity — crypto/hash output identical
+- [ ] UI Parity — screen-by-screen comparison
+- [ ] Edge Cases — empty states, errors, offline, lifecycle
+- [ ] Build & Test: `./gradlew assembleDebug && ./gradlew test && ./gradlew lint`
 
 ### 🎉 Final Summary
 
 ```markdown
-## Complete!
-- Screens: [count] | Libs reused: [count] | Replaced: [count]
+## ✅ Reverse Engineering Complete!
+- Screens: [count] | Features: [count]
+- Libs reused: [count] | Replaced: [count]
 - Tests: [pass/fail] | Lint: [pass/warnings]
 
 ⏭️ Next: /test → /deploy → /code-janitor
@@ -224,9 +174,9 @@ class App : Application() {
 ## 🔗 Related
 
 - **Parent:** [`/reverse-android`](reverse-android.md)
-- **Previous:** [`/re-android-scan`](reverse-android-scan.md) (Step 0-1)
-- **Smali Guide:** `skills/smali-to-kotlin/smali-reading-guide.md`
+- **Previous:** [`/re-android-design`](reverse-android-design.md) (Phase 1)
+- **Skill:** `smali-to-kotlin` → `phase-2-blueprint.md` + `phase-3-build.md`
 
 ---
 
-*re-android-build v2.0.0 — Phase 2: Build & Verify*
+*re-android-build v3.0.0 — Phase 2+3: Blueprint & Build*
