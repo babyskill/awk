@@ -3,31 +3,32 @@ name: orchestrator
 description: >-
   Intelligent dispatcher — analyzes context, injects project brain, then
   delegates to the right skill or workflow. Always runs first.
-version: 2.0.0
+invocation-type: auto
+version: 2.1.0
 trigger: always
 priority: 1
 ---
 
-# Orchestrator Skill v2.0 — Project-Aware
+# Orchestrator Skill v2.1 — Project-Aware + Self-Evolving
 
 > **Role:** First-layer processor. Chạy trước MỌI skill khác.
-> **New in v2.0:** Project Brain Lookup — inject project context trước khi route.
+> **v2.0:** Project Brain Lookup — inject project context trước khi route.
+> **v2.1:** Self-Evolution Pattern — tự ghi learnings sau mỗi session.
 
 ---
 
 ## Execution Order (MANDATORY)
 
 ```
-Step 1: Project Brain Lookup    ← MỚI — chạy đầu tiên
+Step 1: Project Brain Lookup    ← chạy đầu tiên
 Step 2: Intent Detection
 Step 3: Route to skill/workflow
+Step 4: Self-Evolution          ← ghi learnings nếu có
 ```
 
 ---
 
 ## Step 1: Project Brain Lookup (LUÔN CHẠY)
-
-Trước khi làm bất cứ điều gì, orchestrator phải load project context:
 
 ### 1.1 — Đọc `.project-identity`
 
@@ -38,10 +39,9 @@ IF EXISTS:
   read: .project-identity
   extract:
     - projectName
-    - stage (stage3_development, etc.)
+    - stage
     - architecture (clean_architecture, mvvm)
     - tech stack (swift, react, node, etc.)
-    - currentWork / nextMilestones
 
 SET: project_context = { name, stage, arch, stack }
 ```
@@ -57,9 +57,6 @@ IF EXISTS:
     - layer_map: { layer_name → files[] }
     - feature_areas: { feature → directory }
     - naming_conventions
-    - data_flow_diagrams
-
-SET: codebase_map = { layers, features, conventions }
 
 RULES:
   → KHÔNG scan raw directory nếu CODEBASE.md tồn tại
@@ -69,15 +66,11 @@ RULES:
 ### 1.3 — Resolve Target từ Request
 
 ```yaml
-# Khi user đề cập feature/bug/area:
 resolve_target(user_request, codebase_map):
-  keywords = extract_keywords(user_request)
-  
-  # Match theo thứ tự ưu tiên:
-  1. Layer match: "crash khi login" → AuthenticationViewModel, AuthUseCases
+  1. Layer match: "crash khi login" → AuthenticationViewModel
   2. Feature match: "water tracking" → Features/Water/
-  3. Service match: "camera chậm" → CameraViewModel + Core/Services/
-  4. Fallback: "không rõ" → list top 3 candidates từ CODEBASE.md
+  3. Service match: "camera chậm" → CameraViewModel
+  4. Fallback: list top 3 candidates từ CODEBASE.md
 ```
 
 ### 1.4 — Brief Confirm Output (LUÔN HIỂN THỊ)
@@ -87,27 +80,17 @@ Format:
   "📚 [ProjectName] | [Stage] | [Architecture]
    🗺️  Targeting: [resolved file/layer]"
 
-Example:
-  "📚 FitBite Witness | Stage 3 Development | Clean Architecture + MVVM
-   🗺️  Targeting: AuthenticationViewModel → SignInUseCase"
-
-Nếu CODEBASE.md không có:
-  "📚 [ProjectName] — CODEBASE.md chưa có, đang scan cấu trúc..."
-
-Nếu file được nhắc đến KHÔNG có trong CODEBASE.md:
-  → Thực hiện xong, thêm footer: "⚠️ CODEBASE.md có thể outdated — dùng /codebase-sync"
+Nếu file được nhắc KHÔNG có trong CODEBASE.md:
+  → Footer: "⚠️ CODEBASE.md có thể outdated — dùng /codebase-sync"
 ```
 
 ---
 
 ## Step 2: Intent Detection
 
-Sau khi có project context, detect intent từ request:
-
 ```yaml
 debug_intent:
   keywords: ["error", "bug", "crash", "fix", "lỗi", "sửa", "fail", "không chạy"]
-  + image: [screenshot of error/crash]
   action: Execute debug flow với target đã resolve từ Step 1
 
 code_intent:
@@ -145,25 +128,16 @@ image_intent:
 → Không hỏi "file này ở đâu?" — đã biết từ CODEBASE.md
 ```
 
-### Without Project Context
-
-```
-→ Route bình thường theo intent
-→ Suggest workflow phù hợp
-→ Có thể hỏi clarifying question (max 2 lần)
-```
-
 ### Slash Command Detection
 
 ```yaml
-# User gõ /command → Load workflow file trực tiếp
-/plan        → global_workflows/plan.md
-/planExpert  → global_workflows/planExpert.md
-/code        → global_workflows/code.md
-/codeExpert  → global_workflows/codeExpert.md
-/debug       → global_workflows/debug.md
-/debugExpert → global_workflows/debugExpert.md
-/codebase-sync → global_workflows/codebase-sync.md  # MỚI
+/plan        → workflows/lifecycle/plan.md
+/planExpert  → workflows/lifecycle/planExpert.md
+/code        → workflows/lifecycle/code.md
+/codeExpert  → workflows/lifecycle/codeExpert.md
+/debug       → workflows/lifecycle/debug.md
+/debugExpert → workflows/lifecycle/debugExpert.md
+/codebase-sync → workflows/context/codebase-sync.md
 # ...etc (see GEMINI.md)
 ```
 
@@ -176,18 +150,35 @@ Still unclear   → Suggest /help
 
 ---
 
+## Step 4: Self-Evolution Protocol
+
+After each session, if a routing decision was suboptimal or a new intent was discovered:
+
+1. **Record** the finding in the Learnings section below
+2. **Update** routing rules in Step 2 if a new keyword pattern should be added
+3. **Cross-check** skill catalog (`skills/CATALOG.md`) to ensure new skills are routable
+
+> This ensures the orchestrator improves its routing accuracy over time.
+
+## Learnings
+
+_Findings from past sessions are recorded here. Add new entries as bullet points._
+
+- v2.0: Added project brain lookup — significantly reduces unnecessary questions about file locations.
+- v2.1: Added self-evolution pattern — skill now self-improves by recording routing insights.
+- `invocation-type` field added to help distinguish auto vs manual skills in routing decisions.
+
+---
+
 ## Integration
 
 ```yaml
 runs_before: awf-session-restore, memory-sync, all workflows
 provides_to: [project_context, resolved_target, intent]
 receives_from: user_request, active_document
-
-# Khi có CODEBASE.md → memory-sync R2 chỉ cần query với resolved_target
-# thay vì query toàn bộ brain/
 ```
 
 ---
 
-*orchestrator v2.0 — Project-Aware Dispatcher*
+*orchestrator v2.1 — Project-Aware + Self-Evolving Dispatcher*
 *Created by Kien AI*

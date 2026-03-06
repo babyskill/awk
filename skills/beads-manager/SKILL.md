@@ -1,10 +1,12 @@
 ---
 name: beads-manager
 description: Smart Beads task management with Brain integration
+version: 6.6.0
 trigger: always
+invocation-type: auto
 ---
 
-# Beads Manager Skill (v6.5) — Hierarchical Epic Architecture
+# Beads Manager Skill (v6.6) — Hierarchical Epic Architecture
 
 > **Purpose:** Quản lý tasks trong Beads với 3-level hierarchy (Epic → Phase → Subtask),
 > Brain context awareness, và structured JSON output.
@@ -438,3 +440,20 @@ fi
   }
 }
 ```
+
+---
+
+## Self-Evolution Protocol
+
+After each session, if a task management pattern was suboptimal or a new workflow integration was discovered:
+1. Append finding to the Learnings section below
+2. Update gate references or command patterns if needed
+3. Never remove existing learnings — only add or refine
+
+## Learnings
+
+_Findings from past sessions. Add new entries as bullet points._
+
+- `invocation-type: auto` field added to frontmatter for CATALOG.md skill classification.
+- Legacy flat mode fallback still needed — not all projects use epics yet.
+- `bd close --suggest-next` output should be incorporated into next task pick for seamless flow.

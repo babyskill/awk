@@ -5,16 +5,18 @@ description: >-
   Write triggers: decisions, bug fixes, architecture, task completion, file edits.
   Read triggers: session start, debug, new task, errors, similar problems.
   NOTE: Skill này KHÔNG liên quan đến /brainstorm workflow. Chức năng: sync memory storage.
-version: 2.1.0
+version: 2.2.0
 trigger: always
 priority: 3
 formerly: ambient-brain
+invocation-type: auto
 ---
 
 # 💾 Memory Sync Skill
 
 > **Philosophy:** User không nên nhớ để lưu. AI phải tự biết lúc nào cần đọc, lúc nào cần ghi vào memory storage.
 > **Renamed from:** `ambient-brain` → `memory-sync` (v2.0.0) để tránh nhầm lẫn với `/brainstorm` workflow.
+> **v2.2:** Self-Evolution Pattern — tự ghi learnings sau mỗi session.
 
 ---
 
@@ -374,5 +376,21 @@ AI saves silently: brain/decisions/arch-[feature]-[date].md
 
 ---
 
-*memory-sync v2.1.0 — Auto Memory Sync for AWF (Project-Aware, renamed from ambient-brain)*
+## Self-Evolution Protocol
+
+After each session, if a memory trigger pattern was missed or a new write/read pattern was discovered:
+1. Append finding to the Learnings section below
+2. Update trigger patterns or salience scores if needed
+3. Never remove existing learnings — only add or refine
+
+## Learnings
+
+_Findings from past sessions. Add new entries as bullet points._
+
+- `invocation-type: auto` field added to frontmatter for CATALOG.md skill classification.
+- W6 (File Edit Tracking) helps detect when CODEBASE.md needs sync — proactive rather than reactive.
+
+---
+
+*memory-sync v2.2.0 — Auto Memory Sync for AWF (Project-Aware, Self-Evolving)*
 *Created by Kien AI*
