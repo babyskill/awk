@@ -1,36 +1,36 @@
 ---
-description: ➡️ Không biết làm gì tiếp? (v5.0 - Beads + Brain)
+description: ➡️ Không biết làm gì tiếp? (v5.0 - Symphony + Brain)
 ---
 
-# WORKFLOW: /next - The Smart Compass (Beads + Brain Navigator)
+# WORKFLOW: /next - The Smart Compass (Symphony + Brain Navigator)
 
-> **Mục tiêu:** Phân tích context từ Beads (Tasks) và Brain (Plans/Knowledge) để gợi ý bước tiếp theo CHÍNH XÁC.
+> **Mục tiêu:** Phân tích context từ Symphony (Tasks) và Brain (Plans/Knowledge) để gợi ý bước tiếp theo CHÍNH XÁC.
 
 ---
 
 ## Giai đoạn 1: Multi-Source Context Check (Tự động)
 
-### 1.1. Priority 1: Check Beads (Task Tracker)
-```bash
-bd list --status in_progress
+### 1.1. Priority 1: Check Symphony (Task Tracker)
+```
+symphony_available_tasks(filter="my")
 ```
 
 **Case A: Có task đang làm dở**
 ```
-📿 **Beads Context:**
+🎵 **Symphony Context:**
 Task #123: "Implement Login API" (in_progress)
 └─ Started: 2 hours ago
 └─ Blocker: None
 
 ➡️ **Bước tiếp theo:**
 1️⃣ Tiếp tục task này? `/code` (AI sẽ tự load context)
-2️⃣ Xem chi tiết task? `bd show 123`
-3️⃣ Chuyển sang task khác? `bd list`
+2️⃣ Xem chi tiết task? `symphony_workspace_status(task_id)`
+3️⃣ Chuyển sang task khác? `symphony_available_tasks(filter="ready")`
 ```
 
 **Case B: Không có task in_progress**
-```bash
-bd list --status open
+```
+symphony_available_tasks(filter="ready")
 ```
 → Hiển thị danh sách tasks đang chờ (ready to start).
 
@@ -46,7 +46,7 @@ else:
 **Từ Brain lấy được:**
 - Feature đang làm
 - Phase hiện tại
-- Tasks trong phase (so sánh với Beads)
+- Tasks trong phase (so sánh với Symphony)
 
 ### 1.3. Priority 3: Check Git State (Fallback)
 - `git status` → File nào đang thay đổi?
@@ -62,16 +62,16 @@ else:
 
 ➡️ **Bước tiếp theo:**
 1️⃣ Lập kế hoạch: `/plan "Feature Name"`
-   → Sẽ tự động tạo tasks trong Beads
+   → Sẽ tự động tạo tasks trong Symphony
 2️⃣ Brainstorm ý tưởng: `/brainstorm`
 ```
 
 ### 2.2. Scenario: Có Plan nhưng chưa có Task
 ```
-🧭 **Tình trạng:** Có plan tại `plans/260130-login/` nhưng chưa sync Beads.
+🧭 **Tình trạng:** Có plan tại `plans/260130-login/` nhưng chưa sync Symphony.
 
 ➡️ **Bước tiếp theo:**
-1️⃣ Sync plan sang Beads? (Em sẽ tạo tasks tự động)
+1️⃣ Sync plan sang Symphony? (Em sẽ tạo tasks tự động)
 2️⃣ Bắt đầu code luôn? `/code phase-01`
 ```
 
@@ -79,13 +79,13 @@ else:
 ```
 🧭 **Tình trạng:** Có 3 tasks sẵn sàng làm:
 
-📿 **Beads Tasks:**
-#101 Setup Database Schema (P0)
-#102 Create User Model (P1)
-#103 Write API Tests (P2)
+🎵 **Symphony Tasks:**
+#101 Setup Database Schema (P1 - High)
+#102 Create User Model (P2 - Medium)
+#103 Write API Tests (P3 - Low)
 
 ➡️ **Bước tiếp theo:**
-1️⃣ Làm task #101? `/code` (AI sẽ tự chọn P0)
+1️⃣ Làm task #101? `/code` (AI sẽ tự chọn P1)
 2️⃣ Chọn task khác? Gõ số task (vd: "102")
 ```
 
@@ -95,7 +95,7 @@ else:
 
 📊 **Progress:**
 - Brain: Phase 02 - Backend (50%)
-- Beads: Task #123 (in_progress, 2h ago)
+- Symphony: Task #123 (in_progress, 2h ago)
 - Git: 3 files changed
 
 ➡️ **Bước tiếp theo:**
@@ -136,7 +136,7 @@ else:
 
 ➡️ **Gợi ý:**
 1️⃣ Tiếp tục task này? `/code`
-2️⃣ Đóng task (không làm nữa)? `bd update 115 --status cancelled`
+2️⃣ Bỏ task (không làm nữa)? `symphony_abandon_task(task_id, reason)`
 ```
 
 ### 3.3. Knowledge Gap
@@ -152,9 +152,9 @@ else:
 
 ```markdown
 🧭 **ĐANG Ở ĐÂU:**
-[Context từ Beads + Brain + Git]
+[Context từ Symphony + Brain + Git]
 
-📿 **BEADS STATUS:**
+🎵 **SYMPHONY STATUS:**
 - In Progress: X tasks
 - Ready: Y tasks
 - Blocked: Z tasks
@@ -174,11 +174,11 @@ else:
 
 ## 🛡️ Resilience Patterns
 
-### Beads Unavailable
+### Symphony Unavailable
 ```
-if bd_command_fails:
+if symphony_command_fails:
     → Fallback to Brain only
-    → Warning: "Beads không khả dụng. Dùng context từ Brain."
+    → Warning: "Symphony không khả dụng. Dùng context từ Brain."
 ```
 
 ### Brain Empty

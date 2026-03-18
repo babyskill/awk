@@ -2,7 +2,7 @@
 description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 ---
 
-# WORKFLOW: /deploy - The Release Manager (Dual-Mode + Beads)
+# WORKFLOW: /deploy - The Release Manager (Dual-Mode + Symphony)
 
 > **Mode A (Expert):** `/deploy --prod --force` -> Bỏ qua checks, deploy ngay.
 > **Mode B (Guided):** `/deploy` -> Pre-flight Checks -> Config -> Deploy -> Verify.
@@ -23,9 +23,9 @@ description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 2.  **Execute:**
     -   Chạy build script (`npm run build`).
     -   Chạy deploy command (Vercel/Docker/AWS).
-3.  **Beads Sync:**
-    -   Tạo release tag trong Beads: `bd release create v1.0.0`.
-    -   Mark tất cả tasks `in_progress` -> `done` (Optional).
+3.  **Symphony Sync:**
+    -   Complete all in-progress tasks: `symphony_complete_task(task_id, summary)`.
+    -   Report deployment progress.
 4.  **Report:** "✅ Deployed to Production. URL: [Link]"
 
 ---
@@ -35,7 +35,7 @@ description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 ### Phase 1: Pre-Audit & Health Check
 1.  **Blocker Check:**
     -   Check `session.json`: Có test nào đang `skipped` không?
-    -   Check `bd list`: Có task nào `critical` đang mở không?
+    -   Check Symphony: Có task nào `critical` đang mở không?
     -   *If Issue:* ❌ "Khoan! Còn 2 bugs nghiêm trọng chưa fix. Bạn chắc chắn muốn deploy?"
 
 2.  **Environment Check:**
@@ -56,9 +56,9 @@ description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 1.  **Smoke Test:**
     -   AI tự truy cập URL vừa deploy.
     -   Check HTTP 200, check JS errors.
-2.  **Beads Release:**
+2.  **Symphony Release:**
     -   "Tạo Release Note từ các tasks đã làm?"
-    -   Action: `bd release create` kèm danh sách tasks.
+    -   Action: Complete all related tasks in Symphony.
 3.  **Action Menu:**
     ```markdown
     1️⃣ 📢 Thông báo team (Copy release note)
@@ -68,11 +68,11 @@ description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 
 ---
 
-## 🧠 Brain & Beads Logic
+## 🧠 Brain & Symphony Logic
 
 ### 1. Release Tracking
 -   Mỗi lần deploy thành công -> Tạo bản ghi trong `brain/releases/`.
--   Nội dung: Version, Date, Commit Hash, Link tới Beads Release.
+-   Nội dung: Version, Date, Commit Hash.
 
 ### 2. Deployment Knowledge
 -   Lưu các preferences của user (vd: "Luôn dung Vercel", "Luôn skip test ở Staging").
@@ -91,5 +91,5 @@ description: 🚀 Deploy lên Production (Dual-Mode v5.0)
 ```
 1️⃣ Monitor logs (`/logs`)
 2️⃣ Rollback nhanh (`/rollback`)
-3️⃣ Đóng task trong Beads (`/done`)
+3️⃣ Đóng task trong Symphony (`/done`)
 ```

@@ -1,0 +1,243 @@
+
+Agent
+chúng ta có hệ thống reward ads, nhưng khi tạo kế hoạch không có credit thì chưa thấy hiện lựa chọn này, hãy rà soát và brainstorm
+
+
+
+
+
+
+
+
+Analyzed
+Analyzed
+Analyzed
+Analyzed
+
+
+
+
+
+
+
+
+Ran background command
+~/…/FitBite Pro iOS $ symphony preflight --json; cat .project-identity 2>/dev/null; cat CODEBASE.md 2>/dev/null; bd list --status in_progress 2>/dev/null; git status
+<truncated 242 lines>
+│
+├── Features/                     # Feature Modules (Self-contained)
+│   └── Water/                   # Water Intake
+│
+├── Presentation/                # Presentation Layer
+│   ├── ViewModels/             # ViewModels (Categorized by feature)
+│   └── Views/                  # SwiftUI Views (Categorized by feature)
+│       ├── AICare/             # AI Expert chat & wizards (ExpertChat, SleepQualityWizard)
+│       ├── AIPlan/             # AI nutrition planning & meal management
+│       ├── Analysis/           # Food & nutrition analysis results
+│       ├── Authentication/     # Auth gate, Sign-in, Session restoring
+│       ├── Camera/             # Camera views, AI scanner, Food recognition overlay
+│       ├── Dashboard/          # Main dashboard, insights, and widgets
+│       ├── DataExport/         # User data export UI
+│       ├── Health/             # Health metrics (Steps, Weight, Blood Pressure/Glucose, Heart Rate)
+│       ├── HealthReport/       # AI Health summary reports
+│       ├── MedicalRecords/     # Medical records management & storage quota
+│       ├── Medicine/           # Medication scanning & history
+│       ├── Onboarding/         # Complex onboarding flows & intro
+│       ├── Profile/            # Profile, medical profile, quick setup
+│       ├── ProgressivePlan/    # Progressive plan wizard & daily tracking
+│       ├── Social/             # Social networking, following, chat, & widgets
+│       ├── Supervision/        # Supervision & coach/client setup
+│       ├── Sync/               # Data sharing & invitation management
+│       └── ...                 # Navigation, Animations, Haptic, Components
+│
+├── Resources/                   # Resources & Assets
+│   ├── ColorPalette.swift      # Color System
+│   └── TypographySystem.swift  # Typography System
+│
+└── widget/                      # iOS Widgets (Home, Lock Screen, Live Activities)
+    ├── HomeScreen/             # Home screen widgets (Calories, Daily Plan, Water, etc.)
+    ├── LockScreen/             # Lock screen widgets (Emergency, Next Meal, Streak, etc.)
+    └── LiveActivity/           # Live Activities (Meal tracking, Fasting, Medication, etc.)
+```
+
+---
+
+## 🎨 Design System
+
+### Color Palette
+```swift
+Primary: #2196F3 (Blue) - Primary actions, health data
+Secondary: #FF9800 (Orange) - Gamification, energy
+Accent: #4CAF50 (Green) - Success, positive feedback
+Background: #FAFAFA (Off-white) - Screen background
+Surface: #FFFFFF (White) - Card backgrounds
+Error: #F44336 (Red) - Errors, warnings
+```
+
+### Typography
+- **Large Titles**: 34pt, Bold
+- **Headline**: 17pt, Semibold
+- **Body**: 17pt, Regular
+- **Liquid Glass Style**: Modern UI style for cards and overlays.
+
+---
+
+## 🧩 Architecture Layers
+
+### 1. **App Layer** (`App/`)
+**Purpose**: Application entry point and dependency injection.
+**Key Files**: `FitWitnessApp.swift`, `AppStartupController.swift`.
+
+### 2. **Core Layer** (`Core/`)
+
+#### Domain Layer (`Core/Domain/`)
+**Structure**:
+- `Entities/`: `Food`, `MealEntry`, `UserHealthProfile`, `TrackedMedication`, `WeightEntry`, `IntakeLog`.
+- `UseCases/`: `AuthenticationUseCases`, `FoodUseCases`, `MealUseCases`, `SettingsUseCases`.
+- `Repositories/`: Interfaces (Protocols) for data access.
+- `Models/`: Domain-specific models like `SleepEntry`, `SyncModels`.
+
+#### Data Layer (`Core/Data/` & `Core/Repositories/`)
+**Purpose**: Data persistence (GRDB) and API communication.
+**Key Components**: `OfflineSyncEngine`, `SyncQueue`, `SyncMetadataRecord`.
+
+#### Services (`Core/Services/`)
+**Purpose**: External service integrations.
+- `AIResponseService` / `AIMealPlanService`: Gemini AI logic.
+- `AppwriteManager`: Backend communication.
+- `SocialTrackingService`: Social features logic.
+- `PushNotificationManager`: FCM/APNs handling.
+- `AIQuotaManager`: AI usage limits.
+
+---
+
+### 3. **Presentation Layer** (`Presentation/`)
+
+#### ViewModels (`Presentation/ViewModels/`)
+**Key ViewModels**:
+- `DashboardViewModel` & `EnhancedDashboardViewModel`: Core dashboard logic.
+- `ExpertChatViewModel`: AI Expert interaction.
+- `NewMealPlanWizardViewModel`: AI-driven plan creation.
+- `MedicalRecordsViewModel`: File management for medical data.
+- `SocialChatViewModel`: Social interaction & messaging.
+- `ClientStatsViewModel`: Tracking for PT/Social.
+- `ProgressivePlanWizardViewModel`: Multi-step plan wizard.
+- `AuthenticationViewModel`: Auth & session state.
+
+#### Views (`Presentation/Views/`)
+**Key View Groups**:
+- `Dashboard/`: `DashboardView`, `DailyInsightsView`.
+- `AICare/`: `ExpertChatView`, `ExpertInfoView`.
+- `AIPlan/`: `NewMealPlanWizardView` (Wizard), `MealPlanDetailView`.
+- `MedicalRecords/`: `MedicalRecordsListView`, `RecordUploadView`.
+- `Health/`: Metric-specific views (e.g., `HeartRateMeasureView`, `BloodPressureDetailView`).
+- `ProgressivePlan/`: `DailyTrackingView`, `ProgressivePlanDetailView`.
+- `Social/`: `SocialChatView`, `FollowingListView`.
+
+---
+
+## 🔄 Data Flow
+
+### 1. **User Authentication (Native Token Exchange)**
+Native Auth (Apple/Google) → `native-auth-exchange` Cloud Function → Appwrite Session.
+
+### 2. **Offline-First Data Sync**
+UI Action → GRDB (Local DB) → `SyncQueue` → `OfflineSyncEngine` → Appwrite Collections.
+FCM "sync_nudge" triggers background selective pulls.
+
+### 3. **AI Meal Verification & Quota**
+Camera/Image → Gemini Vision → `AIQuotaManager` checks limits → Log Meal.
+
+### 4. **Progressive Plan Generation**
+User Input (Wizard) → `NewMealPlanWizardViewModel` → AI Analysis → `ProgressivePlan` stored locally & synced.
+
+---
+
+## 🎯 Key Features
+
+### 1. **AI Expert Care (`AICare`)**
+- Interactive chat with AI nutritionists and doctors.
+- Specialized wizards for sleep quality, body trends, and nutrition.
+
+### 2. **Medical Records Management**
+- Secure upload and storage of medical documents.
+- Storage quota tracking and record categorization.
+
+### 3. **Progressive Meal Planning**
+- AI-generated personalized dietary plans.
+- Daily tracking of tasks and meals with progress visualization.
+
+### 4. **Advanced Health Metrics**
+- PPG-based heart rate measurement via camera.
+- Tracking for Blood Pressure, Blood Glucose, Weight, Sleep, and Steps.
+- AI Health Summary Reports.
+
+### 5. **Comprehensive Widget System**
+- **Home Screen**: Quick glance at calories, plan, water, and meds.
+- **Lock Screen**: Emergency info, next meal, and streak fire.
+- **Live Activities**: Real-time tracking for fasting, meals, and medication.
+
+### 6. **Social & Supervision**
+- PT/Coach mode for client tracking.
+- Social messaging and following system.
+
+---
+
+## 📂 Recent Updates (March 2026)
+- **Enhanced Dashboard**: Improved insights and AI-driven recommendations.
+- **Medical Profile Refactoring**: New wizard-based approach for collecting medical data.
+- **Performance Monitoring**: Integrated system for tracking app performance and haptics.
+- **Liquid Glass UI**: Adoption of a consistent modern glassmorphism design system.
+
+---
+
+**Last Updated**: 2026-03-14
+**Sync Status**: ✅ Up to date with latest file structure.
+**Project Stage**: Stage 3 - Development (Advanced Features)
+**Architecture**: Clean Architecture + MVVM + Local-First Sync
+On branch feature/icloud-sync-appwrite-optimize
+Your branch is up to date with 'main/feature/icloud-sync-appwrite-optimize'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   FitWitness/Core/Billing/RevenueCatManager.swift
+        modified:   FitWitness/Presentation/Views/Dashboard/Components/AIInsightsWidget.swift
+        modified:   FitWitness/Presentation/Views/Onboarding/Steps/OnboardAnalysisResultsView.swift
+        modified:   log.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        FitBite Pro 2026-03-16 11-49-01/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Exit code 0
+MCP Tool:
+neural-memory / nmem_context
+Ran with these arguments:
+json
+{
+  "limit": 10
+}
+Output
+json
+{
+  "context": "- Session: Social Profile Redesign — Initialize project context and research existing designs. (10%)\n- Session: Widget Refactoring — CREATE_THEME_AND_REFACTOR_SMALL (10%)\n- Symphony CLI fix for NODE_MODULE_VERSION mismatch: MUST kill server first (lsof -ti :3100 | xargs kill -9), THEN npm rebuild better-sqlite3, THEN npm run dev &. Running rebuild while server is still running will crash the server.\n- Winkdev build order (UI-First): 1-Foundation+Nav, 2-Home/Feed, 3-Profile+Social, 4-Settings, 5-Search, 6-VIP/Billing, 7-Auth, 8-Courses, 9-Post/Share, 10-Media Album, 11-Video Editor (native bridge), 12-AI Features, 13-Formula/Templates, 14-SDK Integration, 15-Final Parity. Est. 30-45 days total.\n- Winkdev API domains: api-wink.meitumv.com (main), vesdk.meitu.com (video SDK), api-voice.meitu.com (TTS), api.data.meitu.com (data), account.meitu.com (auth), music-material.meitudata.com (CDN). All have pre/beta variants. Ad stack: AppLovin MAX + AdMob + Meitu exchange. Social: WeChat, QQ, Weibo, TikTok, XiaoHongShu, Facebook. Push: GeTui + FCM.\n- Fixed FilmCam onboarding translations. Added 8 languages (ja, ko, th, in, zh-rCN, zh-rTW, es, fr) to assets/onboarding_config.json because OnboardingConfigLoader fell back to 'en' when missing.\n- [ZeroTeamDev/FitBite-Pro] Bypassed the \"Add Food\" popup dialog in CalorieDashboardView and CaloriesDetailView so that tapping \"Scan Meal\" or the add FAB directly opens the camera scanner (.food mode).\n- [ZeroTeamDev/FitBite-Pro] Hid daily tips (Mẹo hay mỗi ngày) and AI Insights in CalorieDashboardView and CaloriesDetailView to prevent JSON decoding crashes from AIInsightsViewModel.generateNewTips().\n- session_fingerprint:8bed90ed93b9384362daf6b795bf3634\n- session_fingerprint:d70db789284d8b415724cdca11698438",
+  "count": 10,
+  "tokens_used": 259
+}
+
+
+
+
+
+
+
+
+Investigate AI Plan Creation Missing Reward Ads Option
+Found the progressive plan wizard view model. Drafting the implementation plan to integrate rewarded ads button when out of quota.
+
+Files Edited
+Progress Updates
+1
+Setting up task board and searching for the Plan Creation paywall pop-up

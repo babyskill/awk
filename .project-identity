@@ -1,6 +1,8 @@
 {
-  "projectName": "AWF - Antigravity Workflow Framework",
+  "projectName": "AWKit - Antigravity Workflow Kit",
+  "projectId": "awkit",
   "projectType": "library",
+  "icon": "⚡",
   "primaryLanguage": "en",
   "techStack": {
     "runtime": ["Node.js 18+"],
@@ -16,6 +18,25 @@
     "Distribute via npm for easy install and update",
     "Maintain zero-context-loss philosophy"
   ],
+  "developmentFlow": {
+    "sourceOfTruth": "/Users/trungkientn/Dev/NodeJS/main-awf",
+    "runtimeTarget": "~/.gemini/antigravity",
+    "editPriority": "ALWAYS edit in main-awf FIRST, then sync to ~/.gemini/antigravity via `awkit install`",
+    "syncCommands": {
+      "deploy": "awkit install — deploys main-awf → ~/.gemini/antigravity",
+      "harvest": "awkit harvest — pulls changes from ~/.gemini/antigravity → main-awf",
+      "fullSync": "awkit sync — harvest + install (bidirectional)",
+      "status": "awkit status — show diff between main-awf and ~/.gemini/antigravity",
+      "doctor": "awkit doctor — health check"
+    },
+    "rules": [
+      "NEVER edit files directly in ~/.gemini/antigravity/ when main-awf workspace is active",
+      "All changes to GEMINI.md, skills/, workflows/, templates/ MUST be made in main-awf/ first",
+      "After editing in main-awf, run `awkit install` to deploy to runtime",
+      "If changes were made in ~/.gemini/antigravity/ by another session, run `awkit harvest` first to pull them back",
+      "Use `awkit status` to check if main-awf and ~/.gemini/antigravity are in sync"
+    ]
+  },
   "codingStandards": {
     "language": "en",
     "namingConvention": "kebab-case",
@@ -24,5 +45,5 @@
   },
   "documentationLanguage": "en",
   "createdDate": "2026-02-22",
-  "lastUpdated": "2026-02-22"
+  "lastUpdated": "2026-03-10"
 }

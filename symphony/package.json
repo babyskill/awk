@@ -1,0 +1,53 @@
+{
+  "name": "awkit-symphony",
+  "version": "0.1.0",
+  "description": "Multi-Agent Orchestration for AI Coding Assistants — task management, git isolation, file locking, and real-time dashboard",
+  "keywords": [
+    "ai",
+    "multi-agent",
+    "orchestration",
+    "mcp",
+    "git",
+    "worktree",
+    "dashboard",
+    "coding-assistant"
+  ],
+  "license": "MIT",
+  "main": "core/orchestrator.js",
+  "bin": {
+    "symphony": "./cli/index.js"
+  },
+  "files": [
+    "core/",
+    "cli/",
+    "mcp/",
+    "lib/",
+    "app/",
+    "scripts/",
+    "symphony.config.js",
+    "next.config.mjs",
+    "jsconfig.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "postinstall": "node scripts/postinstall.js",
+    "cli": "node cli/index.js",
+    "mcp": "node mcp/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "better-sqlite3": "^12.6.2",
+    "commander": "^14.0.3",
+    "nanoid": "^3.3.11",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
+  }
+}

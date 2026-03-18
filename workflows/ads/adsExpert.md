@@ -49,23 +49,23 @@ AI tự động check các rules sau:
 
 **Without `--auto-fix`:**
 - Tổng hợp lỗi vào Report.
-- Tạo Beads Tasks cho các lỗi R1, R2.
+- Tạo Symphony Tasks cho các lỗi R1, R2.
 
 **With `--auto-fix`:**
 - **R1 (Wasted Spend):** Auto-pause Keyword/Ad Group.
-- **R2, R3, R4:** Tạo Beads Task.
+- **R2, R3, R4:** Tạo Symphony Task.
 
-### 4. Beads Integration
+### 4. Symphony Integration
 
 ```bash
 # R1: Wasted Spend -> Critical Task
-bd create "Pause Waste: [Keyword] ($$ Spend, 0 Conv)" --label ads-waste --priority 0
+symphony_create_task(title="Pause Waste: [Keyword] ($$ Spend, 0 Conv)", priority=1)
 
 # R2: High CPA -> Investigation Task
-bd create "Investigate High CPA: [Campaign] (CPA: $$)" --label ads-optimize --priority 1
+symphony_create_task(title="Investigate High CPA: [Campaign] (CPA: $$)", priority=1)
 
 # R5: Good Mover -> Scale Task
-bd create "Scale Up: [Campaign] (ROAS: 2.5)" --label ads-scale --priority 1
+symphony_create_task(title="Scale Up: [Campaign] (ROAS: 2.5)", priority=1)
 ```
 
 ### 5. Report Generation
@@ -83,7 +83,7 @@ Tạo file: `reports/ads/[date]_expert_audit.md`
 ## 🚨 Actions Taken (Auto-Fix)
 - Paused Keyword: "free download" (Spent 200k, 0 conv)
 
-## 📿 Beads Tasks Created
+## 📿 Symphony Tasks Created
 1. [P0] Pause Waste: "cheat codes" (Spent 150k, 0 conv) #123
 2. [P1] Investigate High CPA: "Competitor Campaign" #124
 3. [P1] Scale Up: "Brand Campaign" #125

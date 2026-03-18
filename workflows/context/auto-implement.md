@@ -23,10 +23,10 @@ FEATURE=$1  # Pass feature name as argument
 Đọc và parse:
 1. `requirements.md` → Hiểu WHAT & WHY
 2. `design.md` → Hiểu HOW (architecture, models, UI)
-3. `bd list` → Hiểu execution plan (list tasks in JSON format for parsing)
+3. `symphony_available_tasks()` → Hiểu execution plan (list tasks in JSON format for parsing)
 
 ### 0.3. Parse Tasks
-Retrieve tasks using `bd list --json`:
+Retrieve tasks using Symphony:
 - Extract task ID
 - Extract description and body
 - Extract requirements from body tags
@@ -45,7 +45,7 @@ FOR each task WHERE status = "[ ]":
   4. GENERATE code
   5. WRITE to specified file
   6. VERIFY (syntax check)
-  7. MARK task as complete: `bd close [id]`
+  7. MARK task as complete: `symphony_complete_task(task_id)`
   8. REPORT progress
 END FOR
 ```
@@ -113,7 +113,7 @@ Mọi code phải tuân thủ:
 ### 3.1. Update Status
 Sau mỗi task hoàn thành:
 ```bash
-bd close [id]
+symphony_complete_task(task_id)
 ```
 
 ### 3.2. Progress Report

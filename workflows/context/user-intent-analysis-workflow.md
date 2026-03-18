@@ -7,16 +7,16 @@ alwaysApply: true
 
 ## Nguyên Tắc Cốt Lõi
 
-- **_BẮT BUỘC_** kiểm tra Beads task trước khi phân tích bất kỳ yêu cầu coding nào
+- **_BẮT BUỘC_** kiểm tra Symphony task trước khi phân tích bất kỳ yêu cầu coding nào
 - **_BẮT BUỘC_** phân tích và suy luận ý định thực sự của người dùng
 - **_BẮT BUỘC_** đề xuất giải pháp tối ưu thay vì chỉ làm theo nghĩa đen
-- **_NGHIÊM CẤM_** bỏ qua Beads check kể cả khi user nói “nhanh lên”, “làm luôn”
+- **_NGHIÊM CẤM_** bỏ qua Symphony check kể cả khi user nói “nhanh lên”, “làm luôn”
 
-## ⛔ Pre-Analysis Beads Gate (LUÔN LUÔN CHẠY TRƯỚC)
+## ⛔ Pre-Analysis Symphony Gate (LUÔN LUÔN CHẠY TRƯỚC)
 
 ```bash
 # Trước khi phân tích bất kỳ yêu cầu coding/debug/plan:
-bd list --status in_progress
+symphony_available_tasks(filter="my")
 
 # Nếu có task → Confirm: “Đây có liên quan đến Task #X không?”
 # Nếu không có → Tạo task mới sau khi confirm với user

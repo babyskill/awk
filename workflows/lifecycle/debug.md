@@ -2,7 +2,7 @@
 description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 ---
 
-# WORKFLOW: /debug - The Sherlock Holmes (Dual-Mode + Beads)
+# WORKFLOW: /debug - The Sherlock Holmes (Dual-Mode + Symphony)
 
 > **Mode A (Expert):** `/debug --auto-fix` -> Tự động phân tích và sửa lỗi.
 > **Mode B (Guided):** `/debug` -> Hướng dẫn thu thập thông tin -> Phân tích -> Menu sửa.
@@ -27,8 +27,8 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 3.  **Auto-Fix (Safe Only):**
     -   Lỗi *Safe-to-fix*: Missing import, typo, undefined check -> Sửa ngay.
     -   Lỗi *Logic*: Báo cáo và đề xuất (không tự ý sửa).
-4.  **Beads Sync:**
-    -   Nếu lỗi Critical và không thể auto-fix -> `bd create "Fix Critical Bug in Cart.tsx" --label bug`.
+4.  **Symphony Sync:**
+    -   Nếu lỗi Critical và không thể auto-fix -> `symphony_create_task(title="Fix Critical Bug in Cart.tsx")`.
 5.  **Report:** "✅ Fixed 1 issue. ⚠️ Created task #456 for manual review."
 
 ---
@@ -74,7 +74,7 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 2.  **Fix Options:**
     ```markdown
     1️⃣ 🔧 Em sửa ngay (Auto-fix)
-    2️⃣ 📿 Tạo task Beads để sửa sau
+    2️⃣ 📿 Tạo task Symphony để sửa sau
     3️⃣ 📝 Hướng dẫn anh tự sửa
     4️⃣ 🔍 Điều tra sâu hơn
     ```
@@ -86,11 +86,11 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 
 ---
 
-## 🧠 Brain & Beads Logic
+## 🧠 Brain & Symphony Logic
 
 ### 1. Bug Tracking
 -   Mọi lỗi được phát hiện -> Ghi vào `brain/bugs/[date]_[issue].md`.
--   Nếu lỗi Critical -> Auto-create Beads task với tag `bug` và `high-priority`.
+-   Nếu lỗi Critical -> Auto-create Symphony task với tag `bug` và `high-priority`.
 
 ### 2. Knowledge Base
 -   Lỗi đã fix -> Lưu vào `brain/solutions/` để tham khảo sau.
@@ -104,7 +104,7 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 ## 🛡️ Resilience Patterns
 
 -   **False Fix Detection:** Sau khi sửa, tự động chạy test. Nếu fail -> Rollback ngay.
--   **Unknown Error:** Nếu không tìm ra nguyên nhân sau 3 lần -> Tạo task Beads "Investigate Unknown Error" và gợi ý user tìm expert.
+-   **Unknown Error:** Nếu không tìm ra nguyên nhân sau 3 lần -> Tạo task Symphony "Investigate Unknown Error" và gợi ý user tìm expert.
 
 ---
 

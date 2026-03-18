@@ -58,15 +58,15 @@ description: 🐞 Sửa lỗi tự động (Expert Mode)
 - ✅ Linting issues
 
 **Need-Review:**
-- ⚠️ Logic errors → Create Beads task
-- ⚠️ Security issues → Create Beads task + Alert
-- ⚠️ Performance issues → Create Beads task
+- ⚠️ Logic errors → Create Symphony task
+- ⚠️ Security issues → Create Symphony task + Alert
+- ⚠️ Performance issues → Create Symphony task
 
 ### 4. Verify Fix
 
 - Chạy lại test/linter
 - Nếu pass → Done
-- Nếu fail → Rollback + Create Beads task
+- Nếu fail → Rollback + Create Symphony task
 
 ### 5. Report
 
@@ -81,7 +81,7 @@ Added null check before mapping products array
 
 ✅ **Verification:** Tests passed
 
-📿 **Beads:** No new tasks (auto-fixed)
+🎵 **Symphony:** No new tasks (auto-fixed)
 
 ➡️ **Next:** /codeExpert (Continue coding)
 ```
@@ -105,15 +105,15 @@ AI sẽ tự động quyết định:
 ```
 ⚠️ Cannot auto-fix: Complex logic error
 
-📿 Created task: #789 "Fix logic error in calculateTotal()"
+🎵 Created task: "Fix logic error in calculateTotal()"
 
 📋 **Analysis:**
 - Issue: Calculation returns negative value
 - Root cause: Missing validation for discount > price
 - Suggested fix: Add validation before calculation
 
-➡️ **Next:** 
-1. Fix manually: Open task #789
+➡️ **Next:**
+1. Fix manually: Open task in Symphony
 2. Get help: /debug (Guided Mode)
 ```
 
@@ -122,15 +122,15 @@ AI sẽ tự động quyết định:
 ⚠️ Found 5 errors
 
 ✅ Auto-fixed: 3 errors
-📿 Created tasks: 2 errors (#790, #791)
+🎵 Created Symphony tasks: 2 errors
 
-➡️ **Next:** bd list --label bug
+➡️ **Next:** symphony_available_tasks(filter="ready")
 ```
 
 ---
 
 ## Integration
 
-- **Beads:** Auto-create tasks for complex bugs
+- **Symphony:** Auto-create tasks for complex bugs
 - **Brain:** Save bug patterns to `brain/bugs/`
 - **Git:** Auto-commit fixes with message "fix: [description]"

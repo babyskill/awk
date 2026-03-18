@@ -83,17 +83,29 @@ for each missing_file:
 
 ## Phase 3: Update CODEBASE.md
 
+> [!IMPORTANT]
+> CODEBASE.md dùng **compact format** — AI đọc nhanh, tốn ít context.
+> KHÔNG dùng format verbose (multi-line per file).
+
 ```yaml
 MO:
   - APPEND vào đúng section, không xóa gì cũ
   - Update "Last Updated" timestamp
   - Nếu thêm feature mới → thêm section mới
 
-Format mỗi entry thêm vào:
-  #### [FileName.swift]
-  **Layer:** [Layer name]
-  **Purpose:** [Description]
-  **Key class/struct:** `ClassName`
+Compact Format (BẮT BUỘC):
+  Mỗi file = 1 dòng trong table:
+  | `path/to/File.swift` | Purpose mô tả ngắn (1 câu) |
+
+  Ví dụ:
+  | `Core/Services/PushNotificationService.swift` | FCM push notification registration & handling |
+  | `Features/WeeklyGoal/ViewModels/WeeklyGoalVM.swift` | Weekly goal progress tracking logic |
+
+  ❌ KHÔNG dùng format cũ:
+    #### FileName.swift
+    **Layer:** ...
+    **Purpose:** ...
+    **Key class:** ...
 
 Footer update:
   **Last Updated**: [current date]
@@ -103,9 +115,8 @@ Footer update:
 **Preview trước khi apply:**
 ```
 📝 Sẽ thêm [K] entries vào CODEBASE.md:
-  + Core/Services/PushNotificationService.swift → Services Layer
-  + Features/WeeklyGoal/ViewModels/WeeklyGoalViewModel.swift → Features
-  + Presentation/Views/Dashboard/CombinedDashboardHeader.swift → Views
+  + Core/Services/PushNotificationService.swift → FCM push notification
+  + Features/WeeklyGoal/ViewModels/WeeklyGoalVM.swift → Weekly goal logic
 
 Apply? [auto-yes nếu < 10 entries / confirm nếu lớn hơn]
 ```

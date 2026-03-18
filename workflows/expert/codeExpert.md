@@ -18,42 +18,39 @@ description: 💻 Code ngay lập tức (Expert Mode)
 ```bash
 /codeExpert phase-01           # Code toàn bộ phase 01
 /codeExpert "Login API"        # Code task cụ thể
-/codeExpert                    # Code task tiếp theo (auto-detect từ Beads)
+/codeExpert                    # Code task tiếp theo (auto-detect từ Symphony)
 ```
 
 ---
 
 ## Execution Flow
 
-### 1. Context Detection — `smart_pick()` (v6.5)
+### 1. Context Detection — `smart_pick()`
 
-**Priority 1: Active Epic (Hierarchical)**
-```bash
-# Read epic from brain
-EPIC_ID=$(cat brain/active_plans.json | jq -r '.current.epic_id // empty')
+**Priority 1: Active Tasks (Symphony)**
+```
+# Read task mapping from brain
+TASK_MAPPING = read brain/active_plans.json
 
-if [ -n "$EPIC_ID" ]; then
-  # Check in-progress first
-  bd list --status in_progress --parent $EPIC_ID --json
-  # If none → Get ready (unblocked) tasks
-  bd ready --parent $EPIC_ID --json --limit 5
-  # Auto-claim first ready task
-  bd update <id> --claim
-fi
+# Check in-progress first
+symphony_available_tasks(filter="my")
+# If none → Get ready tasks
+symphony_available_tasks(filter="ready")
+# Auto-claim first ready task
+symphony_claim_task(task_id)
 ```
 
 **Priority 2: Argument**
 - Nếu có `phase-XX` → Load phase file
 - Nếu có task name → Search trong plan
 
-**Priority 3: Legacy Flat (no epic)**
-```bash
-bd list --status in_progress
-bd ready --limit 5
+**Priority 3: Fallback**
+```
+symphony_available_tasks(filter="ready")
 ```
 
 ### 2. Load Spec/Plan
-- Đọc acceptance criteria từ task metadata (`bd show <id> --json`)
+- Đọc acceptance criteria từ Symphony task
 - Đọc spec từ `docs/specs/` hoặc phase file
 
 ### 3. Execute (Zero Questions)
@@ -67,15 +64,15 @@ bd ready --limit 5
 ### 4. Auto-Test
 - Chạy test liên quan (nếu có)
 - Fix lỗi tự động (max 3 lần)
-- Nếu fail sau 3 lần → Tạo Beads task "Fix test for [Feature]"
+- Nếu fail sau 3 lần → Tạo Symphony task "Fix test for [Feature]"
 
-### 5. Update Beads — `cascade_complete()` (v6.5)
-```bash
-# Close task with reason + suggest next
-bd close <task-id> --reason "Completed" --suggest-next
+### 5. Update Symphony — `complete_task()`
+```
+# Complete task with summary
+symphony_complete_task(task_id, summary="Completed", files_changed=[...])
 
-# Auto-close parent phase/epic if all children done
-bd epic close-eligible
+# Report progress if partially done
+symphony_report_progress(task_id, progress=100)
 ```
 
 ### 6. Report
@@ -89,7 +86,7 @@ bd epic close-eligible
 
 ✅ **Tests:** 5/5 passed
 
-📿 **Beads:** Task #123 → Done
+🎵 **Symphony:** Task #123 → Done
 
 ➡️ **Next:** /codeExpert (Auto-pick next task)
 ```
@@ -117,14 +114,14 @@ AI sẽ tự động quyết định:
 Suggestions:
 1. Create plan first: /planExpert "Feature"
 2. Specify target: /codeExpert "Task Name"
-3. Check Beads: bd list
+3. Check Symphony: symphony_available_tasks()
 ```
 
 ### Test Fail (After 3 Retries)
 ```
 ⚠️ Auto-fix failed after 3 attempts
 
-📿 Created task: #456 "Fix test for Login API"
+🎵 Created task: "Fix test for Login API"
 
 Options:
 1. Debug manually: /debugExpert
@@ -136,6 +133,6 @@ Options:
 
 ## Integration
 
-- **Beads:** Auto-update task status
+- **Symphony:** Auto-update task status via `symphony_complete_task()`
 - **Brain:** Auto-save code patterns to knowledge base
 - **Git:** Auto-stage changes (optional)

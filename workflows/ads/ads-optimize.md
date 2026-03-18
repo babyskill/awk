@@ -37,21 +37,21 @@ User chọn mục tiêu:
 
 ### Phase 3: Action Execution
 - AI thực hiện thay đổi thông qua MCP (nếu tool hỗ trợ write).
-- Nếu MCP chưa hỗ trợ write (an toàn): -> **Tạo Beads Task hướng dẫn chi tiết.**
+- Nếu MCP chưa hỗ trợ write (an toàn): -> **Tạo Symphony Task hướng dẫn chi tiết.**
 
-### Phase 4: Beads Integration (Task Generation)
+### Phase 4: Symphony Integration (Task Generation)
 
-**Tạo Action Plan trong Beads:**
+**Tạo Action Plan trong Symphony:**
 
-```bash
+```
 # Example: Cut Waste Plan
-bd create "Ads Optimization: Cut Waste [Date]" --priority 1
-bd create "Add 5 Negative Keywords" --parent [ParentID] --note "burn, hack, free,..."
-bd create "Exclude 10 Mobile App Placements" --parent [ParentID]
+symphony_create_task(title="Ads Optimization: Cut Waste [Date]", priority=1)
+symphony_create_task(title="Add 5 Negative Keywords", description="burn, hack, free,...")
+symphony_create_task(title="Exclude 10 Mobile App Placements")
 
 # Example: Scale Plan
-bd create "Ads Optimization: Scale Up [Date]" --priority 0
-bd create "Increase Budget: Campaign A (+20%)" --parent [ParentID]
+symphony_create_task(title="Ads Optimization: Scale Up [Date]", priority=2)
+symphony_create_task(title="Increase Budget: Campaign A (+20%)")
 ```
 
 ---
@@ -92,6 +92,6 @@ Sau khi hoàn thành workflow, AI **PHẢI** ghi log vào file `brain/ads_histor
 
 ## ⚠️ NEXT STEPS:
 ```
-1️⃣ Xác nhận task trong Beads (`/todo`)
+1️⃣ Xác nhận task trong Symphony (`/todo`)
 2️⃣ Kiểm tra lại Audit (`/ads-audit`)
 ```

@@ -7,7 +7,7 @@ const MAIN_AWF_DIR = path.join(__dirname, '..');
 
 // Nguồn v4 (Chi tiết, Persona, Auto-test loop)
 const AWF_V4_DIR = path.join(HOME, 'Dev', 'NodeJS', 'awf');
-// Nguồn v5 (Beads, Brain, Fast execution)
+// Nguồn v5 (Symphony, Brain, Fast execution)
 const ANTIGRAVITY_V5_DIR = path.join(HOME, '.gemini', 'antigravity');
 
 function ensureDir(dir) {
@@ -110,7 +110,7 @@ async function run() {
         'adaptive-language',
         'error-translator',
         'context-help',
-        'beads-manager'
+        'symphony-orchestrator'
     ];
     for (const skill of coreSkills) {
         copySkill(skill, skill);

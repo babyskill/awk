@@ -42,34 +42,20 @@ description: 📝 Thiết kế tính năng (Expert Mode - Zero Questions)
   - Medium: 6 phases (+ Database + Integration)
   - Complex: 8+ phases (+ Auth + Deploy + Monitoring)
 
-### 4. Sync to Beads (Hierarchical — v6.5)
-```bash
-# Step 1: Create epic (1 per plan)
-EPIC_ID=$(bd create "<Feature Name>" -t epic -p 1 \
-  --description "<feature summary>" \
-  --acceptance "<high-level acceptance>" \
-  --design "<architecture approach>" \
-  --json | jq -r '.id')
+### 4. Sync to Symphony
+```
+# Step 1: Create root task (1 per plan)
+symphony_create_task(title="<Feature Name>", priority=1, description="<feature summary>")
 
-# Step 2: Create phase tasks as children of epic
+# Step 2: Create phase tasks
 for each phase:
-  PHASE_ID=$(bd create "Phase X: [Name]" \
-    --parent $EPIC_ID -p 1 \
-    --description "<phase summary>" \
-    --json | jq -r '.id')
+  symphony_create_task(title="Phase X: [Name]", description="<phase summary>")
 
-  # Step 3: Create subtasks as children of phase
-  for each task in phase:
-    bd create "[Task Name]" \
-      --parent $PHASE_ID -p 2 \
-      --acceptance "<definition of done>" \
-      --json
+# Step 3: Create subtasks for each phase
+for each task in phase:
+  symphony_create_task(title="[Task Name]", acceptance="<definition of done>")
 
-# Step 4: Set inter-phase dependencies
-bd dep add $PHASE2_ID $PHASE1_ID  # Sequential phases
-
-# Step 5: Save to brain/active_plans.json
-# → { "current": { "epic_id": $EPIC_ID, "feature": "...", "phases": [...] } }
+# Step 4: Save to brain/active_plans.json
 ```
 
 ### 5. Report
@@ -80,15 +66,14 @@ bd dep add $PHASE2_ID $PHASE1_ID  # Sequential phases
 📋 Spec: docs/specs/shopping-cart_spec.md
 
 📊 **Structure:**
-- 🏔️ 1 Epic
-- 📦 6 Phases (sequential dependencies)
+- 🏔️ 1 Root Task
+- 📦 6 Phases (sequential)
 - 📝 42 Subtasks (with acceptance criteria)
 - Estimated: 3-4 sessions
 
-📿 **Beads (Hierarchical):**
-- Epic: bd-xxxx
-- Tree: bd list --parent bd-xxxx --tree
-- Ready: bd ready --parent bd-xxxx
+🎵 **Symphony:**
+- Tasks: symphony_available_tasks()
+- Status: symphony_status()
 
 ➡️ **Next:** /codeExpert (auto-picks first ready subtask)
 ```
@@ -129,7 +114,7 @@ Options:
 
 ## Integration
 
-- **Brain:** Auto-save epic mapping to `brain/active_plans.json` (with epic_id + phase IDs)
-- **Beads:** Auto-create epic → phase → subtask hierarchy with dependencies
-- **Skill:** Uses `plan_to_beads()` from `beads-manager` skill v6.5
+- **Brain:** Auto-save task mapping to `brain/active_plans.json`
+- **Symphony:** Auto-create task hierarchy via `symphony_create_task()`
+- **Skill:** Uses `symphony-orchestrator` skill
 - **Git:** Auto-commit plan files (optional)

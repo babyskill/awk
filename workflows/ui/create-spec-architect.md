@@ -123,7 +123,7 @@ enum ViewState {
 - **Animations:** [Duration, Easing]
 ```
 
-### 3.4. Task Generation (bd commands)
+### 3.4. Task Generation (Symphony)
  
 **Script:** `docs/specs/[feature]/init_tasks.sh`
  
@@ -131,23 +131,23 @@ enum ViewState {
 #!/bin/bash
  
 # Phase A: Foundation
-bd create "Implement [Feature] - A1: Models" --body "File: Domain/Models/[Feature].swift\nValidates: RQ-01"
-bd create "Implement [Feature] - A2: Repository" --body "File: Data/Repositories/[Feature]Repository.swift\nValidates: RQ-01, RQ-02"
+symphony_create_task(title= "Implement [Feature] - A1: Models" --body "File: Domain/Models/[Feature].swift\nValidates: RQ-01"
+symphony_create_task(title= "Implement [Feature] - A2: Repository" --body "File: Data/Repositories/[Feature]Repository.swift\nValidates: RQ-01, RQ-02"
  
 # Phase B: UI
-bd create "Implement [Feature] - B1: Main View" --body "File: Presentation/[Feature]/[Feature]View.swift\nValidates: RQ-01"
-bd create "Implement [Feature] - B2: Components" --body "File: Presentation/[Feature]/Components/\nValidates: RQ-01"
+symphony_create_task(title= "Implement [Feature] - B1: Main View" --body "File: Presentation/[Feature]/[Feature]View.swift\nValidates: RQ-01"
+symphony_create_task(title= "Implement [Feature] - B2: Components" --body "File: Presentation/[Feature]/Components/\nValidates: RQ-01"
  
 # Phase C: Logic
-bd create "Implement [Feature] - C1: ViewModel" --body "File: Presentation/[Feature]/[Feature]ViewModel.swift\nValidates: RQ-01, RQ-02"
+symphony_create_task(title= "Implement [Feature] - C1: ViewModel" --body "File: Presentation/[Feature]/[Feature]ViewModel.swift\nValidates: RQ-01, RQ-02"
  
 # Phase D: Polish
-bd create "Implement [Feature] - D1: Localization" --body "Type: i18n"
-bd create "Implement [Feature] - D2: Accessibility" --body "Type: a11y"
+symphony_create_task(title= "Implement [Feature] - D1: Localization" --body "Type: i18n"
+symphony_create_task(title= "Implement [Feature] - D2: Accessibility" --body "Type: a11y"
  
 # Phase E: Verify
-bd create "Implement [Feature] - E1: Unit Tests" --body "Type: test"
-bd create "Implement [Feature] - E2: Final Review" --body "Type: checkpoint"
+symphony_create_task(title= "Implement [Feature] - E1: Unit Tests" --body "Type: test"
+symphony_create_task(title= "Implement [Feature] - E2: Final Review" --body "Type: checkpoint"
 ```
 
 ---
@@ -160,7 +160,7 @@ Sau khi tạo xong, trình bày:
 📁 Created: docs/specs/[feature]/
 ├── requirements.md (X requirements, Y criteria)
 ├── design.md (Component hierarchy, Models, UI specs)
-└── init_tasks.sh (Script to create bd tasks)
+└── init_tasks.sh (Script to create Symphony tasks)
 
 Ready for implementation with /auto-implement
 ```

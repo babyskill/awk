@@ -1,6 +1,6 @@
 # AWKit — Antigravity Workflow Kit v1.0
 
-> **v1.0.0** · Single Source of Truth · Beads-First · Ambient Memory
+> **v1.0.0** · Single Source of Truth · Symphony-First · Ambient Memory
 
 AWKit là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy nhất** chứa toàn bộ workflows, skills, GEMINI.md và cấu hình — không còn phân tán giữa nhiều repo.
 
@@ -77,7 +77,7 @@ main-awf/ (AWKit v7.0 — Source of Truth)
 │   ├── orchestrator/
 │   ├── memory-sync/
 │   ├── brainstorm-agent/
-│   ├── beads-manager/
+│   ├── symphony-orchestrator/
 │   ├── awf-session-restore/
 │   └── ...
 ├── skill-packs/                ← Optional add-ons
@@ -127,7 +127,7 @@ awkit enable-pack ios-dev
 | Version | Name | Notes |
 |---------|------|-------|
 | 4.x | AWF v4 | Shell-based, `awf-` prefix skills |
-| 5.x | Antigravity v5 | Node.js, Beads integration |
+| 5.x | Antigravity v5 | Node.js, Symphony integration |
 | 6.x | AWF v6 | main-awf, multiple sources |
 | **1.0** | **AWKit v1.0** | **Single source of truth, this repo** |
 

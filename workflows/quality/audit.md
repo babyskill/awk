@@ -185,7 +185,7 @@ fi
 ```markdown
 1️⃣ Xem chi tiết vấn đề (scroll up)
 2️⃣ Sửa ngay (`/code`)
-3️⃣ Tạo task để sửa sau (`bd create "Fix warnings"`)
+3️⃣ Tạo task để sửa sau (`symphony_create_task(title="Fix warnings")`)
 4️⃣ Bỏ qua và commit (KHÔNG khuyến khích)
 ```
 

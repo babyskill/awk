@@ -16,6 +16,8 @@
  *   awkit enable-pack    Enable a skill pack
  *   awkit disable-pack   Disable a skill pack
  *   awkit list-packs     List available skill packs
+ *   awkit tg setup       Setup Telegram Bot API credentials
+ *   awkit tg send        Send a message via Telegram Bot API
  *   awkit version        Show current version
  * 
  * Created by Kien AI
@@ -23,6 +25,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const { execSync, spawnSync } = require('child_process');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -197,18 +200,18 @@ function syncGeminiMd() {
 // ─── Commands ────────────────────────────────────────────────────────────────
 
 /**
- * Ensure 'bd' (Beads) is installed. Install via Homebrew if missing.
+ * Ensure Symphony is available. Install via Homebrew if missing.
  * Returns true if bd is available after the call.
  */
-function installBeads({ silent = false } = {}) {
+function installSymphony({ silent = false } = {}) {
     // Check if bd already installed
     try {
         execSync('which bd', { stdio: 'ignore' });
-        if (!silent) ok('bd (Beads) already installed');
+        if (!silent) ok('Symphony already installed');
         return true;
     } catch (_) { /* not installed */ }
 
-    if (!silent) info('bd (Beads) not found — installing via Homebrew...');
+    if (!silent) info('Symphony not found — installing via Homebrew...');
 
     // Check if brew is available
     let brewAvailable = false;
@@ -216,21 +219,21 @@ function installBeads({ silent = false } = {}) {
 
     if (!brewAvailable) {
         warn('Homebrew not found. Please install bd manually:');
-        dim('  brew install beads');
-        dim('  or visit: https://github.com/steveyegge/beads');
+        dim('  npm install -g @anthropic/symphony');
+        dim('  or visit: https://github.com/anthropic/symphony');
         return false;
     }
 
     try {
-        if (!silent) info('Running: brew install beads');
-        execSync('brew install beads', { stdio: silent ? 'pipe' : 'inherit' });
+        if (!silent) info('Running: npm install -g @anthropic/symphony');
+        execSync('npm install -g @anthropic/symphony', { stdio: silent ? 'pipe' : 'inherit' });
         // Verify install
         execSync('which bd', { stdio: 'ignore' });
-        if (!silent) ok('bd (Beads) installed successfully ✨');
+        if (!silent) ok('Symphony installed successfully ✨');
         return true;
     } catch (e) {
         warn(`Failed to install bd via brew: ${e.message}`);
-        dim('Try manually: brew install beads');
+        dim('Try manually: npm install -g @anthropic/symphony');
         return false;
     }
 }
@@ -244,10 +247,10 @@ function cmdInstall() {
 
     const target = TARGETS.antigravity;
 
-    // 0. Install bd (Beads) if missing
+    // 0. Install Symphony if missing
     log('');
     info('Checking dependencies...');
-    installBeads();
+    installSymphony();
 
     // 1. Ensure target dirs exist
     info('Creating directories...');
@@ -345,7 +348,7 @@ function cmdInstall() {
         dim(`Packs:      ${defaultPacks.join(', ')} (auto-enabled)`);
     }
     const bdVer = (() => { try { return execSync('bd --version', { encoding: 'utf8' }).trim().split('\n')[0]; } catch (_) { return 'installed'; } })();
-    dim(`Beads:      ${bdVer} — task tracking ready`);
+    dim(`Symphony:     task tracking ready`);
     log('');
     log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
     log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
@@ -413,21 +416,63 @@ function cmdUninstall() {
 }
 
 function cmdUpdate() {
-    info(`Updating to AWK v${AWK_VERSION}...`);
+    info('Checking for updates on npm registry...');
 
-    // Check current version
-    let currentVersion = '0.0.0';
-    if (fs.existsSync(TARGETS.versionFile)) {
-        currentVersion = fs.readFileSync(TARGETS.versionFile, 'utf8').trim();
+    // 1. Fetch latest version from npm
+    let npmLatest = null;
+    try {
+        npmLatest = execSync(
+            'npm view @leejungkiin/awkit version',
+            { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }
+        ).trim();
+    } catch (_) {
+        warn('Could not reach npm registry (offline?). Falling back to local check.');
     }
 
-    if (currentVersion === AWK_VERSION) {
-        ok(`Already on latest version (${AWK_VERSION})`);
+    // 2. Read currently installed version
+    let installedVersion = '0.0.0';
+    if (fs.existsSync(TARGETS.versionFile)) {
+        installedVersion = fs.readFileSync(TARGETS.versionFile, 'utf8').trim();
+    }
+
+    const targetVersion = npmLatest || AWK_VERSION;
+
+    log('');
+    log(`${C.gray}   npm latest:  v${npmLatest || '(unknown)'}${C.reset}`);
+    log(`${C.gray}   installed:   v${installedVersion}${C.reset}`);
+    log(`${C.gray}   local repo:  v${AWK_VERSION}${C.reset}`);
+    log('');
+
+    // 3. Already up-to-date?
+    if (npmLatest && npmLatest === installedVersion) {
+        ok(`Already on the latest version (v${installedVersion}) 🎉`);
         return;
     }
 
-    info(`Upgrading from ${currentVersion} → ${AWK_VERSION}`);
-    cmdInstall();
+    // 4. New version available on npm → install from registry
+    if (npmLatest && npmLatest !== installedVersion) {
+        info(`Upgrading: v${installedVersion} → v${npmLatest}`);
+        info('Running: npm install -g @leejungkiin/awkit');
+        try {
+            execSync('npm install -g @leejungkiin/awkit', { stdio: 'inherit' });
+        } catch (e) {
+            err(`npm install failed: ${e.message}`);
+            dim('Try manually: npm install -g @leejungkiin/awkit');
+            return;
+        }
+        log('');
+        info('Applying new workflows, skills & schemas...');
+        cmdInstall();
+        return;
+    }
+
+    // 5. Offline fallback: compare AWK_VERSION (local repo) vs installed
+    if (installedVersion === AWK_VERSION) {
+        ok(`Already on latest version (v${AWK_VERSION}) — could not verify with npm`);
+    } else {
+        info(`Upgrading from v${installedVersion} → v${AWK_VERSION} (local only, npm unreachable)`);
+        cmdInstall();
+    }
 }
 
 function cmdDoctor() {
@@ -470,7 +515,7 @@ function cmdDoctor() {
         ok(`${skills.length} skills found`);
 
         // Check essential skills
-        const essentialSkills = ['orchestrator', 'beads-manager', 'awf-session-restore'];
+        const essentialSkills = ['orchestrator', 'symphony-orchestrator', 'awf-session-restore'];
         for (const s of essentialSkills) {
             if (!skills.includes(s)) {
                 warn(`Essential skill missing: ${s}`); issues++;
@@ -1198,7 +1243,7 @@ function cmdHelp() {
     log(`  ${C.green}init${C.reset}                Init mobile project (Firebase) in CWD`);
     log(`  ${C.gray}  --force${C.reset}            Overwrite existing files`);
     log(`  ${C.gray}  Generates: .project-identity, <Name>.code-workspace,${C.reset}`);
-    log(`  ${C.gray}             CODEBASE.md, .beads/ (Beads task DB)${C.reset}`);
+    log(`  ${C.gray}             CODEBASE.md, .symphony/ (Symphony task DB)${C.reset}`);
     log('');
 
     // Sync
@@ -1215,6 +1260,16 @@ function cmdHelp() {
     log(`  ${C.green}list-packs${C.reset}          List available skill packs`);
     log(`  ${C.green}enable-pack${C.reset} <name>  Install a skill pack`);
     log(`  ${C.green}disable-pack${C.reset} <name> Uninstall a skill pack (backed up)`);
+    log('');
+
+    // Telegram
+    log(`${C.bold}📨  Telegram${C.reset}`);
+    log(line);
+    log(`  ${C.green}tg setup${C.reset}            Setup Bot Token, Chat ID & Topic`);
+    log(`  ${C.green}tg send${C.reset} <message>   Send message to default group/topic`);
+    log(`  ${C.gray}  --chat <id>${C.reset}        Send to specific chat`);
+    log(`  ${C.gray}  --topic <id>${C.reset}       Send to specific forum topic`);
+    log(`  ${C.gray}  --parse-mode <md|html>${C.reset}  Formatting mode`);
     log('');
 
     // Available packs
@@ -1553,7 +1608,7 @@ function buildCodebaseMd(projectName, projectType, identity) {
  *   .project-identity
  *   <ProjectName>.code-workspace
  *   CODEBASE.md
- *   .beads/ (via bd init)
+ *   .symphony/ (via Symphony)
  */
 function cmdInit(forceFlag = false) {
     const cwd = process.cwd();
@@ -1620,25 +1675,25 @@ function cmdInit(forceFlag = false) {
         ok('CODEBASE.md created');
     }
 
-    // ── 5. Beads init ─────────────────────────────────────────────────────────
-    const beadsDir = path.join(cwd, '.beads');
-    if (fs.existsSync(beadsDir) && !forceFlag) {
-        warn('.beads/ already exists — skipping bd init');
+    // ── 5. Symphony init ─────────────────────────────────────────────────────────
+    const symphonyDir = path.join(cwd, '.symphony');
+    if (fs.existsSync(symphonyDir) && !forceFlag) {
+        warn('.symphony/ already exists — skipping');
     } else {
-        info('Initializing Beads task database...');
+        info('Initializing Symphony task database...');
         // Ensure bd is installed (auto-install silently if missing)
-        const bdReady = installBeads({ silent: true });
+        const bdReady = installSymphony({ silent: true });
         if (!bdReady) {
             warn('bd not available — skipping bd init');
-            dim('Install manually: brew install beads');
+            dim('Install manually: npm install -g @anthropic/symphony');
         } else {
             try {
                 execSync('bd init', { cwd, stdio: 'pipe' });
-                ok('Beads database initialized (.beads/)');
+                ok('Symphony initialized (.symphony/)');
             } catch (e) {
                 const msg = (e.stderr || e.stdout || e.message || '').toString().trim();
                 if (msg.includes('already')) {
-                    warn('Beads already initialized — skipping');
+                    warn('Symphony already initialized — skipping');
                 } else {
                     warn(`bd init failed: ${msg || e.message}`);
                     dim('Try manually: cd <project> && bd init');
@@ -1655,12 +1710,206 @@ function cmdInit(forceFlag = false) {
     dim(`Type:       ${projectType}`);
     dim(`Firebase:   analytics, crashlytics, remote-config, auth`);
     dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md`);
-    dim(`Beads:      .beads/ (task tracking ready)`);
+    dim(`Symphony:     task tracking ready)`);
     log('');
     log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
     log(`${C.cyan}👉 Run '/codebase-sync' in AI chat to keep CODEBASE.md updated.${C.reset}`);
     log(`${C.cyan}👉 Run 'bd list' to manage tasks.${C.reset}`);
     log('');
+}
+
+// ─── Telegram Bot API ─────────────────────────────────────────────────────────
+
+const TG_CONFIG_PATH = path.join(TARGETS.antigravity, '.tg_config.json');
+
+function tgLoadConfig() {
+    if (!fs.existsSync(TG_CONFIG_PATH)) return null;
+    try {
+        return JSON.parse(fs.readFileSync(TG_CONFIG_PATH, 'utf8'));
+    } catch (_) {
+        return null;
+    }
+}
+
+function tgSaveConfig(config) {
+    const dir = path.dirname(TG_CONFIG_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(TG_CONFIG_PATH, JSON.stringify(config, null, 2) + '\n');
+}
+
+/**
+ * Send message via Telegram Bot API using built-in https module.
+ * Returns a Promise that resolves with the API response.
+ */
+function tgApiSendMessage(botToken, chatId, text, parseMode, topicId) {
+    return new Promise((resolve, reject) => {
+        const payload = JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            ...(parseMode ? { parse_mode: parseMode === 'md' ? 'Markdown' : 'HTML' } : {}),
+            ...(topicId ? { message_thread_id: parseInt(topicId, 10) } : {}),
+        });
+
+        const options = {
+            hostname: 'api.telegram.org',
+            path: `/bot${botToken}/sendMessage`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload),
+            },
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (json.ok) resolve(json);
+                    else reject(new Error(json.description || 'Telegram API error'));
+                } catch (e) {
+                    reject(new Error(`Invalid response: ${data}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+    });
+}
+
+function tgSetup() {
+    log('');
+    log(`${C.cyan}${C.bold}📨 Telegram Bot API Setup${C.reset}`);
+    log('');
+    log(`${C.gray}  1. Open Telegram → search @BotFather → /newbot${C.reset}`);
+    log(`${C.gray}  2. Copy the Bot Token${C.reset}`);
+    log(`${C.gray}  3. Add the bot to your target group${C.reset}`);
+    log(`${C.gray}  4. Get group Chat ID (send a message, then check:${C.reset}`);
+    log(`${C.gray}     https://api.telegram.org/bot<TOKEN>/getUpdates)${C.reset}`);
+    log('');
+
+    // Prompt for Bot Token
+    let botToken = '';
+    try {
+        botToken = execSync(
+            `bash -c 'read -p "Bot Token: " token; echo $token'`,
+            { stdio: ['inherit', 'pipe', 'inherit'] }
+        ).toString().trim();
+    } catch (_) { err('Failed to read input.'); return; }
+
+    if (!botToken) { err('Bot Token is required.'); return; }
+
+    // Prompt for Chat ID
+    let chatId = '';
+    try {
+        chatId = execSync(
+            `bash -c 'read -p "Default Chat ID (e.g. -100xxx): " cid; echo $cid'`,
+            { stdio: ['inherit', 'pipe', 'inherit'] }
+        ).toString().trim();
+    } catch (_) { err('Failed to read input.'); return; }
+
+    if (!chatId) { err('Chat ID is required.'); return; }
+
+    // Prompt for Topic ID (optional)
+    let topicId = '';
+    try {
+        topicId = execSync(
+            `bash -c 'read -p "Default Topic ID (optional, press Enter to skip): " tid; echo $tid'`,
+            { stdio: ['inherit', 'pipe', 'inherit'] }
+        ).toString().trim();
+    } catch (_) { /* optional, ignore */ }
+
+    // Save config
+    const config = { bot_token: botToken, default_chat_id: chatId };
+    if (topicId) config.default_topic_id = topicId;
+    tgSaveConfig(config);
+    ok(`Config saved to ${TG_CONFIG_PATH}`);
+
+    // Test connection
+    info('Sending test message...');
+    tgApiSendMessage(botToken, chatId, '✅ AWKit Telegram integration connected!', null, topicId || null)
+        .then(() => {
+            ok('Test message sent successfully! 🎉');
+            log('');
+            log(`${C.cyan}Usage: awkit tg send "Your message here"${C.reset}`);
+            log('');
+        })
+        .catch((e) => {
+            err(`Test failed: ${e.message}`);
+            warn('Check your Bot Token and Chat ID, then run "awkit tg setup" again.');
+        });
+}
+
+function tgSend(args) {
+    const config = tgLoadConfig();
+    if (!config) {
+        err('Telegram not configured. Run "awkit tg setup" first.');
+        return;
+    }
+
+    // Parse args: --chat <id>, --parse-mode <md|html>, rest is message
+    let chatId = config.default_chat_id;
+    let topicId = config.default_topic_id || null;
+    let parseMode = null;
+    const messageParts = [];
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--chat' && args[i + 1]) {
+            chatId = args[++i];
+        } else if (args[i] === '--topic' && args[i + 1]) {
+            topicId = args[++i];
+        } else if (args[i] === '--parse-mode' && args[i + 1]) {
+            parseMode = args[++i];
+        } else {
+            messageParts.push(args[i]);
+        }
+    }
+
+    const message = messageParts.join(' ');
+    if (!message) {
+        err('No message provided.');
+        dim('Usage: awkit tg send "Your message"');
+        return;
+    }
+
+    tgApiSendMessage(config.bot_token, chatId, message, parseMode, topicId)
+        .then(() => {
+            ok(`Message sent to ${chatId}`);
+        })
+        .catch((e) => {
+            err(`Failed to send: ${e.message}`);
+        });
+}
+
+function tgHelp() {
+    log('');
+    log(`${C.cyan}${C.bold}📨 Telegram Commands${C.reset}`);
+    log('');
+    log(`  ${C.green}awkit tg setup${C.reset}                    Setup Bot Token, Chat ID & Topic`);
+    log(`  ${C.green}awkit tg send${C.reset} <message>           Send to default group/topic`);
+    log(`  ${C.green}awkit tg send --chat <id>${C.reset} <msg>   Send to specific chat`);
+    log(`  ${C.green}awkit tg send --topic <id>${C.reset} <msg>  Send to specific forum topic`);
+    log(`  ${C.green}awkit tg send --parse-mode md${C.reset}     Markdown formatting`);
+    log(`  ${C.green}awkit tg send --parse-mode html${C.reset}   HTML formatting`);
+    log('');
+}
+
+function cmdTelegram(args) {
+    const subCmd = args[0];
+    switch (subCmd) {
+        case 'send':
+            tgSend(args.slice(1));
+            break;
+        case 'setup':
+            tgSetup();
+            break;
+        default:
+            tgHelp();
+            break;
+    }
 }
 
 // ─── Auto-Update Checker ──────────────────────────────────────────────────────
@@ -1749,6 +1998,10 @@ switch (command) {
         break;
     case 'lint':
         cmdLint();
+        break;
+    case 'tg':
+    case 'telegram':
+        cmdTelegram(args);
         break;
     case 'help':
     case '--help':

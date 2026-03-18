@@ -23,7 +23,7 @@ description: Quy trình thiết kế tính năng toàn diện từ kiến trúc 
 │  └── Domain → Data → Presentation layers                   │
 │                          ↓                                  │
 │  Phase 3: FEATURE SPECS                       │
-│  └── requirements.md → design.md → bd tasks                │
+│  └── requirements.md → design.md → Symphony tasks                │
 │                          ↓                                  │
 │  Phase 4: UI/UX DESIGN                                     │
 │  └── Design analysis + Platform guidelines                 │
@@ -206,9 +206,9 @@ Use `/auto-implement [feature-name]` for spec-driven auto-coding.
 
 ### 5.3. Progress Tracking
 
-Update `bd` status as you complete each task:
+Update Symphony status as you complete each task:
 ```bash
-bd close [id]
+symphony_complete_task(task_id)
 ```
 
 ---

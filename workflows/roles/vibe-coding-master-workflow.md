@@ -27,7 +27,7 @@ priority: "high"
 **Trigger**: Complex Logic / New Component.
 1.  **Plan**: Check `code-quality.md` & `project-identity`.
 2.  **Structure**: File organization & Data flow.
-3.  **Output**: `docs/specs/[feature]/design.md` & `bd create` tasks.
+3.  **Output**: `docs/specs/[feature]/design.md` & Symphony tasks.
 
 ### Phase 4: Building (The Developer Hat) 💻
 **Trigger**: Approved Plan.
@@ -44,7 +44,7 @@ priority: "high"
 ## 🚀 How to Use
 - **Auto-Switch**: As an AI, I will seamlessly switch personas.
 - **Explicit Call**: You can say "Put on your PM hat" or "QA this for me".
-- **Progress**: Use `bd list` to track which phase we are in.
+- **Progress**: Use `symphony_available_tasks()` to track which phase we are in.
 
 ## 🌟 The Vibe
 - Keep it **Fast**.

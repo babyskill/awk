@@ -10,7 +10,7 @@ description: 📱 Phân tích màn hình & tạo đặc tả UI
 1.  **Input Analysis**: Detect App Type & Context.
 2.  **Screen Discovery**: Core → Secondary → Common.
 3.  **Feature Grouping**: Organize screens into Features.
-4.  **Spec Gen**: Create `docs/specs/[feature]/{requirements,design}.md` and init tasks via **bd**.
+4.  **Spec Gen**: Create `docs/specs/[feature]/{requirements,design}.md` and init tasks via **Symphony**.
 5.  **Overview**: Create `docs/specs/_overview.md`.
 
 ---
@@ -101,10 +101,10 @@ enum ViewState { case idle, loading, loaded([Model]), error(Error) }
 [Entry] -> [Screen1] -> [Screen2]
 ```
 
-### 3.3. Task Initialization (bd)
+### 3.3. Task Initialization (Symphony)
 ```bash
-bd create "Implement [Feature] - A1: Models & Repos" --body "File: Domain & Data\nValidates: RQ-01"
-bd create "Implement [Feature] - B1: [Screen1]" --body "File: Presentation/[Feature]/"
+symphony_create_task(title= "Implement [Feature] - A1: Models & Repos" --body "File: Domain & Data\nValidates: RQ-01"
+symphony_create_task(title= "Implement [Feature] - B1: [Screen1]" --body "File: Presentation/[Feature]/"
 ```
 
 ---

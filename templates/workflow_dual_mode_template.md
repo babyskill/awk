@@ -34,7 +34,7 @@ description: [Short description of the workflow]
 ### Phase 1: Context & Setup
 1. **Understand Intent:**
    - "Bạn muốn làm gì với [Command]?"
-   - (AI analyzes context from `.project-identity` & `.beads`)
+   - (AI analyzes context from `.project-identity` & `.symphony`)
 
 2. **Configuration:**
    - [Question 1]
@@ -68,7 +68,7 @@ description: [Short description of the workflow]
    - Locations of artifacts.
 
 2. **Memory Sync:**
-   - Auto-sync with Beads (Task) & Brain (Knowledge).
+   - Auto-sync with Symphony (Task) & Brain (Knowledge).
 
 3. **Next Steps Menu:**
    ```markdown
@@ -79,9 +79,9 @@ description: [Short description of the workflow]
 
 ---
 
-## 🧠 Brain & Beads Integration
+## 🧠 Brain & Symphony Integration
 
-- **Input:** Check `bd list --status in_progress` to resume context.
+- **Input:** Check `symphony_available_tasks(filter="my")` to resume context.
 - **Output:**
-  - Create/Update Beads task.
+  - Create/Update Symphony task.
   - Create Brain memory file if knowledge is valuable.

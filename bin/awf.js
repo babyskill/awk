@@ -355,7 +355,7 @@ function cmdDoctor() {
         ok(`${skills.length} skills found`);
 
         // Check essential skills
-        const essentialSkills = ['orchestrator', 'beads-manager', 'session-restore'];
+        const essentialSkills = ['orchestrator', 'symphony-orchestrator', 'session-restore'];
         for (const s of essentialSkills) {
             if (!skills.includes(s)) {
                 warn(`Essential skill missing: ${s}`); issues++;

@@ -1,0 +1,34 @@
+
+🗺️ App Map Wink 2.21.5 xong!
+
+Tóm tắt nhanh:
+
+Package: com.meitu.wink | Min SDK 26 | Target SDK 35
+Scale: 14 dex, 80+ Activities, 1064 layouts, 51 native .so libs
+2 module chính: wink.* (main shell) + videoedit.* (video editor engine)
+Complexity: ★★★★★ EXTREME — Đây là app cấp doanh nghiệp với native engine nặng (AR, AI, FFmpeg, beauty filter)
+⚠️ Lưu ý quan trọng: App này có 51 native .so files của Meitu — KHÔNG thể rebuild, chỉ có thể giữ nguyên và bridge qua JNI.
+
+Anh review App Map, có gì cần điều chỉnh không? OK → em sẽ chuyển sang Phase 1: Architecture Design (/re-android-design).
+
+Phase 0 Discovery App Map for Wink 2.21.5 by Meitu. Documents app identity (package com.meitu.wink, 14 dex, 80+ activities, 51 native .so libs), permission groups, complete screen flow with Mermaid diagrams (main shell + video editor module), categorized library landscape (50+ libraries across Reuse/Google/Ads/Analytics/Social/Native/Crash categories), complexity estimate (5/5 EXTREME), key observations about obfuscation and native engine dependency, and rebuild recommendations.
+ok
+
+
+RE Android Phase 1 Architecture Design
+Completed Architecture Blueprint for Wink 2.21.5. Designed Clean Architecture with 3 modules (:app, :videoedit-sdk, :meitu-sdk), mapped 14 features to domain models/repos/usecases/screens, inventoried 7 API domains, documented data schema (Room with 60+ DAOs, MMKV, SharedPrefs), defined project structure, and created UI-First build order with 16 phases (est. 30–45 days).
+
+Files Edited
+Background Steps
+Running background command
+Wink2.21.5smali $ # Find Room database/DAO/Entity
+grep -rln 'Landroidx/room\|Lroom/\|@Entity\|@Dao\|@Database' smali*/com/meitu/ --include="*.smali" 2>/dev/null | head -20
+Progress Updates
+1
+Reading /reverse-android-design workflow
+
+Analyzed
+The workflow is about architecture design — NO CODE BODIES. This is a documentation-only phase. Let me now analyze the smali codebase to extract API endpoints, data models, and map features to architecture. Since this is a documentation-only output (no code changes), I don't need an implementation plan. Let me proceed directly with the analysis.
+
+2
+Extracting API endpoints and base URLs from smali code

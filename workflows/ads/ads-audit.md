@@ -2,7 +2,7 @@
 description: 📊 Tự động phân tích & báo cáo hiệu suất Google Ads hàng ngày (Dual-Mode v5.0)
 ---
 
-# WORKFLOW: /ads-audit - The Ads Analyst (Dual-Mode + Beads)
+# WORKFLOW: /ads-audit - The Ads Analyst (Dual-Mode + Symphony)
 
 > **Mode A (Expert):** `/adsExpert [id]` -> Auto check & create tasks.
 > **Mode B (Guided):** `/ads-audit` -> Chọn Account -> Phân tích -> Hướng dẫn chi tiết.
@@ -49,16 +49,16 @@ User nhận được tóm tắt và menu chọn hành động:
 
 ➡️ **Chiến lược tiếp theo:**
 1️⃣ 🧹 Dọn dẹp rác ngay (Review & Pause)
-2️⃣ 📿 Tạo task Beads để xử lý sau
+2️⃣ 🎵 Tạo task Symphony để xử lý sau
 3️⃣ 📝 Xem báo cáo đầy đủ
 4️⃣ 🔍 Phân tích sâu hơn (`/ads-analyst`)
 ```
 
-### Phase 5: Beads Integration
+### Phase 5: Symphony Integration
 - Nếu chọn **2 (Create Task)**:
     - AI tự động tạo các tasks:
-        - `bd create "Pause Keyword X (Waste 200k)" --label ads`
-        - `bd create "Review Campaign Y (CPA too high)" --label ads`
+        - `symphony_create_task(title="Pause Keyword X (Waste 200k)")`
+        - `symphony_create_task(title="Review Campaign Y (CPA too high)")`
 
 ---
 

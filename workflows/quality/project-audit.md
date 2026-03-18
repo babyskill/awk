@@ -57,5 +57,5 @@ Tổng hợp kết quả thành báo cáo Markdown:
 3.  **Tối ưu**: [Refactor code rác, UI chưa mượt].
 
 ### 🤖 Lệnh tiếp theo
-- `bd create "Fix logic ABC"`
+- `symphony_create_task(title="Fix logic ABC")`
 - `/create-feature "Tên tính năng còn thiếu"`

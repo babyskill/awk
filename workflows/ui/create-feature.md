@@ -109,14 +109,14 @@ Property 1: [Property description]
 **Validates: Requirements X.X, X.X**
 ```
 
-#### Task Creation (using bd)
-Instead of a `tasks.md` file, use `bd` to create tracking issues:
+#### Task Creation (using Symphony)
+Instead of a `tasks.md` file, use Symphony to create tracking tasks:
 
 ```bash
 # Initialize tasks for the feature
-bd create "Implement [Feature Name] - Phase A: Foundation" --body "Models, Repositories"
-bd create "Implement [Feature Name] - Phase B: UI" --body "Views, Components"
-bd create "Implement [Feature Name] - Phase C: Logic" --body "ViewModels, Services"
+symphony_create_task(title="Implement [Feature Name] - Phase A: Foundation", description="Models, Repositories")
+symphony_create_task(title="Implement [Feature Name] - Phase B: UI", description="Views, Components")
+symphony_create_task(title="Implement [Feature Name] - Phase C: Logic", description="ViewModels, Services")
 ```
 
 #### product.md Template (Steering - one-time)
@@ -212,7 +212,7 @@ When initiating specs, follow this process:
 
 ### 1.1. Check Spec
 Is there a spec file in `docs/specs/[current-feature]/`?
-- **YES**: **Strict Implementation** mode (follow spec exactly, track progress with `bd`)
+- **YES**: **Strict Implementation** mode (follow spec exactly, track progress with Symphony)
 - **NO**: **Agile Coding** mode (quick implementation, optionally create spec first)
 
 ### 1.2. Agile Coding Mode
@@ -277,7 +277,7 @@ Users often FORGET these. AI MUST ADD:
 
 ### 3.4. Task Sync
 If working in **Strict Implementation** mode:
-- Mark tasks as completed using `bd close [id]`
+- Mark tasks as completed using `symphony_complete_task(task_id)`
 - Update `design.md` if architecture changes
 - Keep specs as source of truth
 
@@ -304,7 +304,7 @@ If working in **Strict Implementation** mode:
 
 1. Report: "Completed [Task Name]."
 2. List: "Changed files: [List]"
-3. If using specs: Update `bd` status with `bd update [id]`
+3. If using specs: Update task status with `symphony_report_progress(task_id)`
 4. Suggest next steps:
    - "Use `/run` to test."
    - "Use `/test` to verify logic."
