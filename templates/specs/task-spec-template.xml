@@ -1,0 +1,65 @@
+<!-- 
+  AWF Task Spec Template (XML Format)
+  
+  Usage: Copy this structure into implementation_plan.md for each task.
+  AI parses these blocks precisely during EXECUTION mode.
+  
+  Attributes:
+    type="auto"   → AI executes without user interaction
+    type="manual" → Requires user action (e.g., config, credentials)
+    
+  Elements:
+    <name>       → Short task title
+    <files>      → Comma-separated list of files to create/modify
+    <spec_ref>   → Reference to REQUIREMENTS.md or TECH-SPEC.md section
+    <depends_on> → Task names this depends on (for wave grouping)
+    <action>     → Specific implementation instructions
+    <verify>     → Command or check to verify task completion
+    <done>       → Expected final state description
+-->
+
+<!-- Example: Single independent task -->
+<task type="auto">
+  <name>Create User model</name>
+  <files>Models/User.swift, Models/UserRepository.swift</files>
+  <spec_ref>REQUIREMENTS.md § R1, TECH-SPEC.md § AD-1</spec_ref>
+  <depends_on>none</depends_on>
+  <action>
+    Create User struct with Codable conformance.
+    Implement UserRepository with GRDB persistence.
+    Follow offline-first pattern from TECH-SPEC.md.
+  </action>
+  <verify>Unit test: UserRepositoryTests — insert, fetch, delete pass</verify>
+  <done>User model persists to local DB with full CRUD</done>
+</task>
+
+<!-- Example: Dependent task -->
+<task type="auto">
+  <name>Create login endpoint</name>
+  <files>Services/AuthService.swift, ViewModels/LoginViewModel.swift</files>
+  <spec_ref>REQUIREMENTS.md § R2</spec_ref>
+  <depends_on>Create User model</depends_on>
+  <action>
+    Use Firebase Auth for authentication.
+    Store session in Keychain per TECH-SPEC.md § Security.
+    Handle offline: queue login attempt, retry on connectivity.
+  </action>
+  <verify>Login with test credentials returns valid session token</verify>
+  <done>User can log in; session persists across app restarts</done>
+</task>
+
+<!-- Example: Manual task -->
+<task type="manual">
+  <name>Configure Firebase project</name>
+  <files>GoogleService-Info.plist</files>
+  <spec_ref>TECH-SPEC.md § Tech Stack</spec_ref>
+  <depends_on>none</depends_on>
+  <action>
+    User must:
+    1. Create Firebase project at console.firebase.google.com
+    2. Download GoogleService-Info.plist
+    3. Add to Xcode project root
+  </action>
+  <verify>FirebaseApp.configure() succeeds without crash</verify>
+  <done>Firebase SDK initialized on app launch</done>
+</task>
