@@ -4,10 +4,10 @@ description: |
   Mandatory Symphony checkpoint system. Ensures AI never forgets to create,
   update, or complete tasks in Symphony. Enforces progress reporting at every
   milestone and auto-detects task completion without waiting for user confirmation.
-  v3.0: Pre-Plan Gate, Auto-Lifecycle, Auto-Next.
+  v3.1: Pre-Plan Gate, Auto-Lifecycle, Auto-Next, Atomic Git Commits.
 metadata:
   stage: core
-  version: "3.0"
+  version: "3.1"
   replaces: "v2.0"
   requires: symphony-orchestrator
   tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next]
@@ -24,13 +24,14 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.0 — Spec-First + Auto-Lifecycle + Auto-Next
+# Symphony Enforcer v3.1 — Spec-First + Auto-Lifecycle + Auto-Next + Atomic Commits
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.0:**
+> **Key Changes v3.1:**
 > - **Pre-Plan Gate**: Đọc spec trước khi plan, hỏi user về constraints
 > - **Auto-Lifecycle**: Liên kết task_boundary ↔ Symphony tự động
 > - **Auto-Next**: BẮT BUỘC gợi ý next steps sau mỗi task done
+> - **Atomic Git Commits**: Tự động commit sau mỗi task done (NEW v3.1)
 > **Principle:** AI tự detect completion — user KHÔNG CẦN nói "xong".
 
 ---
@@ -42,6 +43,7 @@ KHÔNG CÓ NGOẠI LỆ:
 - Mọi code/debug/plan task PHẢI qua STRICT STARTUP PROTOCOL
 - Mọi milestone PHẢI report progress
 - AI tự detect completion và auto-complete task
+- Task done → PHẢI atomic git commit trước khi suggest next
 - Kết thúc task PHẢI kèm next suggestion
 - BỎ QUA BẤT KỲ STEP NÀO = VI PHẠM
 ```
@@ -184,8 +186,55 @@ Signal 4: Verification pass (tests OK, build OK)
      summary="mô tả ngắn kết quả"
    )
 2. Hiển thị: "✅ SYM #sym-XYZ — Done"
-3. → TRIGGER TP4 (Auto-Next) NGAY LẬP TỨC
+3. → TRIGGER TP2.5 (Atomic Git Commit)
+4. → TRIGGER TP4 (Auto-Next) NGAY LẬP TỨC
 ```
+
+---
+
+### TP2.5: Atomic Git Commit (NEW v3.1 — BẮT BUỘC)
+
+**Khi nào:** Ngay sau TP2 (task completed), TRƯỚC TP4 (Auto-Next).
+Chỉ trigger khi task có code changes (có files_changed).
+
+**Action:**
+```
+1. Kiểm tra: git status --porcelain
+   → Nếu KHÔNG CÓ changes → skip ("📝 No code changes to commit")
+   → Nếu CÓ changes → tiếp tục
+
+2. Xác định commit type từ task context:
+   → PLANNING/EXECUTION mới → "feat"
+   → Debug/fix → "fix"
+   → Refactor/cleanup → "refactor"
+   → Docs/specs → "docs"
+
+3. Tạo commit message theo Conventional Commits:
+   → Format: "{type}({scope}): {task_summary_ngắn}"
+   → scope = module/feature name (từ task title)
+   → Ví dụ: "feat(auth): implement login with Firebase"
+   → Ví dụ: "fix(camera): resolve 10s delay on tab switch"
+
+4. Stage & commit:
+   → git add <files_changed từ symphony_complete_task>
+   → Nếu không rõ files → git add -A (thận trọng)
+   → git commit -m "{message}"
+
+5. Hiển thị:
+   🔀 Atomic Commit: {short_hash} — "{message}"
+   📁 {N} files changed
+
+6. ⚠️ KHÔNG AUTO-PUSH:
+   → Chỉ commit local
+   → Push = yêu cầu user confirm hoặc dùng /smart-git-ops
+```
+
+**Enforcement:**
+- ❌ KHÔNG được auto-push (chỉ commit local)
+- ❌ KHÔNG được commit nếu có unresolved merge conflicts
+- ❌ KHÔNG được commit files ngoài scope task
+- ✅ NÊN commit ngay khi task done — đừng để accumulate
+- ✅ Mỗi task = 1 commit (atomic, traceable)
 
 ---
 
@@ -309,3 +358,5 @@ Nếu completed:
 - XML task format chính xác hơn markdown cho AI parsing (learned from GSD)
 - Auto-Next giữ momentum — user không cần tự tìm task tiếp theo
 - Spec alignment tránh plan bị lệch khỏi project constraints
+- Atomic commits giúp rollback chính xác — 1 task = 1 commit (learned from GSD)
+- KHÔNG auto-push — chỉ commit local, push cần user confirm
