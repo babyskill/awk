@@ -89,7 +89,7 @@ allowed-tools:
 **Links:** `SUPERSEDES` → old pattern if exists
 
 ### W4: Task Complete → `workflow` type
-**Condition:** Task marked done trong Beads
+**Condition:** Task marked done trong Symphony
 **Capture:** What was done + approach taken
 **Store:** `nmem_remember(content, type="workflow", priority=5)`
 
@@ -178,7 +178,7 @@ If `nmem` is not available, falls back to flat-file behavior:
 
 ## Integration
 
-- Works alongside `beads-manager` for task lifecycle hooks
+- Works alongside `symphony-orchestrator` for task lifecycle hooks
 - Reads `.project-identity` for project-scoped memory filtering
 - Feeds data to `nm-memory-audit` for quality checks
 - Activated before `orchestrator` dispatches (priority 2.5 in skill chain)

@@ -224,6 +224,34 @@ Template saved to session:
   }
 ```
 
+### W7: Brainstorm / Analysis Artifact Persist (MỚI)
+**Điều kiện:** Brainstorm-agent hoặc AI tạo brainstorm/analysis artifact
+```
+Patterns detect:
+- BRIEF.md tạo xong (qua brainstorm-agent)
+- Analysis document tạo (pricing, market, competitor...)
+- Brainstorm document tạo (feature ideas, architecture exploration...)
+
+Action (SILENT):
+1. POST metadata vào Symphony Notes API (type: brainstorm hoặc analysis)
+2. content = summary ngắn 2-3 dòng ONLY
+3. filePath = absolute path đến file artifact
+4. conversationId = conversation ID hiện tại
+5. projectId = project đang active
+
+curl -X POST http://localhost:3100/api/notes -H 'Content-Type: application/json' -d '{
+  "projectId": "<project-id>",
+  "type": "brainstorm",
+  "title": "<artifact-title>",
+  "content": "<summary-2-3-lines>",
+  "filePath": "<path-to-file>",
+  "conversationId": "<conversation-id>",
+  "metadata": { "tags": [...], "created_by": "memory-sync" }
+}'
+
+⚠️ Nếu Symphony server offline → skip silently, không block workflow
+```
+
 ---
 
 ## 🔄 MEMORY SYNC PROTOCOL
@@ -304,7 +332,7 @@ NEVER:
 ```
 Runs BEFORE: awf-session-restore (cung cấp data)
 Runs AFTER:  awf-auto-save (fallback nếu memory-sync bỏ sót)
-Works WITH:  beads-manager (link memory entries với Bead IDs)
+Works WITH:  symphony-orchestrator (link memory entries với Symphony task IDs)
 Works WITH:  orchestrator (nhận resolved_target → query focused hơn)
 Enhances:    awf-error-translator (thêm historical context)
 SEPARATE FROM: brainstorm-agent (hoàn toàn độc lập — brainstorm-agent xử lý ý tưởng)

@@ -1,8 +1,8 @@
 ---
 name: beads-manager
-description: Smart Beads task management with Brain integration
+description: "⚠️ DEPRECATED — Replaced by symphony-orchestrator. Do NOT use this skill."
 version: 6.6.0
-trigger: always
+trigger: never
 invocation-type: auto
 ---
 

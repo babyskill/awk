@@ -663,7 +663,7 @@ triggers_from:
 delegates_to:
   - "/test" — after parity check
   - "/deploy" — when rebuild is complete
-  - beads-manager — auto-track progress per step
+  - symphony-orchestrator — auto-track progress per step
 
 works_with:
   - memory-sync — saves decisions, patterns, solutions

@@ -30,7 +30,7 @@ priority: medium
 | Skill này LÀM | Skill này KHÔNG làm |
 |---------------|---------------------|
 | Brainstorm ý tưởng tính năng | Đọc/ghi brain/memory files |
-| Tư vấn hướng đi sản phẩm | Track tasks (việc của beads-manager) |
+| Tư vấn hướng đi sản phẩm | Track tasks (việc của symphony-orchestrator) |
 | Research thị trường | Sửa lỗi code |
 | Tạo BRIEF.md output | Lên kế hoạch chi tiết (việc của /plan) |
 | Phân tích đối thủ | Deploy |
@@ -249,6 +249,51 @@ Anh muốn làm gì tiếp:
 
 ---
 
+## 💾 SYMPHONY NOTES AUTO-SAVE (BẮT BUỘC)
+
+> **Rule:** Sau khi tạo BẤT KỲ brainstorm artifact nào (BRIEF.md, analysis, brainstorm doc),
+> AI PHẢI POST metadata vào Symphony Notes API. Content ĐỌC TỪ FILE, KHÔNG lưu vào DB.
+
+### Khi nào trigger:
+
+```yaml
+triggers:
+  - BRIEF.md tạo xong
+  - Analysis document tạo xong (pricing, market, competitor...)
+  - Brainstorm document tạo xong
+  - Bất kỳ artifact có giá trị lâu dài
+```
+
+### Cách thực hiện:
+
+```bash
+curl -X POST http://localhost:3100/api/notes -H 'Content-Type: application/json' -d '{
+  "projectId": "<current-project-id>",
+  "type": "brainstorm",
+  "title": "<artifact-title>",
+  "content": "<summary-2-3-lines-ONLY — KHÔNG copy full content>",
+  "filePath": "<absolute-path-to-artifact-file>",
+  "conversationId": "<current-conversation-id>",
+  "metadata": {
+    "mode": "quick|full|feature",
+    "tags": ["pricing", "features", "architecture", ...],
+    "created_by": "brainstorm-agent"
+  }
+}'
+```
+
+### Quy tắc:
+
+```yaml
+rules:
+  - content CHỈ chứa summary ngắn 2-3 dòng
+  - filePath trỏ đến file .resolved hoặc .md thực tế
+  - Nếu Symphony server không chạy → skip (không block workflow)
+  - type: "brainstorm" cho ý tưởng, "analysis" cho phân tích dữ liệu
+```
+
+---
+
 ## 🚫 ANTI-PATTERNS
 
 ```yaml
@@ -285,7 +330,7 @@ Short messages — không dump wall of text
 Works WITH:  /brainstorm workflow (skill này hỗ trợ workflow)
 Delegates TO: /plan (sau khi BRIEF xong)
 NOT: memory-sync (hoàn toàn độc lập — memory-sync tự theo dõi)
-NOT: beads-manager (không tạo task, chỉ brainstorm)
+NOT: symphony-orchestrator (không tạo task, chỉ brainstorm)
 Triggers: memory-sync W3 sẽ tự kích hoạt khi BRIEF.md tạo xong
 ```
 

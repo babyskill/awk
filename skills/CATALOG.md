@@ -21,7 +21,7 @@
 | 1 | `orchestrator` | `auto` | Always (first) | 1 | 2.1.0 | ✅ Active |
 | 2 | `awf-session-restore` | `auto` | Session start | 2 | — | ✅ Active |
 | 3 | `memory-sync` | `auto` | Always | 3 | 2.2.0 | ✅ Active |
-| 4 | `beads-manager` | `auto` | Always | 4 | 6.6.0 | ✅ Active |
+| 4 | `symphony-orchestrator` | `auto` | Always | 4 | 1.0.0 | ✅ Active |
 | 5 | `brainstorm-agent` | `manual` | `/brainstorm`, keywords | 5 | 1.0.0 | ✅ Active |
 | 6 | `awf-error-translator` | `auto` | Error detected | 6 | — | ✅ Active |
 | 7 | `awf-adaptive-language` | `auto` | Always | 7 | — | ✅ Active |
@@ -53,7 +53,7 @@ Skills marked with self-evolution have a `## Learnings` section that accumulates
 
 - ✅ `orchestrator` — routing improvements
 - ✅ `memory-sync` — trigger pattern refinements
-- ✅ `beads-manager` — task structure optimizations
+- ✅ `symphony-orchestrator` — task management optimizations
 
 ---
 
@@ -68,3 +68,4 @@ These were deleted in v2.2 cleanup — canonical versions are listed above:
 | `context-help/` | `awf-context-help/` | Naming standardization |
 | `error-translator/` | `awf-error-translator/` | Naming standardization |
 | `session-restore/` | `awf-session-restore/` | Naming standardization |
+| `beads-manager/` | `symphony-orchestrator/` | Migrated to Symphony for task management |
