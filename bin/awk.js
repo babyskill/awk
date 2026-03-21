@@ -28,17 +28,75 @@ const path = require('path');
 const https = require('https');
 const { execSync, spawnSync } = require('child_process');
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const AWK_VERSION = fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim();
 const AWK_ROOT = path.join(__dirname, '..');
 const HOME = process.env.HOME || process.env.USERPROFILE;
 
+const { generateClineRules, generateClineWorkflows, generateClineSkills } = require('./cline-generators');
+const { generateCodexAgentsMd, generateCodexSkills, generateCodexAgents } = require('./codex-generators');
+
+// ─── Platform Definitions ──────────────────────────────────────────────────
+
+const PLATFORMS = {
+    antigravity: {
+        name: 'Antigravity (Gemini Code Assist)',
+        globalRoot: path.join(HOME, '.gemini', 'antigravity'),
+        rulesFile: path.join(HOME, '.gemini', 'GEMINI.md'),
+        versionFile: path.join(HOME, '.gemini', 'awk_version'),
+        dirs: {
+            workflows: 'global_workflows',
+            skills: 'skills',
+            schemas: 'schemas',
+            templates: 'templates',
+        },
+        supportsCustomModes: false,
+        supportsSubagents: false,
+    },
+    cline: {
+        name: 'Cline (VS Code)',
+        globalRoot: process.cwd(), // Local to project
+        rulesFile: path.join(HOME, '.cline', 'rules', 'antigravity-rules.md'),
+        versionFile: path.join(HOME, '.cline', 'awk_version'),
+        dirs: {
+            workflows: '.clinerules',
+            skills: '.clinerules/skills',
+        },
+    },
+    codex: {
+        name: 'Codex (OpenAI)',
+        globalRoot: path.join(HOME, '.codex'),
+        rulesFile: path.join(HOME, '.codex', 'AGENTS.md'),
+        versionFile: path.join(HOME, '.codex', 'awk_version'),
+        dirs: {
+            agents: 'agents',
+            skills: '../.agents/skills',
+        },
+    }
+};
+
+const PLATFORM_FILE = path.join(HOME, '.awkit_platform');
+
+/**
+ * Get the currently configured platform.
+ * Reads from ~/.awkit_platform, defaults to 'antigravity'.
+ */
+function getActivePlatform() {
+    return 'antigravity';
+}
+
+function savePlatform(platform) {
+    fs.writeFileSync(PLATFORM_FILE, platform, 'utf8');
+}
+
+// Active platform — resolved at install time or from saved config
+let activePlatform = 'antigravity';
+
+// Legacy compat: TARGETS object derived from active platform
 const TARGETS = {
-    antigravity: path.join(HOME, '.gemini', 'antigravity'),
-    geminiMd: path.join(HOME, '.gemini', 'GEMINI.md'),
-    versionFile: path.join(HOME, '.gemini', 'awk_version'),
-    agentsDir: null, // Set per-project
+    get antigravity() { return PLATFORMS[activePlatform].globalRoot; },
+    get geminiMd() { return PLATFORMS[activePlatform].rulesFile || path.join(HOME, '.gemini', 'GEMINI.md'); },
+    get versionFile() { return PLATFORMS[activePlatform].versionFile; },
+    agentsDir: null,
 };
 
 // Mapping: source dir in package → target dir in antigravity
@@ -84,6 +142,22 @@ function promptYN(question) {
         return answer === 'y' || answer === 'yes';
     } catch (e) {
         return false;
+    }
+}
+
+/**
+ * Prompt user for a choice, returning the raw answer string.
+ * Returns defaultVal if user presses Enter without input.
+ */
+function promptChoice(question, defaultVal = '') {
+    try {
+        const answer = execSync(
+            `bash -c 'read -p "${question} (default: ${defaultVal}): " ans; echo $ans'`,
+            { stdio: ['inherit', 'pipe', 'inherit'] }
+        ).toString().trim();
+        return answer || defaultVal;
+    } catch (e) {
+        return defaultVal;
     }
 }
 
@@ -200,62 +274,52 @@ function syncGeminiMd() {
 // ─── Commands ────────────────────────────────────────────────────────────────
 
 /**
- * Ensure Symphony is available. Install via Homebrew if missing.
- * Returns true if bd is available after the call.
+ * Check if Symphony is available.
  */
-function installSymphony({ silent = false } = {}) {
-    // Check if bd already installed
+function checkSymphony({ silent = false } = {}) {
     try {
-        execSync('which bd', { stdio: 'ignore' });
-        if (!silent) ok('Symphony already installed');
+        execSync('which symphony', { stdio: 'ignore' });
+        if (!silent) ok('Symphony CLI is installed');
         return true;
-    } catch (_) { /* not installed */ }
-
-    if (!silent) info('Symphony not found — installing via Homebrew...');
-
-    // Check if brew is available
-    let brewAvailable = false;
-    try { execSync('which brew', { stdio: 'ignore' }); brewAvailable = true; } catch (_) { }
-
-    if (!brewAvailable) {
-        warn('Homebrew not found. Please install bd manually:');
-        dim('  npm install -g @anthropic/symphony');
-        dim('  or visit: https://github.com/anthropic/symphony');
-        return false;
-    }
-
-    try {
-        if (!silent) info('Running: npm install -g @anthropic/symphony');
-        execSync('npm install -g @anthropic/symphony', { stdio: silent ? 'pipe' : 'inherit' });
-        // Verify install
-        execSync('which bd', { stdio: 'ignore' });
-        if (!silent) ok('Symphony installed successfully ✨');
-        return true;
-    } catch (e) {
-        warn(`Failed to install bd via brew: ${e.message}`);
-        dim('Try manually: npm install -g @anthropic/symphony');
+    } catch (_) {
+        if (!silent) warn('Symphony CLI not found. Please install it manually:');
+        if (!silent) dim('  npm install -g awkit-symphony');
         return false;
     }
 }
 
-function cmdInstall() {
+function cmdInstall(platformArg) {
     log('');
     log(`${C.cyan}${C.bold}╔══════════════════════════════════════════════════════════╗${C.reset}`);
     log(`${C.cyan}${C.bold}║     🚀 AWK v${AWK_VERSION} — Antigravity Workflow Kit        ║${C.reset}`);
     log(`${C.cyan}${C.bold}╚══════════════════════════════════════════════════════════╝${C.reset}`);
     log('');
 
-    const target = TARGETS.antigravity;
+    // Platform selection
+    let platform = platformArg || getActivePlatform();
 
-    // 0. Install Symphony if missing
+    if (!PLATFORMS[platform]) {
+        err(`Unknown platform: ${platform}.`);
+        return;
+    }
+
+    activePlatform = platform;
+    savePlatform(platform);
+
+    const plat = PLATFORMS[platform];
+    const target = plat.globalRoot;
+
+    info(`Installing for ${C.bold}${plat.name}${C.reset}...`);
     log('');
+
+    // 0. Check Symphony dependency
     info('Checking dependencies...');
-    installSymphony();
+    checkSymphony();
 
     // 1. Ensure target dirs exist
     info('Creating directories...');
-    const dirs = ['global_workflows', 'skills', 'schemas', 'templates'];
-    for (const dir of dirs) {
+    const dirKeys = Object.values(plat.dirs);
+    for (const dir of dirKeys) {
         const fullPath = path.join(target, dir);
         if (!fs.existsSync(fullPath)) {
             fs.mkdirSync(fullPath, { recursive: true });
@@ -263,72 +327,104 @@ function cmdInstall() {
     }
     ok('Directories ready');
 
-    // 2. Sync GEMINI.md
-    info('Syncing GEMINI.md...');
-    syncGeminiMd();
+    // 2. Sync rules (platform-specific)
+    if (platform === 'antigravity') {
+        info('Syncing GEMINI.md...');
+        syncGeminiMd();
+    } else if (platform === 'cline') {
+        info('Generating Cline global rules...');
+        generateClineRules(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
+    } else if (platform === 'codex') {
+        info('Generating Codex AGENTS.md...');
+        generateCodexAgentsMd(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
+    }
 
-    // 3. Backup and flatten workflows
-    info('Installing workflows...');
-    const wfSrc = path.join(AWK_ROOT, 'workflows');
-    const wfDest = path.join(target, 'global_workflows');
+    // 3. Backup and install workflows
+    if (plat.dirs.workflows) {
+        info('Installing workflows...');
+        const wfSrc = path.join(AWK_ROOT, 'workflows');
+        const wfDest = path.join(target, plat.dirs.workflows);
 
-    // Backup existing global_workflows to a zip file
-    if (fs.existsSync(wfDest)) {
-        const backupDir = path.join(target, 'backup');
-        if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+        // Backup existing workflows
+        if (fs.existsSync(wfDest)) {
+            const backupDir = path.join(target, 'backup');
+            if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const zipFile = path.join(backupDir, `global_workflows_${timestamp}.bak.zip`);
-        try {
-            info('Creating zip backup of global_workflows...');
-            execSync(`zip -r "${zipFile}" .`, { cwd: wfDest, stdio: 'ignore' });
-            ok(`Backup created: ${zipFile}`);
-        } catch (e) {
-            warn(`Failed to create backup zip: ${e.message}`);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const zipFile = path.join(backupDir, `workflows_${timestamp}.bak.zip`);
+            try {
+                execSync(`zip -r "${zipFile}" .`, { cwd: wfDest, stdio: 'ignore' });
+                dim(`Backup: ${zipFile}`);
+            } catch (e) {
+                warn(`Failed to create backup: ${e.message}`);
+            }
+        }
+
+        if (platform === 'cline') {
+            generateClineWorkflows(wfSrc, wfDest);
+        } else if (platform !== 'codex') {
+            const wfCount = flattenWorkflows(wfSrc, wfDest);
+            ok(`${wfCount} workflows installed`);
         }
     }
 
-    const wfCount = flattenWorkflows(wfSrc, wfDest);
-    ok(`${wfCount} workflows installed`);
-
     // 4. Copy AGENTS.md
-    const agentsSrc = path.join(AWK_ROOT, 'core', 'AGENTS.md');
-    const agentsDest = path.join(target, 'global_workflows', 'AGENTS.md');
-    if (fs.existsSync(agentsSrc)) {
-        fs.copyFileSync(agentsSrc, agentsDest);
-        ok('AGENTS.md installed');
+    if (platform === 'antigravity' && plat.dirs.workflows) {
+        const agentsSrc = path.join(AWK_ROOT, 'core', 'AGENTS.md');
+        const agentsDest = path.join(target, plat.dirs.workflows, 'AGENTS.md');
+        if (fs.existsSync(agentsSrc)) {
+            fs.copyFileSync(agentsSrc, agentsDest);
+            ok('AGENTS.md installed');
+        }
     }
 
     // 5. Copy skills
-    info('Installing skills...');
-    const skillsSrc = path.join(AWK_ROOT, 'skills');
-    const skillsDest = path.join(target, 'skills');
-    const skillCount = copyDirRecursive(skillsSrc, skillsDest);
-    ok(`${skillCount} skill files installed`);
+    if (plat.dirs.skills) {
+        info('Installing skills...');
+        const skillsSrc = path.join(AWK_ROOT, 'skills');
+        const skillsDest = path.join(target, plat.dirs.skills);
+
+        if (platform === 'cline') {
+            generateClineSkills(skillsSrc, skillsDest);
+        } else if (platform === 'codex') {
+            generateCodexSkills(skillsSrc, skillsDest);
+            const agentsDest = path.join(target, plat.dirs.agents);
+            generateCodexAgents(skillsSrc, agentsDest);
+        } else {
+            const skillCount = copyDirRecursive(skillsSrc, skillsDest);
+            ok(`${skillCount} skill files installed`);
+        }
+    }
 
     // 6. Copy orchestrator
-    const orchSrc = path.join(AWK_ROOT, 'core', 'orchestrator.md');
-    const orchDestDir = path.join(target, 'skills', 'orchestrator');
-    if (!fs.existsSync(orchDestDir)) fs.mkdirSync(orchDestDir, { recursive: true });
-    fs.copyFileSync(orchSrc, path.join(orchDestDir, 'SKILL.md'));
-    ok('Orchestrator skill installed');
+    if (platform === 'antigravity') {
+        const orchSrc = path.join(AWK_ROOT, 'core', 'orchestrator.md');
+        const orchDestDir = path.join(target, plat.dirs.skills, 'orchestrator');
+        if (!fs.existsSync(orchDestDir)) fs.mkdirSync(orchDestDir, { recursive: true });
+        fs.copyFileSync(orchSrc, path.join(orchDestDir, 'SKILL.md'));
+        ok('Orchestrator skill installed');
+    }
 
     // 7. Copy schemas (always overwrite)
-    info('Installing schemas...');
-    const schemaSrc = path.join(AWK_ROOT, 'schemas');
-    const schemaDest = path.join(target, 'schemas');
-    const schemaCount = copyDirRecursive(schemaSrc, schemaDest);
-    ok(`${schemaCount} schemas installed`);
+    if (plat.dirs.schemas) {
+        info('Installing schemas...');
+        const schemaSrc = path.join(AWK_ROOT, 'schemas');
+        const schemaDest = path.join(target, plat.dirs.schemas);
+        const schemaCount = copyDirRecursive(schemaSrc, schemaDest);
+        ok(`${schemaCount} schemas installed`);
+    }
 
     // 8. Copy templates (don't overwrite existing)
-    info('Installing templates...');
-    const tmplSrc = path.join(AWK_ROOT, 'templates');
-    const tmplDest = path.join(target, 'templates');
-    const tmplCount = copyDirRecursive(tmplSrc, tmplDest, { overwrite: false });
-    ok(`${tmplCount} templates installed`);
+    if (plat.dirs.templates) {
+        info('Installing templates...');
+        const tmplSrc = path.join(AWK_ROOT, 'templates');
+        const tmplDest = path.join(target, plat.dirs.templates);
+        const tmplCount = copyDirRecursive(tmplSrc, tmplDest, { overwrite: false });
+        ok(`${tmplCount} templates installed`);
+    }
 
     // 9. Save version
-    fs.writeFileSync(TARGETS.versionFile, AWK_VERSION);
+    fs.writeFileSync(plat.versionFile, AWK_VERSION);
     ok(`Version ${AWK_VERSION} saved`);
 
     // 10. Install default skill packs
@@ -337,21 +433,34 @@ function cmdInstall() {
     // 11. Summary
     log('');
     log(`${C.gray}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
-    log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed successfully!${C.reset}`);
+    log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed for ${plat.name}!${C.reset}`);
     log('');
-    dim(`Workflows:  ${path.join(target, 'global_workflows')}`);
-    dim(`Skills:     ${path.join(target, 'skills')}`);
-    dim(`Schemas:    ${path.join(target, 'schemas')}`);
-    dim(`Templates:  ${path.join(target, 'templates')}`);
-    dim(`GEMINI.md:  ${TARGETS.geminiMd}`);
+    dim(`Platform:   ${plat.name}`);
+    if (plat.dirs.workflows) dim(`Workflows:  ${path.join(target, plat.dirs.workflows)}`);
+    if (plat.dirs.skills) dim(`Skills:     ${path.join(target, plat.dirs.skills)}`);
+    if (plat.dirs.schemas) dim(`Schemas:    ${path.join(target, plat.dirs.schemas)}`);
+    if (plat.dirs.templates) dim(`Templates:  ${path.join(target, plat.dirs.templates)}`);
+    if (plat.dirs.agents) dim(`Agents:     ${path.join(target, plat.dirs.agents)}`);
+
+    if (plat.rulesFile) {
+        dim(`Global Rules: ${plat.rulesFile}`);
+    }
     if (defaultPacks.length > 0) {
         dim(`Packs:      ${defaultPacks.join(', ')} (auto-enabled)`);
     }
-    const bdVer = (() => { try { return execSync('bd --version', { encoding: 'utf8' }).trim().split('\n')[0]; } catch (_) { return 'installed'; } })();
-    dim(`Symphony:     task tracking ready`);
+    if (platform === 'antigravity') {
+        dim(`Symphony:   task tracking ready`);
+    }
     log('');
-    log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
-    log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
+
+    if (platform === 'antigravity') {
+        log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
+        log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
+    } else if (platform === 'cline') {
+        log(`${C.cyan}👉 Type '/plan' in Cline chat to get started.${C.reset}`);
+    } else if (platform === 'codex') {
+        log(`${C.cyan}👉 Type '$skill' in Codex to invoke skills.${C.reset}`);
+    }
     log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
     log('');
 }
@@ -1675,30 +1784,20 @@ function cmdInit(forceFlag = false) {
         ok('CODEBASE.md created');
     }
 
-    // ── 5. Symphony init ─────────────────────────────────────────────────────────
+    // ── 5. Symphony folder ───────────────────────────────────────────────────────
     const symphonyDir = path.join(cwd, '.symphony');
     if (fs.existsSync(symphonyDir) && !forceFlag) {
-        warn('.symphony/ already exists — skipping');
+        warn('.symphony/ folder already exists');
     } else {
-        info('Initializing Symphony task database...');
-        // Ensure bd is installed (auto-install silently if missing)
-        const bdReady = installSymphony({ silent: true });
-        if (!bdReady) {
-            warn('bd not available — skipping bd init');
-            dim('Install manually: npm install -g @anthropic/symphony');
-        } else {
-            try {
-                execSync('bd init', { cwd, stdio: 'pipe' });
-                ok('Symphony initialized (.symphony/)');
-            } catch (e) {
-                const msg = (e.stderr || e.stdout || e.message || '').toString().trim();
-                if (msg.includes('already')) {
-                    warn('Symphony already initialized — skipping');
-                } else {
-                    warn(`bd init failed: ${msg || e.message}`);
-                    dim('Try manually: cd <project> && bd init');
-                }
-            }
+        info('Creating .symphony/ folder to mark project context...');
+        fs.mkdirSync(symphonyDir, { recursive: true });
+        // Create an empty .gitignore just in case
+        fs.writeFileSync(path.join(symphonyDir, '.gitignore'), '*\n');
+        ok('Symphony project marker created (.symphony/)');
+        
+        const symReady = checkSymphony({ silent: true });
+        if (!symReady) {
+            dim('Symphony CLI is not installed. Run: npm i -g awkit-symphony');
         }
     }
 
@@ -1714,7 +1813,7 @@ function cmdInit(forceFlag = false) {
     log('');
     log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
     log(`${C.cyan}👉 Run '/codebase-sync' in AI chat to keep CODEBASE.md updated.${C.reset}`);
-    log(`${C.cyan}👉 Run 'bd list' to manage tasks.${C.reset}`);
+    log(`${C.cyan}👉 Run 'symphony task list' to manage tasks.${C.reset}`);
     log('');
 }
 
@@ -1962,7 +2061,17 @@ switch (command) {
         cmdInit(args.includes('--force'));
         break;
     case 'install':
-        cmdInstall();
+        // Parse platform from either first arg or --platform flag
+        {
+            const pIdx = args.indexOf('--platform');
+            let platformArg = null;
+            if (pIdx !== -1 && args[pIdx + 1]) {
+                platformArg = args[pIdx + 1];
+            } else if (args[0] && !args[0].startsWith('-')) {
+                platformArg = args[0];
+            }
+            cmdInstall(platformArg);
+        }
         break;
     case 'uninstall':
         cmdUninstall();
