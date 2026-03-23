@@ -1,0 +1,15 @@
+{
+    "name": "superpowers",
+    "auto_install": false,
+    "description": "Structured development workflows ported from Claude Code Superpowers: TDD, code review, planning, debugging, git worktree isolation, and two-stage review loops",
+    "origin": "https://github.com/skainguyen1412/antigravity-superpowers",
+    "requires": [],
+    "post_install": [],
+    "notes": {
+        "overlap": [
+            "brainstorming ↔ brainstorm-agent (AWF version is more comprehensive)",
+            "using-superpowers ↔ orchestrator (AWF version has Symphony integration)"
+        ],
+        "key_skill": "single-flow-task-execution — Two-stage review loop (spec compliance → code quality)"
+    }
+}

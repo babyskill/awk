@@ -291,6 +291,29 @@ Khi user gõ `/code all-phases`:
 *   Cài thêm thư viện mới → Hỏi trước
 *   Deploy/Push code → **LUÔN LUÔN** hỏi trước
 
+### 5. TDD ENFORCEMENT (Superpowers-Inspired)
+
+> **Iron Law:** Write failing test FIRST, then implement. RED → GREEN → REFACTOR.
+> Ref: `~/.gemini/antigravity/skills/systematic-debugging/SKILL.md` Phase 4.
+
+**For PRODUCTION and ENTERPRISE quality levels:**
+```
+1. Write failing test for the feature/fix
+2. Run test → MUST FAIL (RED)
+3. Write MINIMAL code to make test pass
+4. Run test → MUST PASS (GREEN)
+5. Refactor if needed, tests still pass
+6. Commit
+```
+
+**Anti-Rationalization:**
+| Excuse | Reality |
+|--------|--------|
+| "I'll write tests after" | Untested code = unknown state |
+| "Too simple for tests" | Simple code breaks most |
+| "Tests slow me down" | Tests prevent 2h debug sessions |
+| "MVP doesn't need tests" | Even MVP needs syntax/build check |
+
 ---
 
 ## Giai đoạn 2: Hidden Requirements (Tự động thêm)
@@ -401,8 +424,12 @@ Test FAIL
 [Lần 3] Rollback + Approach khác → Test lại
     ↓
 ├── PASS → Thoát loop, tiếp tục
-└── FAIL → Hỏi User
+└── FAIL → ⚠️ 3-Fix Rule: Question architecture!
+         → Hỏi User + gợi ý /debug --systematic
 ```
+
+> **3-Fix Rule (from Superpowers):** Nếu 3 lần fix fail → đây KHÔNG phải bug đơn giản.
+> Đây là vấn đề kiến trúc. DỪNG fix symptoms, thảo luận root cause với user.
 
 ### 4.3. Khi fix loop thất bại
 

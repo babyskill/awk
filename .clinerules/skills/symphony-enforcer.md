@@ -181,20 +181,9 @@ Signal 4: Verification pass (tests OK, build OK)
 
 **Action:**
 ```
-0. ⚡ VERIFICATION GATE (BẮT BUỘC — Iron Law):
-   - IDENTIFY: What command proves this task is done?
-   - RUN: Execute verification (build, test, lint)
-   - READ: Full output, check exit code
-   - VERIFY: Does output confirm completion?
-   - If NO → FIX trước, KHÔNG complete task
-   - If YES → Proceed with evidence
-   ⛔ Skip verification = VI PHẠM (xem verification-gate skill)
-
 1. symphony_complete_task(
      task_id=current_task,
-     summary="mô tả ngắn + VERIFICATION EVIDENCE"
-     // ✅ "Implemented X. Build: ✅ exit 0. Tests: ✅ 47/47. Lint: ✅ 0 errors."
-     // ❌ "Implemented X" (không evidence)
+     summary="mô tả ngắn kết quả"
    )
 2. Hiển thị: "✅ SYM #sym-XYZ — Done"
 3. → TRIGGER TP2.5 (Atomic Git Commit)

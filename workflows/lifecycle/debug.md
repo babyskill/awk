@@ -9,6 +9,18 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 
 ---
 
+## ⚠️ Iron Law (from systematic-debugging skill)
+
+```
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+```
+
+> Bắt buộc: Đọc `~/.gemini/antigravity/skills/systematic-debugging/SKILL.md` trước khi debug.
+> 4 phases: Root Cause → Pattern Analysis → Hypothesis → Implementation
+> 3-Fix Rule: Sau 3 fix thất bại → question architecture, discuss with user.
+
+---
+
 ## 🅰️ Expert Mode (Direct Execution)
 
 **Usage:**
@@ -16,20 +28,28 @@ description: 🐞 Sửa lỗi & Debug (Dual-Mode v5.0)
 /debug --auto-fix --file src/components/Cart.tsx
 ```
 
-**Logic:**
-1.  **Auto-Detect:**
-    -   Đọc logs gần nhất.
-    -   Parse error stack trace.
-    -   Identify file & line number.
-2.  **Root Cause Analysis:**
-    -   Phân tích code tại vị trí lỗi.
-    -   Đưa ra 1-2 giả thuyết.
-3.  **Auto-Fix (Safe Only):**
-    -   Lỗi *Safe-to-fix*: Missing import, typo, undefined check -> Sửa ngay.
-    -   Lỗi *Logic*: Báo cáo và đề xuất (không tự ý sửa).
-4.  **Symphony Sync:**
-    -   Nếu lỗi Critical và không thể auto-fix -> `symphony_create_task(title="Fix Critical Bug in Cart.tsx")`.
-5.  **Report:** "✅ Fixed 1 issue. ⚠️ Created task #456 for manual review."
+**Logic (follows 4-phase systematic debugging):**
+1.  **Phase 1 — Root Cause Investigation:**
+    -   Đọc error messages/stack traces HOÀN TOÀN (không skip).
+    -   Reproduce consistently — exact steps.
+    -   `git diff` — check recent changes.
+    -   Multi-component: add diagnostic logging ở mỗi boundary.
+    -   Trace data flow backward đến source.
+2.  **Phase 2 — Pattern Analysis:**
+    -   Find similar WORKING code in codebase.
+    -   Compare: list EVERY difference.
+3.  **Phase 3 — Hypothesis:**
+    -   "I think X is root cause because Y"
+    -   Test minimally — ONE variable at a time.
+4.  **Phase 4 — Implementation:**
+    -   Create failing test FIRST.
+    -   Implement single fix.
+    -   Verify: tests pass, no regressions.
+5.  **Symphony Sync:**
+    -   Nếu lỗi Critical và không thể auto-fix → `symphony_create_task(title="Fix Critical Bug in Cart.tsx")`.
+6.  **NeuralMemory:**
+    -   `nmem_remember` root cause + fix + pattern (cho future recall).
+7.  **Report:** "✅ Fixed 1 issue. Evidence: [test output]. ⚠️ Created task #456 for manual review."
 
 ---
 

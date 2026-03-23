@@ -34,6 +34,21 @@
 
 ---
 
+## Quality & Discipline Skills (Superpowers-Inspired)
+
+> Skills ported and adapted from [obra/superpowers](https://github.com/obra/superpowers) framework.
+> Integrated into AWKit with NeuralMemory + Symphony extensions.
+
+| # | Skill | Type | Trigger | Priority | Status |
+|---|-------|------|---------|----------|--------|
+| 14 | `verification-gate` | `auto` | Task completion, commit, deploy | 1 | ✅ Active |
+| 15 | `systematic-debugging` | `auto` | `/debug`, error detected, test failures | 2 | ✅ Active |
+| 16 | `code-review` | `auto` | Task completion, before merge | 3 | ✅ Active |
+| 17 | `writing-skills` | `manual` | Creating/modifying skills | — | ✅ Active |
+
+
+---
+
 ## NeuralMemory Skill Pack (Optional Upgrade)
 
 When NeuralMemory is installed, these skills provide enhanced capabilities:
