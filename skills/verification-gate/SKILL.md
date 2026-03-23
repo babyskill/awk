@@ -121,10 +121,31 @@ When calling `symphony_complete_task`:
 ✅ symphony_complete_task(summary="Implemented feature X. Build: ✅ (exit 0). Tests: ✅ 47/47 pass. Lint: ✅ 0 errors.")
 ```
 
+## Boil-the-Lake Completeness Checklist
+
+> **Principle:** AI's marginal cost is near zero. Ship completeness, not shortcuts.
+
+Trước khi claim DONE, kiểm tra **mỗi item** dưới đây:
+
+```
+☐ Error handling: MỌI code path có proper error handling?
+  → Network errors, parsing errors, invalid input, timeouts
+☐ Edge cases: Đã handle empty states, nil/null, boundary values?
+  → Empty list, first item, last item, max size
+☐ Logging: Đủ log cho production debugging?
+  → Errors logged with context, key operations tracked
+☐ Cleanup: Resources released? Listeners removed? Timers cancelled?
+☐ Input validation: User input được validate trước khi process?
+☐ Concurrency: Thread-safe? Race conditions handled?
+☐ Backwards compatibility: Breaking changes documented?
+```
+
+**Nếu thiếu bất kỳ item nào → report DONE_WITH_CONCERNS, không DONE.**
+
 ## The Bottom Line
 
-**No shortcuts for verification.**
+**No shortcuts for verification. No shortcuts for completeness.**
 
-Run the command. Read the output. THEN claim the result.
+Run the command. Read the output. Check the checklist. THEN claim the result.
 
 This is non-negotiable.

@@ -4,10 +4,10 @@ description: |
   Mandatory Symphony checkpoint system. Ensures AI never forgets to create,
   update, or complete tasks in Symphony. Enforces progress reporting at every
   milestone and auto-detects task completion without waiting for user confirmation.
-  v3.1: Pre-Plan Gate, Auto-Lifecycle, Auto-Next, Atomic Git Commits.
+  v3.3: Completion Status Protocol, Search-Before-Building, Boil-the-Lake.
 metadata:
   stage: core
-  version: "3.1"
+  version: "3.3"
   replaces: "v2.0"
   requires: symphony-orchestrator
   tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next]
@@ -24,14 +24,16 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.1 — Spec-First + Auto-Lifecycle + Auto-Next + Atomic Commits
+# Symphony Enforcer v3.3 — Completion Status Protocol + Gstack Principles
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.1:**
+> **Key Changes v3.3:**
+> - **Completion Status Protocol**: 4-status (DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT)
+> - **Design Compliance (TP1.5)**: Đối chiếu schema changes vs approved design doc
 > - **Pre-Plan Gate**: Đọc spec trước khi plan, hỏi user về constraints
 > - **Auto-Lifecycle**: Liên kết task_boundary ↔ Symphony tự động
 > - **Auto-Next**: BẮT BUỘC gợi ý next steps sau mỗi task done
-> - **Atomic Git Commits**: Tự động commit sau mỗi task done (NEW v3.1)
+> - **Atomic Git Commits**: Tự động commit sau mỗi task done
 > **Principle:** AI tự detect completion — user KHÔNG CẦN nói "xong".
 
 ---
@@ -168,7 +170,48 @@ symphony_report_progress(
 
 ---
 
-### TP2: Task Complete — Auto-detect
+### TP1.5: Design Compliance Check (NEW v3.2 — Gate 4 Enforcement)
+
+**Khi nào:** Mỗi khi AI sửa file liên quan đến DB/Model/Schema trong EXECUTION mode.
+
+**Trigger signals:**
+```
+File patterns:
+  - **/models/**,  **/entities/**,  **/schemas/**
+  - **Migration*, **Schema*, **Model*
+  - *.entity.*, *.model.*, *.schema.*
+  - Database.swift, AppDatabase.swift, schema.prisma, etc.
+```
+
+**Action:**
+```
+1. Kiểm tra: docs/architecture/<feature>_design.md tồn tại?
+   → KHÔNG → ⚠️ Warning: "Đang sửa model file nhưng chưa có approved design.
+     Recommend chạy spec-gate trước."
+     → Nếu COMPLEX task → ⛔ DỪNG, enforce Gate 2
+     → Nếu TRIVIAL/MODERATE → Warning only, tiếp tục
+
+2. Đối chiếu thay đổi vs approved design:
+   → Thêm field KHÔNG có trong design? → ⛔ DỪNG
+   → Đổi type khác design? → ⛔ DỪNG
+   → Xóa field trong design? → ⛔ DỪNG
+   → Thêm field CÓ trong design? → ✅ OK
+
+3. Khi DỪNG:
+   → Thông báo: "Schema change ngoài approved design detected.
+     [field_name] không có trong docs/architecture/<feature>_design.md.
+     Quay lại Gate 2 để update design trước nhé."
+   → Kích hoạt spec-gate skill để update design doc
+   → Sau khi re-approve → tiếp tục code
+```
+
+**Enforcement:**
+- ❌ KHÔNG tự ý thêm cột/bảng ngoài approved design cho COMPLEX tasks
+- ✅ NÊN ghi lại mọi deviation attempt vào NeuralMemory cho future reference
+
+---
+
+### TP2: Task Complete — Completion Status Protocol
 
 **Khi nào:** AI detect ≥2/4 completion signals:
 
@@ -179,7 +222,44 @@ Signal 3: Tất cả checklist items trong task.md đã [x]
 Signal 4: Verification pass (tests OK, build OK)
 ```
 
-**Action:**
+**Completion Status Protocol (4 statuses):**
+
+```
+DONE:
+  Điều kiện: Verification pass, không caveats.
+  Action: symphony_complete_task với evidence.
+  Format: "✅ DONE — {summary}. Build: ✅. Tests: ✅ N/N."
+
+DONE_WITH_CONCERNS:
+  Điều kiện: Code hoạt động nhưng có caveats/risks cần biết.
+  Action: Complete task NHƯNG ghi rõ concerns.
+  Format: "⚠️ DONE_WITH_CONCERNS — {summary}.
+    Concerns: [list cụ thể]
+    Risk: [mức độ ảnh hưởng]
+    Recommendation: [đề xuất xử lý]"
+  Ví dụ: "Feature works nhưng chưa handle offline mode."
+  Ví dụ: "API call thành công nhưng chưa có retry logic."
+
+BLOCKED:
+  Điều kiện: Không thể tiếp tục vì external dependency/blocker.
+  Action: KHÔNG complete task. Report + list attempts.
+  Format: "🚫 BLOCKED — {reason}.
+    Attempted: [list things đã thử]
+    Needs: [what's needed to unblock]"
+  Ví dụ: "API endpoint return 500, đã retry 3 lần."
+
+NEEDS_CONTEXT:
+  Điều kiện: Thiếu thông tin từ user để tiếp tục.
+  Action: KHÔNG complete task. Hỏi user cụ thể.
+  Format: "❓ NEEDS_CONTEXT — {what's missing}.
+    Question: [câu hỏi cụ thể]
+    Options: [list options nếu có]"
+  Ví dụ: "Cần user clarify: offline-first hay online-only?"
+```
+
+⛔ **KHÔNG BAO GIỜ report DONE nếu thực tế là DONE_WITH_CONCERNS hoặc BLOCKED.**
+
+**Action (cho DONE status):**
 ```
 0. ⚡ VERIFICATION GATE (BẮT BUỘC — Iron Law):
    - IDENTIFY: What command proves this task is done?
@@ -192,11 +272,12 @@ Signal 4: Verification pass (tests OK, build OK)
 
 1. symphony_complete_task(
      task_id=current_task,
-     summary="mô tả ngắn + VERIFICATION EVIDENCE"
-     // ✅ "Implemented X. Build: ✅ exit 0. Tests: ✅ 47/47. Lint: ✅ 0 errors."
-     // ❌ "Implemented X" (không evidence)
+     summary="mô tả ngắn + STATUS + VERIFICATION EVIDENCE"
+     // ✅ "DONE — Implemented X. Build: ✅ exit 0. Tests: ✅ 47/47."
+     // ✅ "DONE_WITH_CONCERNS — Implemented X. Build: ✅. Concerns: no offline support."
+     // ❌ "Implemented X" (không status, không evidence)
    )
-2. Hiển thị: "✅ SYM #sym-XYZ — Done"
+2. Hiển thị: "✅ SYM #sym-XYZ — {STATUS}"
 3. → TRIGGER TP2.5 (Atomic Git Commit)
 4. → TRIGGER TP4 (Auto-Next) NGAY LẬP TỨC
 ```

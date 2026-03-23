@@ -1,6 +1,6 @@
-# GEMINI.md — Antigravity v11.0
+# GEMINI.md — Antigravity v12.1
 
-> Rules + routing only. Gate details → skills. Updated: 2026-03-18
+> Rules + routing only. Gate details → skills. Updated: 2026-03-23
 
 ---
 
@@ -50,10 +50,19 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
 
-### Spec-First (NEW v11.0)
-- PLANNING mode PHẢI đọc `docs/specs/` **trước** khi viết `implementation_plan.md`.
-- Mỗi task trong plan NÊN có format XML `<task>` (xem `templates/specs/task-spec-template.xml`).
-- `implementation_plan.md` PHẢI reference `TECH-SPEC.md` constraints khi relevant.
+### 5-Gate Autonomous System (NEW v12.0)
+- orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.
+- COMPLEX tasks PHẢI qua 5 Gates tuần tự:
+  - Gate 1 (Spec): `brainstorm-agent` → BRIEF.md / spec document
+  - Gate 2 (Architecture): `spec-gate` → design doc + user approve
+  - Gate 3 (Tasks): `symphony-enforcer` → tạo Symphony tickets
+  - Gate 4 (Execution): code theo ticket, đối chiếu design doc
+  - Gate 5 (Verification): `verification-gate` + `code-review`
+- TRIVIAL tasks bypass → thẳng Gate 4.
+- MODERATE tasks → Gate 3 + 4 + 5.
+- AI tự detect gate state — user KHÔNG CẦN gọi workflow bằng tay.
+- Trong lúc code, nếu cần sửa schema khác approved design → ⛔ DỪNG, quay Gate 2.
+- Chi tiết: xem `orchestrator/SKILL.md` (triage) + `spec-gate/SKILL.md` (Gate 2).
 
 ### NeuralMemory
 - Brain = projectId. Switch trước mọi nmem call.
@@ -66,6 +75,34 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - Code/Docs/Comments: Tiếng Anh.
 - Kết thúc task: Tóm tắt + Test + Next steps.
 - Không rõ: Hỏi lại, tối đa 2 lần.
+
+### Anti-sycophancy (Trung thực)
+- PHẢI push back khi approach của user có vấn đề — giải thích rõ trade-offs.
+- KHÔNG nói "Great idea!" nếu idea có red flags → nêu rủi ro trước.
+- Nêu cả ưu VÀ nhược điểm của mọi approach, không chỉ list ưu điểm.
+- Nếu request vi phạm best practices → cảnh báo TRƯỚC khi implement.
+- Khi phát hiện pattern sai → đề xuất alternative, không im lặng đồng ý.
+- Acknowledge limitations: nói "Tôi không chắc" khi không chắc.
+
+### Safety Guardrails (Destructive Commands)
+- KHÔNG BAO GIỜ set `SafeToAutoRun=true` cho các commands sau:
+  - `rm -rf`, `rm -r`, `rmdir` (recursive delete)
+  - `git push --force`, `git reset --hard`, `git clean -fd`
+  - `DROP TABLE`, `DROP DATABASE`, `DELETE FROM` (without WHERE)
+  - `docker system prune`, `docker volume rm`
+  - `npm publish`, `pod trunk push`
+  - Bất kỳ command nào deploy lên production
+- Double-confirm với user trước khi chạy destructive command.
+- Nếu không chắc command có destructive hay không → hỏi trước.
+
+### 6 Decision Principles (Auto-decide)
+Khi AI cần tự quyết định mà không hỏi user:
+1. **Complete > Shortcuts** — Implement đủ, không bỏ edge cases.
+2. **Evidence > Assumptions** — Dựa trên data, không đoán.
+3. **Standard > Custom** — Ưu tiên solution có sẵn, chuẩn ngành.
+4. **Explicit > Implicit** — Code rõ ràng, không "clever" tricks.
+5. **Test > Trust** — Viết test, không "chắc chắn đúng".
+6. **Small > Big** — Incremental changes, không big-bang refactor.
 
 ### Project Context
 - CODEBASE.md tồn tại → KHÔNG scan raw directory.
@@ -85,7 +122,8 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 
 ## Routing
 
-- **Execution order:** `symphony-orchestrator` → `awf-session-restore` → `nm-memory-sync` → `symphony-enforcer` → `orchestrator` → action
+- **Execution order:** `symphony-orchestrator` → `awf-session-restore` → `nm-memory-sync` → `symphony-enforcer` → `orchestrator` (triage + gate-check) → action
+- **Gate skills:** `orchestrator` (triage) → `brainstorm-agent` (G1) → `spec-gate` (G2) → `symphony-enforcer` (G3) → `verification-gate` (G5)
 - **Skill catalog:** xem `orchestrator/SKILL.md`
 - **Workflows:** 75+ (`/xxx`). Core: `/init` `/code` `/debug` `/recap` `/next` `/todo`
 - **Shortcuts:** `/todo` `/done` `/next`

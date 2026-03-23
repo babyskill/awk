@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../.gemini"
+		},
+		{
+			"path": "../../../Dev2/iOS/FitBite Pro iOS"
 		}
 	],
 	"settings": {}

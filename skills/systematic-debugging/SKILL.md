@@ -98,25 +98,50 @@ You MUST complete each phase before proceeding to the next.
 2. **Implement Single Fix** — ONE change at a time. No "while I'm here" improvements
 3. **Verify Fix** — Test passes? No other tests broken? Issue actually resolved?
 
-## The 3-Fix Rule
+## The 3-Strike Escalation Protocol
 
 ```
-If 3+ fixes have FAILED → STOP
+If 3+ fixes have FAILED → STOP. ESCALATE. NO EXCEPTIONS.
 
 This is NOT a failed hypothesis.
 This is a WRONG ARCHITECTURE.
 ```
 
-**After 3 failed fixes:**
-- Is this pattern fundamentally sound?
-- Are we sticking with it through sheer inertia?
-- Should we refactor architecture vs. continue fixing symptoms?
-- **DISCUSS with user before attempting more fixes**
+**Escalation Protocol (BẮT BUỘC sau 3 failed attempts):**
+
+```
+1. STOP — Không thử fix thứ 4.
+2. REPORT full context cho user:
+   🚫 ESCALATION — 3 fix attempts failed
+   ─────────────────────────────────────
+   Attempt 1: {what tried} → {why failed}
+   Attempt 2: {what tried} → {why failed}
+   Attempt 3: {what tried} → {why failed}
+   
+   Root Cause Hypothesis: {current best guess}
+   Architectural Concern: {pattern detected}
+   
+   Recommended: [refactor approach | seek expert | alternative solution]
+   ─────────────────────────────────────
+3. WAIT for user decision — do NOT proceed autonomously.
+```
 
 **Pattern indicating architectural problem:**
 - Each fix reveals new shared state/coupling
 - Fixes require "massive refactoring" to implement
 - Each fix creates new symptoms elsewhere
+
+## Scope Freeze During Debug
+
+```
+Khi đang debug một issue:
+- KHÔNG sửa bug khác "tiện tay"
+- KHÔNG refactor code xung quanh
+- KHÔNG thêm feature "nhân tiện"
+- CHỈ tập trung vào root cause hiện tại
+
+Violation → revert side changes, focus on current scope
+```
 
 ## Red Flags — STOP and Return to Phase 1
 
