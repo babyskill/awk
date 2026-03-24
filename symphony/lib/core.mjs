@@ -266,12 +266,13 @@ export function getActiveProject() {
  */
 function resolveProjectId(projectParam) {
     if (projectParam === '__all__') return null;
-    if (projectParam) return projectParam;
+    if (projectParam) return String(projectParam).toLowerCase();
     // No auto-scoping — return null to show all
     return null;
 }
 
 export function createProject({ id, name, projectPath, icon, color }) {
+    if (id) id = String(id).toLowerCase();
     const db = getDb();
     db.prepare(`
         INSERT INTO projects (id, name, path, icon, color, last_active_at)
@@ -307,6 +308,7 @@ export function updateProject(id, fields) {
 }
 
 export function setActiveProject(projectId) {
+    if (projectId) projectId = String(projectId).toLowerCase();
     const db = getDb();
     db.prepare('UPDATE projects SET is_active = 0 WHERE is_active = 1').run();
     if (projectId) {
@@ -396,7 +398,15 @@ export function createTask(title, opts = {}) {
     for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
 
     const initialStatus = opts.isDraft ? 'draft' : 'ready';
-    const projectId = opts.projectId || resolveProjectId(null);
+    const projectId = opts.projectId ? String(opts.projectId).toLowerCase() : resolveProjectId(null);
+
+    // Auto-register project so it appears in UI
+    if (projectId) {
+        db.prepare(`
+            INSERT OR IGNORE INTO projects (id, name, path, icon, color, last_active_at)
+            VALUES (?, ?, NULL, '📁', '#8888a0', datetime('now'))
+        `).run(projectId, projectId);
+    }
 
     db.prepare(`
         INSERT INTO tasks (id, project_id, title, description, status, priority, acceptance, phase, estimated_files, conversation_id)
