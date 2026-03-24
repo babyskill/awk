@@ -28,7 +28,8 @@ const path = require('path');
 const https = require('https');
 const { execSync, spawnSync } = require('child_process');
 
-const AWK_VERSION = fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim();
+const packageJson = require(path.join(__dirname, '..', 'package.json'));
+const AWK_VERSION = packageJson.version;
 const AWK_ROOT = path.join(__dirname, '..');
 const HOME = process.env.HOME || process.env.USERPROFILE;
 
@@ -283,7 +284,7 @@ function checkSymphony({ silent = false } = {}) {
         return true;
     } catch (_) {
         if (!silent) warn('Symphony CLI not found. Please install it manually:');
-        if (!silent) dim('  npm install -g awkit-symphony');
+        if (!silent) dim('  npm install -g @leejungkiin/awkit-symphony');
         return false;
     }
 }
@@ -454,10 +455,7 @@ function cmdInstall(platformArg) {
     log('');
 
     if (platform === 'antigravity') {
-        log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
         log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
-    } else if (platform === 'cline') {
-        log(`${C.cyan}👉 Type '/plan' in Cline chat to get started.${C.reset}`);
     } else if (platform === 'codex') {
         log(`${C.cyan}👉 Type '$skill' in Codex to invoke skills.${C.reset}`);
     }
@@ -1371,6 +1369,18 @@ function cmdHelp() {
     log(`  ${C.green}disable-pack${C.reset} <name> Uninstall a skill pack (backed up)`);
     log('');
 
+    // Trello
+    log(`${C.bold}📋  Trello${C.reset}`);
+    log(line);
+    log(`  ${C.green}trello desc${C.reset} <text>       Update card description`);
+    log(`  ${C.green}trello comment${C.reset} <text>    Add milestone comment`);
+    log(`  ${C.green}trello item${C.reset} <name>       Add checklist item`);
+    log(`  ${C.green}trello complete${C.reset} <name>   Mark checklist item ✅`);
+    log(`  ${C.green}trello block${C.reset} <reason>    Label card Blocked + comment`);
+    log(`  ${C.green}trello checklist${C.reset} <name>  Create new checklist`);
+    log(`  ${C.gray}  Auto-loads .trello-config.json + global credentials${C.reset}`);
+    log('');
+
     // Telegram
     log(`${C.bold}📨  Telegram${C.reset}`);
     log(line);
@@ -1773,6 +1783,27 @@ function cmdInit(forceFlag = false) {
         ok(`${workspaceName} created`);
     }
 
+    // ── 3.5. .trello-config.json ───────────────────────────────────────────────
+    const trelloConfigPath = path.join(cwd, '.trello-config.json');
+    if (fs.existsSync(trelloConfigPath) && !forceFlag) {
+        warn('.trello-config.json already exists — skipping (use --force to overwrite)');
+    } else {
+        info('Creating .trello-config.json...');
+        const templatePath = path.join(TARGETS.antigravity, 'templates', 'configs', 'trello-config.json');
+        if (fs.existsSync(templatePath)) {
+            fs.copyFileSync(templatePath, trelloConfigPath);
+            ok('.trello-config.json created from template');
+        } else {
+            const defaultTrelloConfig = {
+                "BOARD_NAME": "Your Board Name",
+                "LIST_NAME": "Your Backlog List",
+                "CARD_NAME": "Project Card Name or ID"
+            };
+            fs.writeFileSync(trelloConfigPath, JSON.stringify(defaultTrelloConfig, null, 2) + '\n');
+            ok('.trello-config.json created with default values');
+        }
+    }
+
     // ── 4. CODEBASE.md ────────────────────────────────────────────────────────
     const codebasePath = path.join(cwd, 'CODEBASE.md');
     if (fs.existsSync(codebasePath) && !forceFlag) {
@@ -1797,7 +1828,7 @@ function cmdInit(forceFlag = false) {
         
         const symReady = checkSymphony({ silent: true });
         if (!symReady) {
-            dim('Symphony CLI is not installed. Run: npm i -g awkit-symphony');
+            dim('Symphony CLI is not installed. Run: npm i -g @leejungkiin/awkit-symphony');
         }
     }
 
@@ -1808,7 +1839,7 @@ function cmdInit(forceFlag = false) {
     log('');
     dim(`Type:       ${projectType}`);
     dim(`Firebase:   analytics, crashlytics, remote-config, auth`);
-    dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md`);
+    dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md, .trello-config.json`);
     dim(`Symphony:     task tracking ready)`);
     log('');
     log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
@@ -2011,6 +2042,155 @@ function cmdTelegram(args) {
     }
 }
 
+// ─── Trello Integration ───────────────────────────────────────────────────────
+
+const TRELLO_CRED_PATH = path.join(TARGETS.antigravity, 'credentials', 'trello.json');
+
+/**
+ * Load Trello credentials from global config.
+ * Returns { api_key, api_token } or null.
+ */
+function trelloLoadCredentials() {
+    // Priority 1: Environment variables (already exported by user)
+    if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
+        return { api_key: process.env.TRELLO_KEY, api_token: process.env.TRELLO_TOKEN };
+    }
+    // Priority 2: Global credentials file
+    if (fs.existsSync(TRELLO_CRED_PATH)) {
+        try {
+            const cred = JSON.parse(fs.readFileSync(TRELLO_CRED_PATH, 'utf8'));
+            if (cred.api_key && cred.api_token) return cred;
+        } catch (_) { }
+    }
+    return null;
+}
+
+/**
+ * Load Trello project config from .trello-config.json in CWD.
+ * Returns { board, list, card } or null.
+ */
+function trelloLoadProjectConfig() {
+    const configPath = path.join(process.cwd(), '.trello-config.json');
+    if (!fs.existsSync(configPath)) return null;
+    try {
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        return {
+            board: cfg.BOARD_NAME || cfg.board,
+            list: cfg.LIST_NAME || cfg.list,
+            card: cfg.CARD_NAME || cfg.card,
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+/**
+ * Execute a trello-cli command with auto-injected credentials.
+ */
+function trelloExec(cliArgs) {
+    const cred = trelloLoadCredentials();
+    const cfg = trelloLoadProjectConfig();
+    if (!cred) {
+        err('Trello credentials not found.');
+        log(`  Set env vars: ${C.cyan}export TRELLO_KEY=... && export TRELLO_TOKEN=...${C.reset}`);
+        log(`  Or create: ${C.cyan}${TRELLO_CRED_PATH}${C.reset}`);
+        return false;
+    }
+    if (!cfg) {
+        err('.trello-config.json not found in current directory.');
+        log(`  Run ${C.cyan}awkit init${C.reset} to generate one, or create it manually.`);
+        return false;
+    }
+
+    const env = { ...process.env, TRELLO_KEY: cred.api_key, TRELLO_TOKEN: cred.api_token };
+    const fullArgs = [...cliArgs, '--board', cfg.board, '--list', cfg.list, '--card', cfg.card];
+
+    const result = spawnSync('npx', ['--yes', 'trello-cli', ...fullArgs], {
+        env,
+        stdio: 'inherit',
+        timeout: 30000,
+    });
+
+    if (result.status !== 0) {
+        warn('Trello CLI returned non-zero exit code. Try: npx --yes trello-cli sync');
+        return false;
+    }
+    return true;
+}
+
+function trelloHelp() {
+    log('');
+    log(`${C.cyan}${C.bold}📋 Trello Commands${C.reset}`);
+    log('');
+    log(`  ${C.green}awkit trello desc${C.reset} <text>        Update card description`);
+    log(`  ${C.green}awkit trello comment${C.reset} <text>     Add milestone comment to card`);
+    log(`  ${C.green}awkit trello item${C.reset} <name>        Add checklist item (incomplete)`);
+    log(`  ${C.green}awkit trello complete${C.reset} <name>    Mark checklist item ✅ complete`);
+    log(`  ${C.green}awkit trello block${C.reset} <reason>     Label card Blocked + comment`);
+    log(`  ${C.green}awkit trello checklist${C.reset} <name>   Create a new checklist on card`);
+    log('');
+    log(`  ${C.gray}Credentials: env vars TRELLO_KEY/TRELLO_TOKEN or ${TRELLO_CRED_PATH}${C.reset}`);
+    log(`  ${C.gray}Project config: .trello-config.json in CWD${C.reset}`);
+    log('');
+}
+
+function cmdTrello(args) {
+    const subCmd = args[0];
+    const text = args.slice(1).join(' ');
+
+    if (!subCmd || subCmd === 'help') {
+        trelloHelp();
+        return;
+    }
+
+    if (!text && subCmd !== 'help') {
+        err(`Missing argument for 'trello ${subCmd}'. Usage: awkit trello ${subCmd} <text>`);
+        return;
+    }
+
+    switch (subCmd) {
+        case 'desc':
+            info(`Updating card description...`);
+            trelloExec(['card:update', '--desc', text]);
+            break;
+
+        case 'comment':
+            info(`Adding comment to card...`);
+            trelloExec(['card:comment', '--text', text]);
+            break;
+
+        case 'item':
+            // trello-cli doesn't support adding checklist items natively.
+            // We fall back to marking an item incomplete (which implicitly creates it in some versions)
+            // or inform the user to use the REST API.
+            info(`Adding checklist item: ${text}`);
+            warn('Note: trello-cli may not support adding items. Use REST API if this fails.');
+            trelloExec(['card:check-item', '--item', text, '--state', 'incomplete']);
+            break;
+
+        case 'complete':
+            info(`Marking item complete: ${text}`);
+            trelloExec(['card:check-item', '--item', text, '--state', 'complete']);
+            break;
+
+        case 'block':
+            info(`Blocking card with reason...`);
+            trelloExec(['card:label', '--label', 'Blocked']);
+            trelloExec(['card:comment', '--text', `⚠️ BLOCKED: ${text}`]);
+            break;
+
+        case 'checklist':
+            info(`Creating checklist: ${text}`);
+            trelloExec(['card:checklist', '-n', text]);
+            break;
+
+        default:
+            err(`Unknown trello subcommand: ${subCmd}`);
+            trelloHelp();
+            break;
+    }
+}
+
 // ─── Auto-Update Checker ──────────────────────────────────────────────────────
 
 function checkAutoUpdate() {
@@ -2107,6 +2287,9 @@ switch (command) {
         break;
     case 'lint':
         cmdLint();
+        break;
+    case 'trello':
+        cmdTrello(args);
         break;
     case 'tg':
     case 'telegram':
