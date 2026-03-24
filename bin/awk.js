@@ -1810,12 +1810,10 @@ function cmdInit(forceFlag = false) {
         warn('Trello API Key & Token are not set. Automated Trello sync will be disabled.');
         log(`  ${C.cyan}👉 To setup Trello integration:${C.reset}`);
         log(`     1. Get API Key & Token: https://trello.com/app-key`);
-        log(`     2. Run in terminal (this session):`);
+        log(`     2. Add to your ~/.zshrc or ~/.bashrc:`);
         log(`        ${C.cyan}export TRELLO_KEY="your_key"${C.reset}`);
         log(`        ${C.cyan}export TRELLO_TOKEN="your_token"${C.reset}`);
-        log(`     3. Or save globally (all sessions) to:`);
-        log(`        ${C.cyan}~/.gemini/antigravity/credentials/trello.json${C.reset}`);
-        log(`        { "api_key": "YOUR_KEY", "api_token": "YOUR_TOKEN" }`);
+        log(`     3. Run ${C.cyan}source ~/.zshrc${C.reset} (or restart terminal)`);
     }
 
     // ── 4. CODEBASE.md ────────────────────────────────────────────────────────
@@ -2058,23 +2056,13 @@ function cmdTelegram(args) {
 
 // ─── Trello Integration ───────────────────────────────────────────────────────
 
-const TRELLO_CRED_PATH = path.join(TARGETS.antigravity, 'credentials', 'trello.json');
-
 /**
- * Load Trello credentials from global config.
+ * Load Trello credentials from environment variables.
  * Returns { api_key, api_token } or null.
  */
 function trelloLoadCredentials() {
-    // Priority 1: Environment variables (already exported by user)
     if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
         return { api_key: process.env.TRELLO_KEY, api_token: process.env.TRELLO_TOKEN };
-    }
-    // Priority 2: Global credentials file
-    if (fs.existsSync(TRELLO_CRED_PATH)) {
-        try {
-            const cred = JSON.parse(fs.readFileSync(TRELLO_CRED_PATH, 'utf8'));
-            if (cred.api_key && cred.api_token) return cred;
-        } catch (_) { }
     }
     return null;
 }
@@ -2106,8 +2094,7 @@ function trelloExec(cliArgs, retries = 3) {
     const cfg = trelloLoadProjectConfig();
     if (!cred) {
         err('Trello credentials not found.');
-        log(`  Set env vars: ${C.cyan}export TRELLO_KEY=... && export TRELLO_TOKEN=...${C.reset}`);
-        log(`  Or create: ${C.cyan}${TRELLO_CRED_PATH}${C.reset}`);
+        log(`  Please export ${C.cyan}TRELLO_KEY${C.reset} and ${C.cyan}TRELLO_TOKEN${C.reset} in your ~/.zshrc`);
         return false;
     }
     if (!cfg) {
@@ -2162,7 +2149,7 @@ function trelloHelp() {
     log(`  ${C.green}awkit trello block${C.reset} <reason>     Label card Blocked + comment`);
     log(`  ${C.green}awkit trello checklist${C.reset} <name>   Create a new checklist on card`);
     log('');
-    log(`  ${C.gray}Credentials: env vars TRELLO_KEY/TRELLO_TOKEN or ${TRELLO_CRED_PATH}${C.reset}`);
+    log(`  ${C.gray}Credentials: env vars TRELLO_KEY and TRELLO_TOKEN${C.reset}`);
     log(`  ${C.gray}Project config: .trello-config.json in CWD${C.reset}`);
     log('');
 }
