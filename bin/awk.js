@@ -1804,6 +1804,20 @@ function cmdInit(forceFlag = false) {
         }
     }
 
+    const trelloCred = trelloLoadCredentials();
+    if (!trelloCred) {
+        log('');
+        warn('Trello API Key & Token are not set. Automated Trello sync will be disabled.');
+        log(`  ${C.cyan}👉 To setup Trello integration:${C.reset}`);
+        log(`     1. Get API Key & Token: https://trello.com/app-key`);
+        log(`     2. Run in terminal (this session):`);
+        log(`        ${C.cyan}export TRELLO_KEY="your_key"${C.reset}`);
+        log(`        ${C.cyan}export TRELLO_TOKEN="your_token"${C.reset}`);
+        log(`     3. Or save globally (all sessions) to:`);
+        log(`        ${C.cyan}~/.gemini/antigravity/credentials/trello.json${C.reset}`);
+        log(`        { "api_key": "YOUR_KEY", "api_token": "YOUR_TOKEN" }`);
+    }
+
     // ── 4. CODEBASE.md ────────────────────────────────────────────────────────
     const codebasePath = path.join(cwd, 'CODEBASE.md');
     if (fs.existsSync(codebasePath) && !forceFlag) {
