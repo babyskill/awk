@@ -2085,9 +2085,9 @@ function trelloLoadProjectConfig() {
 }
 
 /**
- * Execute a trello-cli command with auto-injected credentials.
+ * Execute a trello-cli command with auto-injected credentials and rate-limit retries.
  */
-function trelloExec(cliArgs) {
+function trelloExec(cliArgs, retries = 3) {
     const cred = trelloLoadCredentials();
     const cfg = trelloLoadProjectConfig();
     if (!cred) {
@@ -2105,17 +2105,36 @@ function trelloExec(cliArgs) {
     const env = { ...process.env, TRELLO_KEY: cred.api_key, TRELLO_TOKEN: cred.api_token };
     const fullArgs = [...cliArgs, '--board', cfg.board, '--list', cfg.list, '--card', cfg.card];
 
-    const result = spawnSync('npx', ['--yes', 'trello-cli', ...fullArgs], {
-        env,
-        stdio: 'inherit',
-        timeout: 30000,
-    });
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        const result = spawnSync('npx', ['--yes', 'trello-cli', ...fullArgs], {
+            env,
+            encoding: 'utf-8',
+            timeout: 30000,
+        });
 
-    if (result.status !== 0) {
-        warn('Trello CLI returned non-zero exit code. Try: npx --yes trello-cli sync');
+        const stdoutStr = result.stdout || '';
+        const stderrStr = result.stderr || '';
+        const combinedOut = stdoutStr + stderrStr;
+
+        if (stdoutStr) process.stdout.write(stdoutStr);
+        if (stderrStr) process.stderr.write(stderrStr);
+
+        if (result.status === 0) {
+            return true;
+        }
+
+        if (combinedOut.includes('429') || combinedOut.includes('Rate limit exceeded') || combinedOut.includes('Too Many Requests') || combinedOut.includes('API_TOKEN_LIMIT_EXCEEDED') || combinedOut.includes('API_KEY_LIMIT_EXCEEDED')) {
+            warn(`[Trello API] Rate limit hit (429). Waiting 10s before retry ${attempt}/${retries}...`);
+            // Sleep for 10 seconds to satisfy the 100 requests / 10s window boundary
+            spawnSync('sleep', ['10']);
+            continue;
+        }
+
+        warn(`Trello CLI returned non-zero exit code (${result.status}). Command: awkit trello ${cliArgs.join(' ')}`);
         return false;
     }
-    return true;
+    err('Trello CLI failed after multiple retries due to rate limits.');
+    return false;
 }
 
 function trelloHelp() {
