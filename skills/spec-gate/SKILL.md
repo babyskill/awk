@@ -4,11 +4,11 @@ description: >-
   Gate 2 — Architecture & Data Design Gate. Chốt thiết kế kỹ thuật (DB Schema,
   API Contract, State Machine) TRƯỚC KHI cho phép code. Bắt buộc user approve
   thiết kế để tránh "vừa làm vừa sửa database". Auto-triggered bởi orchestrator
-  khi Gate 2 chưa thỏa mãn.
+  khi Gate 2 chưa thỏa mãn. Hỗ trợ auto-detect .kiro/specs/design.md.
 metadata:
   stage: core
-  version: "1.0"
-  tags: [gate, architecture, database, design, spec-first, core]
+  version: "1.1"
+  tags: [gate, architecture, database, design, spec-first, core, kiro]
   requires: orchestrator
 agent: Architect
 trigger: conditional
@@ -58,8 +58,13 @@ Skill này được kích hoạt bởi:
 Trước khi chạy, PHẢI có:
 
 ```
-REQUIRED:
-  → docs/specs/<feature>.md HOẶC BRIEF.md (output từ Gate 1)
+REQUIRED (theo thứ tự ưu tiên):
+  → CHECK 1 (Kiro): .kiro/specs/<module>/design.md
+    → Nếu tồn tại → AUTO-APPROVE: Load làm pre-approved architecture
+    → Skip Phase 2-7, thẳng Phase 8 (Write to NeuralMemory)
+    → Thông báo: "🔍 Phát hiện .kiro/specs design docs.
+       Thiết kế đã được chốt trong Kiro IDE. Auto-approve → Gate 2 PASS."
+  → CHECK 2: docs/specs/<feature>.md HOẶC BRIEF.md (output từ Gate 1)
   → .project-identity (projectId, techStack)
 
 OPTIONAL:
@@ -75,6 +80,17 @@ OPTIONAL:
 ### Phase 1: Context Gathering (Silent)
 
 ```
+0. CHECK KIRO SPECS FIRST (HIGHEST PRIORITY):
+   - Scan .kiro/specs/<module>/design.md
+   - Nếu tồn tại:
+     → Load design.md làm approved architecture
+     → Load .kiro/specs/<project>/design.md cho project-wide schema
+     → Load .kiro/specs/<module>/requirements.md cho acceptance criteria
+     → Lưu vào NeuralMemory: "Kiro architecture loaded: <summary>"
+     → SKIP Phase 2-7, thẳng Phase 8 (write decision to NeuralMemory)
+     → Gate 2 AUTO-PASS
+   - Không tồn tại → tiếp Phase 1 bình thường
+
 1. Đọc BRIEF.md / spec document → Extract:
    - Core entities (Users, Orders, Products...)
    - Relationships (1-N, N-N)
@@ -188,7 +204,21 @@ checklist:
     - [ ] Input validation cho mọi user input?
 ```
 
-### Phase 6: Present & Approval
+### Phase 6: Multi-Role Architecture Review (AI Simulated)
+
+**Trước khi gửi cho user approve, AI TỰ ĐỘNG đóng 5 vai trò chuyên sâu để soát lỗi:**
+
+```
+1. DBA (Database Admin): Đã đánh index các trường queries thường xuyên? Bảng có chuẩn hóa (normalize) chưa? Có issue N+1 query không?
+2. Backend Lead: API có reusable không? Có tính đến rate limit chưa? Transaction boundaries ở đâu?
+3. Security Officer: Có chống SQL Injection không? Data at rest/in transit encrypt thế nào? Cấp quyền Row-level (RBAC)?
+4. QA Automation: Việc setup test data có khó không? Mock API/DB có thuận lợi không?
+5. SRE / DevOps: Nếu data lớn lên, hệ thống có scale nổi? Quá trình migrate db (schema update) có gây downtime không?
+
+*Nếu có P0/P1 issues, AI phải fix bản draft ngay lập tức.*
+```
+
+### Phase 7: Present & Approval
 
 ```
 Present cho user với format:
@@ -206,8 +236,7 @@ Present cho user với format:
 ## State Machine
 [Phase 4 output — nếu có]
 
-## Self-Review ✅
-[Phase 5 checklist results]
+[Phase 7 checklist results]
 
 ## Concerns & Trade-offs
 - [Concern 1]: [Mô tả + recommendation]
@@ -219,7 +248,7 @@ Present cho user với format:
 ───────────────────────────────────
 ```
 
-### Phase 7: Write Design Doc
+### Phase 8: Write Design Doc
 
 Sau khi user approve:
 
@@ -309,4 +338,4 @@ WORKS WITH: nm-memory-sync (store architectural decisions)
 
 ---
 
-*spec-gate v1.0 — Architecture & Data Design Gate for AWKit*
+*spec-gate v1.1 — Architecture & Data Design Gate for AWKit (Kiro Spec Integration)*

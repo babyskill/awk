@@ -41,6 +41,10 @@ This skill transforms the agent into an Expert iOS Engineer. It provides standar
 - Avoid expensive computations in `body`.
 - Use `.drawingGroup()` for complex rendering only when necessary.
 
+### 2.4. Localization (I18N)
+- **NO HARDCODED STRINGS:** All user-facing text must use localized strings (e.g., `Localized("key", value: "Default")`).
+- **Update Translation Files:** Creating the UI with `Localized()` is only step 1. Step 2 is **MANDATORY**: You MUST extract all new keys and append them to the project's `Localizable.strings` files (both English and Vietnamese, e.g. via `update_strings.py` or manually) before claiming the UI task is complete. Never skip this final mile.
+
 ## 3. 🛠️ Project Management & Dependencies
 
 ### 3.1. Dependency Verification Protocol (CRITICAL)

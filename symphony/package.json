@@ -1,5 +1,5 @@
 {
-  "name": "awkit-symphony",
+  "name": "@leejungkiin/awkit-symphony",
   "version": "0.1.0",
   "description": "Multi-Agent Orchestration for AI Coding Assistants — task management, git isolation, file locking, and real-time dashboard",
   "keywords": [
@@ -12,7 +12,16 @@
     "dashboard",
     "coding-assistant"
   ],
+  "author": "Kien Le",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nhadaututtheky/main-awf.git",
+    "directory": "symphony"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "core/orchestrator.js",
   "bin": {
     "symphony": "./cli/index.js"

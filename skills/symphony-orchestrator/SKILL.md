@@ -8,7 +8,7 @@ metadata:
   stage: core
   version: "3.0"
   replaces: null
-  requires: awkit-symphony (npm i -g awkit-symphony)
+  requires: "@leejungkiin/awkit-symphony" (npm i -g @leejungkiin/awkit-symphony)
   tags: [symphony, setup, server, orchestration, core, preflight, multi-project, agent]
 agent: Symphony Conductor
 allowed-tools:
@@ -50,13 +50,12 @@ QUAN TRỌNG:
 ### Bước 1: Install Global
 
 ```bash
-cd ~/Dev/NodeJS/main-awf/symphony
-npm link
+npm i -g @leejungkiin/awkit-symphony
 ```
 
-> Hoặc khi publish npm:
+> Dev mode (từ source):
 > ```bash
-> npm i -g awkit-symphony
+> cd ~/Dev/NodeJS/main-awf/symphony && npm link
 > ```
 
 ### Bước 2: Verify
@@ -127,9 +126,12 @@ symphony preflight --json   # JSON cho AI parsing
    → symphony start -p 3100 &
    → Đợi 3-5 giây
    → Retry preflight
-3. Nếu vẫn FAIL:
+3. Nếu vẫn FAIL (command not found):
+   → AI tự chạy: npm i -g @leejungkiin/awkit-symphony
+   → Retry symphony start
+4. Nếu vẫn FAIL:
    → "⚠️ Symphony không khởi động được"
-   → Hướng dẫn: cd ~/Dev/NodeJS/main-awf/symphony && npm link && symphony start
+   → Hướng dẫn user cài thủ công
 ```
 
 ---

@@ -67,6 +67,9 @@ skip_if:
   - User đang debug/fix bug → SKIP (không phải brainstorm context)
   - User đang code cụ thể → SKIP
   - User chỉ hỏi technical question → SKIP
+  - .kiro/specs/ tồn tại với requirements.md → AUTO-SKIP (Kiro đã tạo spec)
+    → Thông báo: "🔍 Phát hiện .kiro/specs với product specs đầy đủ.
+       Brainstorm không cần thiết — Gate 1 AUTO-PASS. Chuyển thẳng Gate 1.5/2."
 ```
 
 ---
@@ -105,12 +108,23 @@ Focus: Fit với existing architecture
 
 Trước khi bắt đầu, LUÔN:
 
-1. **Check existing context:**
+1. **Check Kiro specs (HIGHEST PRIORITY):**
+   - Scan `.kiro/specs/` folder tại project root
+   - Nếu tồn tại `requirements.md` → **AUTO-SKIP brainstorm**:
+     ```
+     "🔍 Phát hiện .kiro/specs/ với product specs từ IDE Kiro.
+        Gate 1 (Spec) đã được thỏa mãn bởi Kiro specs.
+        Chuyển thẳng sang Gate 1.5 (Module Spec) hoặc Gate 2 (Architecture)."
+     ```
+   - KHÔNG cần hỏi thêm user về product vision (Kiro đã chốt)
+   - Vẫn cho phép user gọi `/brainstorm` explicit để brainstorm cải tiến thêm
+
+2. **Check existing context (fallback):**
    - Đọc `docs/BRIEF.md` nếu có → Project đã có context gì?
    - Đọc `brain/active_plans.json` (qua memory-sync) → Đang ở giai đoạn nào?
    - Hỏi: "Brainstorm này là cho dự án mới hay tính năng mới trong project có sẵn?"
 
-2. **Set mode** dựa trên context.
+3. **Set mode** dựa trên context.
 
 ---
 
@@ -219,12 +233,25 @@ Tạo file tổng kết:
 ### 💭 Backlog:
 - [ ] [Feature 4]
 
-## 5. ƯỚC TÍNH
+## 5. MODULE BREAKDOWN
+
+### Module: [Module Name 1]
+- **Mục đích:** [1 dòng]
+- **Screens chính:** [list screens]
+- **Core flows:** [list main user journeys]
+
+### Module: [Module Name 2]
+- **Mục đích:** [1 dòng]
+- **Screens chính:** [list screens]
+- **Core flows:** [list main user journeys]
+
+## 6. ƯỚC TÍNH
 - **Độ phức tạp:** [Đơn giản / Trung bình / Phức tạp]
 - **Hướng tiếp cận:** [Approach được chọn]
+- **Số modules:** [N]
 
-## 6. BƯỚC TIẾP THEO
-→ Chạy `/plan` để lên thiết kế kỹ thuật chi tiết
+## 7. BƯỚC TIẾP THEO
+→ Module spec chi tiết (Gate 1.5) → Thiết kế kỹ thuật (Gate 2)
 ```
 
 ---
@@ -238,13 +265,18 @@ Tạo file tổng kết:
    [Summary 3-4 dòng]
 
 Anh muốn làm gì tiếp:
-1️⃣ /plan — Thiết kế kỹ thuật chi tiết (DB schema, task list...)
-2️⃣ Sửa Brief — Điều chỉnh thêm
-3️⃣ Lưu lại — Anh cần suy nghĩ thêm"
+1️⃣ Viết module spec chi tiết (Gate 1.5) — Mô tả screens, flows, rules per module
+2️⃣ /plan — Thiết kế kỹ thuật ngay (skip module spec)
+3️⃣ Sửa Brief — Điều chỉnh thêm
+4️⃣ Lưu lại — Anh cần suy nghĩ thêm"
 ```
 
-**Nếu chọn 1 (plan):**
-- Trigger `/plan` workflow với context từ BRIEF.md
+**Nếu chọn 1 (module spec):**
+- Trigger module-spec-writer skill với context từ BRIEF.md
+- Sau khi module specs approved → auto-proceed Gate 2 (spec-gate)
+
+**Nếu chọn 2 (plan/skip):**
+- Trigger `/plan` workflow trực tiếp
 - Memory-sync sẽ tự động lưu kiến trúc sau khi plan hoàn thành
 
 ---
@@ -328,7 +360,8 @@ Short messages — không dump wall of text
 
 ```
 Works WITH:  /brainstorm workflow (skill này hỗ trợ workflow)
-Delegates TO: /plan (sau khi BRIEF xong)
+Delegates TO: module-spec-writer (Gate 1.5, sau khi BRIEF xong)
+Delegates TO: /plan (nếu user skip module spec)
 NOT: memory-sync (hoàn toàn độc lập — memory-sync tự theo dõi)
 NOT: symphony-orchestrator (không tạo task, chỉ brainstorm)
 Triggers: memory-sync W3 sẽ tự kích hoạt khi BRIEF.md tạo xong

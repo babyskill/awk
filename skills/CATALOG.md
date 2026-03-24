@@ -31,6 +31,10 @@
 | 11 | `awf-context-help` | `auto` | `/help`, stuck | — | — | ✅ Active |
 | 12 | `auto-save` | `auto` | Session end | — | — | ✅ Background |
 | 13 | `awf-version-tracker` | `auto` | Skill changes | — | — | ✅ Background |
+| 14 | `module-spec-writer` | `auto` | Gate 1.5 check fail | 1.5 | 1.0.0 | ✅ Active |
+| 15 | `spec-gate` | `auto` | Gate 2 check fail | 2 | 1.0.0 | ✅ Active |
+| 16 | `visual-design-gate` | `auto` | Gate 2.5 check fail | 2.5 | 1.0.0 | ✅ Active |
+| 17 | `trello-sync` | `auto` | Always | 2 | 3.0.0 | ✅ Active |
 
 ---
 

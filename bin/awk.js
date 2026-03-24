@@ -27,6 +27,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { execSync, spawnSync } = require('child_process');
+const os = require('os');
 
 const packageJson = require(path.join(__dirname, '..', 'package.json'));
 const AWK_VERSION = packageJson.version;
@@ -1729,7 +1730,7 @@ function buildCodebaseMd(projectName, projectType, identity) {
  *   CODEBASE.md
  *   .symphony/ (via Symphony)
  */
-function cmdInit(forceFlag = false) {
+async function cmdInit(forceFlag = false) {
     const cwd = process.cwd();
     const dirName = path.basename(cwd);
     // Convert dir name to PascalCase project name: my-app → MyApp, fitbite → Fitbite
@@ -1807,13 +1808,53 @@ function cmdInit(forceFlag = false) {
     const trelloCred = trelloLoadCredentials();
     if (!trelloCred) {
         log('');
-        warn('Trello API Key & Token are not set. Automated Trello sync will be disabled.');
-        log(`  ${C.cyan}👉 To setup Trello integration:${C.reset}`);
-        log(`     1. Get API Key & Token: https://trello.com/app-key`);
-        log(`     2. Add to your ~/.zshrc or ~/.bashrc:`);
-        log(`        ${C.cyan}export TRELLO_KEY="your_key"${C.reset}`);
-        log(`        ${C.cyan}export TRELLO_TOKEN="your_token"${C.reset}`);
-        log(`     3. Run ${C.cyan}source ~/.zshrc${C.reset} (or restart terminal)`);
+        warn('Trello API Key & Token are not set.');
+        log(`  👉 To setup Trello integration, please get your credentials at: https://trello.com/app-key`);
+        
+        const readline = require('readline');
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        const question = (query) => new Promise(resolve => rl.question(query, resolve));
+
+        try {
+            const apiKey = (await question(`  ${C.yellow}Enter Trello API Key: ${C.reset}`)).trim();
+
+            if (apiKey) {
+                const tokenUrl = `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=${apiKey}&name=AWKit`;
+                log('');
+                log(`  ${C.cyan}👉 Open this link to generate your Token:${C.reset}`);
+                log(`     ${C.green}${tokenUrl}${C.reset}`);
+                log('');
+            }
+
+            const apiToken = (await question(`  ${C.yellow}Enter Trello API Token: ${C.reset}`)).trim();
+
+            if (apiKey && apiToken) {
+                let profilePath = path.join(os.homedir(), '.zshrc');
+                if (!fs.existsSync(profilePath) && fs.existsSync(path.join(os.homedir(), '.bashrc'))) {
+                    profilePath = path.join(os.homedir(), '.bashrc');
+                }
+                
+                const exportLines = `\n# Trello API Credentials for AWKit\nexport TRELLO_KEY="${apiKey}"\nexport TRELLO_TOKEN="${apiToken}"\n`;
+                fs.appendFileSync(profilePath, exportLines);
+                
+                // Also inject into current process so immediate awkit trello calls work
+                process.env.TRELLO_KEY = apiKey;
+                process.env.TRELLO_TOKEN = apiToken;
+                
+                ok(`Credentials saved to ${path.basename(profilePath)} ✅`);
+                log(`  ${C.green}👉 Trello is ready! Credentials are active for this session and all future terminals.${C.reset}`);
+            } else {
+                warn('Setup skipped. Automated Trello sync will be disabled.');
+            }
+        } catch (e) {
+            warn(`Failed to setup Trello: ${e.message}`);
+        } finally {
+            rl.close();
+        }
     }
 
     // ── 4. CODEBASE.md ────────────────────────────────────────────────────────
@@ -2256,69 +2297,71 @@ checkAutoUpdate();
 
 const [, , command, ...args] = process.argv;
 
-switch (command) {
-    case 'init':
-        cmdInit(args.includes('--force'));
-        break;
-    case 'install':
-        // Parse platform from either first arg or --platform flag
-        {
-            const pIdx = args.indexOf('--platform');
-            let platformArg = null;
-            if (pIdx !== -1 && args[pIdx + 1]) {
-                platformArg = args[pIdx + 1];
-            } else if (args[0] && !args[0].startsWith('-')) {
-                platformArg = args[0];
+(async () => {
+    switch (command) {
+        case 'init':
+            await cmdInit(args.includes('--force'));
+            break;
+        case 'install':
+            // Parse platform from either first arg or --platform flag
+            {
+                const pIdx = args.indexOf('--platform');
+                let platformArg = null;
+                if (pIdx !== -1 && args[pIdx + 1]) {
+                    platformArg = args[pIdx + 1];
+                } else if (args[0] && !args[0].startsWith('-')) {
+                    platformArg = args[0];
+                }
+                cmdInstall(platformArg);
             }
-            cmdInstall(platformArg);
-        }
-        break;
-    case 'uninstall':
-        cmdUninstall();
-        break;
-    case 'update':
-        cmdUpdate();
-        break;
-    case 'sync':
-        cmdSync();
-        break;
-    case 'status':
-        cmdStatus();
-        break;
-    case 'harvest':
-        cmdHarvest(args.includes('--dry-run'));
-        break;
-    case 'doctor':
-        cmdDoctor();
-        break;
-    case 'enable-pack':
-        cmdEnablePack(args[0]);
-        break;
-    case 'disable-pack':
-        cmdDisablePack(args[0]);
-        break;
-    case 'list-packs':
-        cmdListPacks();
-        break;
-    case 'version':
-    case '--version':
-    case '-v':
-        cmdVersion();
-        break;
-    case 'lint':
-        cmdLint();
-        break;
-    case 'trello':
-        cmdTrello(args);
-        break;
-    case 'tg':
-    case 'telegram':
-        cmdTelegram(args);
-        break;
-    case 'help':
-    case '--help':
-    case '-h':
-    default:
-        cmdHelp();
-        break;
-}
+            break;
+        case 'uninstall':
+            cmdUninstall();
+            break;
+        case 'update':
+            cmdUpdate();
+            break;
+        case 'sync':
+            cmdSync();
+            break;
+        case 'status':
+            cmdStatus();
+            break;
+        case 'harvest':
+            cmdHarvest(args.includes('--dry-run'));
+            break;
+        case 'doctor':
+            cmdDoctor();
+            break;
+        case 'enable-pack':
+            cmdEnablePack(args[0]);
+            break;
+        case 'disable-pack':
+            cmdDisablePack(args[0]);
+            break;
+        case 'list-packs':
+            cmdListPacks();
+            break;
+        case 'version':
+        case '--version':
+        case '-v':
+            cmdVersion();
+            break;
+        case 'lint':
+            cmdLint();
+            break;
+        case 'trello':
+            cmdTrello(args);
+            break;
+        case 'tg':
+        case 'telegram':
+            cmdTelegram(args);
+            break;
+        case 'help':
+        case '--help':
+        case '-h':
+        default:
+            cmdHelp();
+            break;
+    }
+})();

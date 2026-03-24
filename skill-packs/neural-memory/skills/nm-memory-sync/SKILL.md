@@ -165,9 +165,22 @@ This surfaces memories that a keyword search would miss.
 
 ---
 
+## Auto-Install Protocol (New Machine)
+
+If `nmem` CLI is not available:
+```
+1. AI detects: command not found: nmem
+2. AI auto-runs: pip install neural-memory (or python3 -m pip install neural-memory)
+   → Requires Python >= 3.11
+3. After install: nmem init (initialize brain DB)
+4. Verify: nmem --version
+5. If Python < 3.11 or pip fails:
+   → Show user: "⚠️ NeuralMemory requires Python >= 3.11. Install via: brew install python@3.12"
+```
+
 ## Fallback Mode (NeuralMemory Not Installed)
 
-If `nmem` is not available, falls back to flat-file behavior:
+If `nmem` is not available AND auto-install fails, falls back to flat-file behavior:
 ```
 - Reads from brain/decisions/, brain/solutions/
 - Keyword overlap matching (legacy behavior)

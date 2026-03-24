@@ -1,6 +1,6 @@
-# GEMINI.md — Antigravity v12.1
+# GEMINI.md — Antigravity v12.2
 
-> Rules + routing only. Gate details → skills. Updated: 2026-03-23
+> Rules + routing only. Gate details → skills. Updated: 2026-03-24
 
 ---
 
@@ -50,22 +50,25 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
 
-### 6-Gate Autonomous System (v12.1)
+### 7-Gate Autonomous System (v12.2)
 - orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.
-- COMPLEX tasks PHẢI qua 6 Gates tuần tự:
+- COMPLEX tasks PHẢI qua 7 Gates tuần tự:
   - Gate 1 (Spec): `brainstorm-agent` → BRIEF.md / spec document
   - Gate 1.5 (Module Spec): `module-spec-writer` → per-module product specs (screens, flows, rules)
   - Gate 2 (Architecture): `spec-gate` → design doc + user approve
+  - Gate 2.5 (Visual Design): `visual-design-gate` → Thống nhất UI qua Pencil hoặc ảnh đính kèm
   - Gate 3 (Tasks): `symphony-enforcer` → tạo Symphony tickets
-  - Gate 4 (Execution): code theo ticket, đối chiếu design doc
+  - Gate 4 (Execution): code theo ticket, đối chiếu design/UI doc
   - Gate 5 (Verification): `verification-gate` + `code-review`
+- **Kiro Spec Integration:** Khi `.kiro/specs/` tồn tại → auto-accelerate Gates 1, 1.5, 2, 3.
 - Gate 1.5 MANDATORY khi: COMPLEX + >3 modules hoặc port/migration projects.
 - Gate 1.5 SKIP khi: TRIVIAL/MODERATE hoặc single-module projects.
+- Gate 2.5 SKIP khi: Backend/logic-only tasks.
 - TRIVIAL tasks bypass → thẳng Gate 4.
 - MODERATE tasks → Gate 3 + 4 + 5.
 - AI tự detect gate state — user KHÔNG CẦN gọi workflow bằng tay.
-- Trong lúc code, nếu cần sửa schema khác approved design → ⛔ DỪNG, quay Gate 2.
-- Chi tiết: xem `orchestrator/SKILL.md` (triage) + `module-spec-writer/SKILL.md` (Gate 1.5) + `spec-gate/SKILL.md` (Gate 2).
+- Trong lúc code, nếu cần sửa schema/UI khác approved design → ⛔ DỪNG, quay Gate 2/2.5 tương ứng.
+- Chi tiết: xem `orchestrator/SKILL.md` (triage) + `visual-design-gate/SKILL.md` (Gate 2.5).
 
 ### NeuralMemory
 - Brain = projectId. Switch trước mọi nmem call.
@@ -122,6 +125,16 @@ Khi AI cần tự quyết định mà không hỏi user:
 - Index stale → cảnh báo "⚠️ chạy `npx gitnexus analyze`".
 - Chi tiết: xem `gitnexus-intelligence/SKILL.md`.
 
+### Kiro Specs (IDE Integration)
+- `.kiro/specs/` tồn tại → PHẢI dùng làm source of truth cho Gates 1, 1.5, 2, 3.
+- `requirements.md` → Gate 1 (Spec) + Gate 1.5 (Module Spec) AUTO-PASS.
+- `design.md` → Gate 2 (Architecture) AUTO-APPROVE (pre-approved by IDE).
+- `tasks.md` → Gate 3 (Tasks) AUTO-IMPORT vào Symphony.
+- `.kiro/specs` ưu tiên hơn `docs/specs` khi cả hai tồn tại.
+- Gate 2.5 (Visual) và Gate 5 (Verification) KHÔNG bị ảnh hưởng.
+- Khi code (Gate 4), PHẢI đối chiếu với `.kiro/specs/<module>/` tương ứng.
+- Chi tiết: xem `orchestrator/SKILL.md` (Kiro Spec Detection section).
+
 ### Two-Agent Flow (Conductor)
 - Antigravity CHỦ ĐỘNG gọi `gemini -p "..." --approval-mode plan` khi cần tầm nhìn rộng.
 - CLI dùng **quota pool riêng** → không ảnh hưởng Antigravity quota.
@@ -136,7 +149,7 @@ Khi AI cần tự quyết định mà không hỏi user:
 ## Routing
 
 - **Execution order:** `symphony-orchestrator` → `awf-session-restore` → `nm-memory-sync` → `symphony-enforcer` → `orchestrator` (triage + gate-check) → action
-- **Gate skills:** `orchestrator` (triage) → `brainstorm-agent` (G1) → `module-spec-writer` (G1.5) → `spec-gate` (G2) → `symphony-enforcer` (G3) → `verification-gate` (G5)
+- **Gate skills:** `orchestrator` (triage) → `brainstorm-agent` (G1) → `module-spec-writer` (G1.5) → `spec-gate` (G2) → `visual-design-gate` (G2.5) → `symphony-enforcer` (G3) → `verification-gate` (G5)
 - **Code intelligence:** `gitnexus-intelligence` (impact analysis, blast radius, safe refactoring)
 - **Skill catalog:** xem `orchestrator/SKILL.md`
 - **Workflows:** 75+ (`/xxx`). Core: `/init` `/code` `/debug` `/recap` `/next` `/todo` `/gitnexus`

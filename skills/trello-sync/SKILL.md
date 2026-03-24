@@ -42,17 +42,15 @@ KHÔNG CÓ NGOẠI LỆ:
 
 ## 🔐 Auth & Config
 
-Bảo mật: API Key và Token được lưu tại Global, cấu hình dự án (Board/List/Card) lưu tại Local.
+Credentials được lưu dưới dạng **environment variables** (`TRELLO_KEY`, `TRELLO_TOKEN`) trong shell profile (`~/.zshrc` hoặc `~/.bashrc`). Cấu hình dự án (Board/List/Card) lưu tại `.trello-config.json` ở root mỗi dự án.
 
-### 1. Global Credentials (đặt tại `~/.gemini/antigravity/credentials/trello.json`)
-```json
-{
-  "api_key": "YOUR_TRELLO_API_KEY",
-  "api_token": "YOUR_TRELLO_API_TOKEN"
-}
-```
+### 1. Global Credentials (Environment Variables)
 
-### 2. Local Project Config (đặt file `.trello-config.json` tại root mỗi dự án)
+User setup lần đầu qua **interactive wizard** khi chạy `awkit init`:
+- CLI tự hỏi API Key → tạo link authorize token → hỏi Token → lưu vào `~/.zshrc`.
+- Nếu user đã setup rồi, CLI tự skip bước này.
+
+### 2. Local Project Config (`.trello-config.json` tại root dự án)
 ```json
 {
   "board": "Appdexter - Code Magic",
@@ -67,9 +65,21 @@ Bảo mật: API Key và Token được lưu tại Global, cấu hình dự án 
 | `list` | Tên list chứa card (= team member đang phụ trách) |
 | `card` | Tên card dự án (phải khớp chính xác trên Trello) |
 
+### 🔄 Credential Auto-Recovery (BẮT BUỘC cho AI)
+
+Khi `awkit trello` báo **"Trello credentials not found"**, AI PHẢI thực hiện:
+
+```text
+Lần 1: chạy `source ~/.zshrc` → retry lệnh awkit trello
+Lần 2: chạy `source ~/.zshrc` → retry lệnh awkit trello
+Lần 3 (vẫn lỗi): báo user "Trello chưa được cấu hình. Vui lòng chạy awkit init để setup lại."
+```
+
+> ⚠️ KHÔNG được tự tạo script, tự inject biến, hay tự sửa file `.zshrc`. CHỈ dùng `source` và `awkit init`.
+
 ### Tự Động Hóa Qua `awkit trello` (BẮT BUỘC)
 
-AI không cần tự inject ENV hay tìm kiếm cấu hình. Công cụ lệnh `awkit trello` v1.3.0+ sẽ TỰ ĐỘNG đọc từ Global Config và Local Config để thực thi nhanh chóng. MỌI thao tác Trello phải đi qua `awkit trello`.
+AI không cần tự inject ENV hay tìm kiếm cấu hình. Công cụ lệnh `awkit trello` v1.3.0+ sẽ TỰ ĐỘNG đọc từ env vars và `.trello-config.json`. MỌI thao tác Trello phải đi qua `awkit trello`.
 ---
 
 ## 📚 Command Reference
@@ -198,12 +208,13 @@ Trong comment, **PHẢI** ghi Symphony Task ID: `Symphony: #sym-XXX`
 | Tình huống | Xử lý |
 |-----------|--------|
 | `.trello-config.json` không tồn tại | ⛔ Bỏ qua Trello sync, log cảnh báo, tiếp tục code |
+| **Credentials not found** | `source ~/.zshrc` → retry (max 2 lần). Vẫn lỗi → báo user chạy `awkit init` |
 | Card not found | Chạy `sync`, retry. Nếu vẫn lỗi → báo user |
-| Checklist chưa có | Tạo checklist mới bằng `card:checklist` |
+| Checklist chưa có | Tạo checklist mới bằng `awkit trello checklist` |
 | Item trùng tên | Dùng `card:checklists` kiểm tra trước khi thêm |
-| Rate limit / API error | Log warning, tiếp tục code, KHÔNG block flow |
-| Token hết hạn | Báo user refresh trong `.trello-config.json` |
-| Dự án chưa có card trên Trello | Báo user tạo card trên board, cập nhật config |
+| Rate limit / API error | Log warning, tiếp tục code, KHÔNG block flow. CLI tự retry 429. |
+| Token hết hạn | Báo user chạy `awkit init` để setup lại credential mới |
+| Dự án chưa có card trên Trello | Báo user tạo card trên board, cập nhật `.trello-config.json` |
 
 ---
 

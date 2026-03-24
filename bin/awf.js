@@ -275,7 +275,6 @@ function cmdInstall() {
     dim(`Templates:  ${path.join(target, 'templates')}`);
     dim(`GEMINI.md:  ${TARGETS.geminiMd}`);
     log('');
-    log(`${C.cyan}👉 Type '/plan' in your AI chat to get started.${C.reset}`);
     log(`${C.cyan}👉 Run 'awf doctor' to verify installation.${C.reset}`);
     log('');
 }

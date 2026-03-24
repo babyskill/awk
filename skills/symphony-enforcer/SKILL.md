@@ -4,13 +4,13 @@ description: |
   Mandatory Symphony checkpoint system. Ensures AI never forgets to create,
   update, or complete tasks in Symphony. Enforces progress reporting at every
   milestone and auto-detects task completion without waiting for user confirmation.
-  v3.3: Completion Status Protocol, Search-Before-Building, Boil-the-Lake.
+  v3.4: Kiro Spec Integration, Completion Status Protocol, Search-Before-Building, Boil-the-Lake.
 metadata:
   stage: core
-  version: "3.3"
-  replaces: "v2.0"
+  version: "3.4"
+  replaces: "v3.3"
   requires: symphony-orchestrator
-  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next]
+  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro]
 agent: Symphony Enforcer
 allowed-tools:
   - symphony_create_task
@@ -24,10 +24,11 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.3 — Completion Status Protocol + Gstack Principles
+# Symphony Enforcer v3.4 — Kiro Spec Integration + Completion Status Protocol
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.3:**
+> **Key Changes v3.4:**
+> - **Kiro Spec Integration**: Auto-detect `.kiro/specs/` → load specs + import tasks
 > - **Completion Status Protocol**: 4-status (DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT)
 > - **Design Compliance (TP1.5)**: Đối chiếu schema changes vs approved design doc
 > - **Pre-Plan Gate**: Đọc spec trước khi plan, hỏi user về constraints
@@ -47,7 +48,7 @@ KHÔNG CÓ NGOẠI LỆ:
 - AI tự detect completion và auto-complete task
 - Task done → PHẢI atomic git commit trước khi suggest next
 - Kết thúc task PHẢI kèm next suggestion
-- BỎ QUA BẤT KỲ STEP NÀO = VI PHẠM
+- BỎ QUA BẤT BẤT KỲ STEP NÀO = VI PHẠM
 ```
 
 ---
@@ -74,30 +75,47 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
 → Output: "🧠 Step 2/5: Brain ✅ — switched to {projectId}"
 ```
 
-### Step 3: Spec Alignment — Đọc Project Spec (NEW v3.0)
+### Step 3: Spec Alignment — Đọc Project Spec (v3.4 + Kiro)
 
 ```
-→ Kiểm tra: docs/specs/PROJECT.md tồn tại?
-→ CÓ  → Đọc silent: PROJECT.md + TECH-SPEC.md + REQUIREMENTS.md
-       → Extract constraints liên quan đến task hiện tại
-       → NẾU PLANNING mode:
-          - Hỏi user 1-3 câu về constraints/UX cụ thể của feature
-          - Ví dụ: "Feature này cần offline support không?"
-          - Ví dụ: "UI nên dạng list hay cards?"
-       → Output: "📐 Step 3/5: Spec Aligned ✅"
-→ KHÔNG → Skip (project chưa /init) → "📐 Step 3/5: No spec — skipped"
+→ CHECK 1 (Kiro — HIGHEST PRIORITY): .kiro/specs/ tồn tại?
+  → CÓ → Load specs từ .kiro/specs/:
+     - .kiro/specs/<project>/requirements.md → project spec
+     - .kiro/specs/<module>/requirements.md → module specs
+     - .kiro/specs/<module>/design.md → architecture
+     - .kiro/specs/<module>/tasks.md → task breakdown (cho Step 4)
+     → Extract constraints liên quan đến task hiện tại
+     → Output: "📐 Step 3/5: Kiro Specs Loaded ✅ — {N} modules, {M} design docs"
+
+→ CHECK 2 (fallback): docs/specs/PROJECT.md tồn tại?
+  → CÓ  → Đọc silent: PROJECT.md + TECH-SPEC.md + REQUIREMENTS.md
+         → Extract constraints liên quan đến task hiện tại
+         → NẾU PLANNING mode:
+            - Hỏi user 1-3 câu về constraints/UX cụ thể của feature
+            - Ví dụ: "Feature này cần offline support không?"
+         → Output: "📐 Step 3/5: Spec Aligned ✅"
+  → KHÔNG → Skip (project chưa /init) → "📐 Step 3/5: No spec — skipped"
 ```
 
-> **Quan trọng:** Nếu TECH-SPEC.md có "Constraints & Non-Negotiables",
+> **Quan trọng:** Nếu .kiro/specs hoặc TECH-SPEC.md có "Constraints & Non-Negotiables",
 > AI PHẢI tuân thủ chúng trong implementation_plan.md.
 
 ### Step 4: Symphony Task — Tạo hoặc nhận task
 
 ```
-→ symphony_available_tasks(filter="my") → check active tasks
-→ CÓ task in_progress phù hợp → dùng tiếp
-→ CÓ task ready phù hợp → symphony_claim_task
-→ KHÔNG CÓ → symphony_create_task(title) → symphony_claim_task(new_id)
+→ CHECK 1 (Kiro tasks): .kiro/specs/<module>/tasks.md tồn tại?
+  → CÓ + chưa import → Parse task items từ tasks.md:
+     - Group theo module name
+     - Đánh tag kèm module name
+     → ⛔ CẢNH BÁO: KHÔNG đồng bộ hàng loạt các item nhỏ này lên Trello (để tránh rác board). Chỉ đồng bộ lên cấp module hoặc feature lớn.
+     → Output: "🎯 Step 4/5: Kiro Tasks Imported ✅ — {N} tasks created"
+     → Claim task phù hợp nhất với user request
+  → CÓ + đã import → symphony_available_tasks → claim task phù hợp
+
+→ CHECK 2 (fallback): symphony_available_tasks(filter="my") → check active tasks
+  → CÓ task in_progress phù hợp → dùng tiếp
+  → CÓ task ready phù hợp → symphony_claim_task
+  → KHÔNG CÓ → symphony_create_task(title) → symphony_claim_task(new_id)
 → Lưu task_id cho TP1-TP4
 → Output: "🎯 Step 4/5: Task ✅ — #sym-XYZ claimed"
 ```

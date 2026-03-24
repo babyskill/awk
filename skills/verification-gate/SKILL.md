@@ -138,6 +138,8 @@ Trước khi claim DONE, kiểm tra **mỗi item** dưới đây:
 ☐ Input validation: User input được validate trước khi process?
 ☐ Concurrency: Thread-safe? Race conditions handled?
 ☐ Backwards compatibility: Breaking changes documented?
+☐ Localization (I18N): Text UI mới đã được thêm vào Localizable.strings (EN & VI) chưa?
+  → Việc bọc `Localized()` trong code là chưa đủ. Phải THỰC SỰ mở file .strings (hoặc chạy update_strings.py) để bổ sung key/value trước khi báo cáo DONE.
 ```
 
 **Nếu thiếu bất kỳ item nào → report DONE_WITH_CONCERNS, không DONE.**
