@@ -1327,6 +1327,16 @@ function cmdSync() {
     log('');
 }
 
+function cmdAdmin() {
+    info('Mở Symphony Dashboard...');
+    try {
+        execSync('symphony dashboard', { stdio: 'inherit' });
+    } catch (e) {
+        err('Không thể khởi động Symphony Dashboard.');
+        dim('Vui lòng cài đặt: npm install -g @leejungkiin/awkit-symphony');
+    }
+}
+
 function cmdHelp() {
     const line = `${C.gray}${'─'.repeat(56)}${C.reset}`;
     log('');
@@ -1360,6 +1370,12 @@ function cmdHelp() {
     log(`  ${C.green}status${C.reset}              Compare repo vs installed (diff view)`);
     log(`  ${C.green}harvest${C.reset}             Pull live edits from ~/.gemini/ → repo`);
     log(`  ${C.green}sync${C.reset}                Full sync: harvest + install (one shot)`);
+    log('');
+
+    // Symphony
+    log(`${C.bold}🎶  Symphony${C.reset}`);
+    log(line);
+    log(`  ${C.green}admin${C.reset}               Khởi động Symphony Dashboard`);
     log('');
 
     // Packs
@@ -2201,12 +2217,12 @@ function cmdTrello(args) {
     const subCmd = args[0];
     const text = args.slice(1).join(' ');
 
-    if (!subCmd || subCmd === 'help') {
+    if (!subCmd || subCmd === 'help' || subCmd === '--help' || subCmd === '-h') {
         trelloHelp();
         return;
     }
 
-    if (!text && subCmd !== 'help') {
+    if (!text) {
         err(`Missing argument for 'trello ${subCmd}'. Usage: awkit trello ${subCmd} <text>`);
         return;
     }
@@ -2223,12 +2239,51 @@ function cmdTrello(args) {
             break;
 
         case 'item':
-            // trello-cli doesn't support adding checklist items natively.
-            // We fall back to marking an item incomplete (which implicitly creates it in some versions)
-            // or inform the user to use the REST API.
-            info(`Adding checklist item: ${text}`);
-            warn('Note: trello-cli may not support adding items. Use REST API if this fails.');
-            trelloExec(['card:check-item', '--item', text, '--state', 'incomplete']);
+            info(`Adding checklist item via REST API: ${text}`);
+            const credItem = trelloLoadCredentials();
+            const cfgItem = trelloLoadProjectConfig();
+            if (!credItem || !cfgItem) {
+                err("Credentials or config missing for REST API fallback.");
+                break;
+            }
+            
+            // 1. Get checklists
+            const clRes = spawnSync('npx', ['--yes', 'trello-cli', 'card:checklists', '--board', cfgItem.board, '--list', cfgItem.list, '--card', cfgItem.card, '--format', 'json'], { env: { ...process.env, TRELLO_KEY: credItem.api_key, TRELLO_TOKEN: credItem.api_token }, encoding: 'utf-8' });
+            
+            if (clRes.status !== 0) {
+                err(`Failed to get checklists: ${clRes.stderr || clRes.stdout}`);
+                break;
+            }
+            
+            try {
+                // Sometime trello-cli outputs to stdout along with some other logs.
+                // We extract the JSON array part.
+                const outText = clRes.stdout;
+                const jsonStr = outText.substring(outText.indexOf('['));
+                const checklists = JSON.parse(jsonStr);
+                
+                if (!checklists || checklists.length === 0) {
+                    err("No checklists found on card. Create one first using 'awkit trello checklist <name>'.");
+                    break;
+                }
+                
+                // Add to the LAST checklist (most recently appended usually)
+                const targetChecklist = checklists[checklists.length - 1];
+                const checklistId = targetChecklist.id;
+                
+                // 2. Add item via curl
+                const url = `https://api.trello.com/1/checklists/${checklistId}/checkItems?name=${encodeURIComponent(text)}&key=${credItem.api_key}&token=${credItem.api_token}`;
+                const addRes = spawnSync('curl', ['-s', '-X', 'POST', url], { encoding: 'utf-8' });
+                
+                const responseJson = JSON.parse(addRes.stdout);
+                if (responseJson.id) {
+                    ok(`Item added successfully to checklist "${targetChecklist.name}".`);
+                } else {
+                    err(`Failed to add item via REST API: ${addRes.stdout}`);
+                }
+            } catch (e) {
+                err(`Failed to parse checklists or execute curl: ${e.message}`);
+            }
             break;
 
         case 'complete':
@@ -2358,6 +2413,9 @@ const [, , command, ...args] = process.argv;
         case 'tg':
         case 'telegram':
             cmdTelegram(args);
+            break;
+        case 'admin':
+            cmdAdmin();
             break;
         case 'help':
         case '--help':
