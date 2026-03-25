@@ -1818,9 +1818,11 @@ async function cmdInit(forceFlag = false) {
         });
 
         const question = (query) => new Promise(resolve => rl.question(query, resolve));
+        // Sanitize: strip ALL whitespace (spaces, tabs, newlines) from pasted input
+        const sanitize = (s) => s.replace(/\s+/g, '');
 
         try {
-            const apiKey = (await question(`  ${C.yellow}Enter Trello API Key: ${C.reset}`)).trim();
+            const apiKey = sanitize(await question(`  ${C.yellow}Enter Trello API Key: ${C.reset}`));
 
             if (apiKey) {
                 const tokenUrl = `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=${apiKey}&name=AWKit`;
@@ -1830,7 +1832,7 @@ async function cmdInit(forceFlag = false) {
                 log('');
             }
 
-            const apiToken = (await question(`  ${C.yellow}Enter Trello API Token: ${C.reset}`)).trim();
+            const apiToken = sanitize(await question(`  ${C.yellow}Enter Trello API Token: ${C.reset}`));
 
             if (apiKey && apiToken) {
                 let profilePath = path.join(os.homedir(), '.zshrc');
@@ -2212,7 +2214,7 @@ function cmdTrello(args) {
     switch (subCmd) {
         case 'desc':
             info(`Updating card description...`);
-            trelloExec(['card:update', '--desc', text]);
+            trelloExec(['card:update', '--description', text]);
             break;
 
         case 'comment':

@@ -4,13 +4,13 @@ description: |
   Mandatory Symphony checkpoint system. Ensures AI never forgets to create,
   update, or complete tasks in Symphony. Enforces progress reporting at every
   milestone and auto-detects task completion without waiting for user confirmation.
-  v3.4: Kiro Spec Integration, Completion Status Protocol, Search-Before-Building, Boil-the-Lake.
+  v3.5: UI-First Three-Phase Execution with User Test Checkpoints.
 metadata:
   stage: core
-  version: "3.4"
-  replaces: "v3.3"
+  version: "3.5"
+  replaces: "v3.4"
   requires: symphony-orchestrator
-  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro]
+  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro, ui-first, user-test]
 agent: Symphony Enforcer
 allowed-tools:
   - symphony_create_task
@@ -24,17 +24,14 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.4 — Kiro Spec Integration + Completion Status Protocol
+# Symphony Enforcer v3.5 — UI-First Three-Phase Execution + User Test Checkpoints
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.4:**
-> - **Kiro Spec Integration**: Auto-detect `.kiro/specs/` → load specs + import tasks
-> - **Completion Status Protocol**: 4-status (DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT)
-> - **Design Compliance (TP1.5)**: Đối chiếu schema changes vs approved design doc
-> - **Pre-Plan Gate**: Đọc spec trước khi plan, hỏi user về constraints
-> - **Auto-Lifecycle**: Liên kết task_boundary ↔ Symphony tự động
-> - **Auto-Next**: BẮT BUỘC gợi ý next steps sau mỗi task done
-> - **Atomic Git Commits**: Tự động commit sau mỗi task done
+> **Key Changes v3.5:**
+> - **Gate 4 Three-Phase Execution**: Phase A (Infra) → Phase B (UI Shell + User Test) → Phase C (Logic + User Test)
+> - **TP1.7: User Test Checkpoint**: Trigger dừng lại cho user test trên device thật
+> - **UI-First Task Ordering**: UI tasks PHẢI đi trước logic tasks trong Symphony
+> - Kế thừa tất cả features v3.4 (Kiro, Completion Status, Design Compliance).
 > **Principle:** AI tự detect completion — user KHÔNG CẦN nói "xong".
 
 ---
@@ -137,7 +134,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
 
 ---
 
-## Auto-Lifecycle: task_boundary ↔ Symphony (NEW v3.0)
+## Auto-Lifecycle: task_boundary ↔ Symphony (v3.5)
 
 ```
 LIÊN KẾT TỰ ĐỘNG:
@@ -145,10 +142,123 @@ LIÊN KẾT TỰ ĐỘNG:
 - task_boundary(EXECUTION) → symphony_report_progress(40%)
 - task_boundary(VERIFICATION) → symphony_report_progress(80%)
 - notify_user(BlockedOnUser=false) → TRIGGER TP2 (completion check)
+
+THREE-PHASE MAPPING (Gate 4 — COMPLEX tasks với UI):
+- Phase A done (build OK)     → report_progress(25%) + checkpoint build
+- Phase B done (UI mock)      → report_progress(45%) + TRIGGER TP1.7 (User Test)
+- Phase C per-feature done    → report_progress(50-85%) + TRIGGER TP1.7 (User Test)
+- Phase C all features done   → report_progress(90%) → Gate 5
 ```
 
 AI PHẢI giữ `current_task_id` xuyên suốt session.
 Mỗi lần gọi `task_boundary` với mode mới → đồng thời report progress.
+
+---
+
+## 🚨 Three-Phase Auto-Enforcement Protocol (BẮT BUỘC — v3.5)
+
+> **Vấn đề:** AI không tự chủ động dùng Three-Phase nếu không bị ép.
+> **Giải pháp:** Auto-detect + auto-announce + auto-enforce.
+
+### Phase State Tracking
+
+AI PHẢI duy trì trạng thái phase hiện tại xuyên suốt Gate 4:
+
+```
+current_phase = "A" | "B" | "C" | "none"
+phase_b_confirmed = false | true
+checkpoint_count = 0
+```
+
+### Auto-Detection: Khi nào kích hoạt Three-Phase?
+
+Tại đầu Gate 4 (EXECUTION bắt đầu), AI PHẢI tự kiểm tra:
+
+```
+1. Task được triage là COMPLEX?
+2. Task có UI component? (detect qua):
+   → Symphony task title chứa: screen, view, UI, layout, dashboard, form
+   → Implementation plan mentions: Composable, Fragment, Activity, Screen, View
+   → Design doc tồn tại (docs/design/ hoặc docs/architecture/ có UI sections)
+   → Spec references: wireframe, mockup, screenshot
+   → Platform: Android/iOS/React Native/Flutter (hầu hết có UI)
+
+Nếu CẢ HAI điều kiện thỏa:
+   → BẮT BUỘC kích hoạt Three-Phase
+   → Hiển thị Phase Announcement Block
+```
+
+### Phase Announcement Block (BẮT BUỘC)
+
+Khi kích hoạt Three-Phase, AI PHẢI hiển thị:
+
+```
+🎯 THREE-PHASE EXECUTION ACTIVATED
+══════════════════════════════════════
+🏗️ Phase A: Infrastructure Setup
+   → {list tasks for Phase A}
+🎨 Phase B: UI Shell (Mock Data)
+   → {list tasks for Phase B}
+   → 🧪 USER TEST sau phase này
+⚡ Phase C: Logic Integration
+   → {list tasks for Phase C}
+   → 🧪 USER TEST mỗi feature
+══════════════════════════════════════
+Bắt đầu Phase A...
+```
+
+### Phase Transition Triggers (TỰ ĐỘNG)
+
+AI PHẢI tự động phát hiện khi chuyển phase:
+
+```yaml
+auto_triggers:
+  phase_a_to_b:
+    signal: Tất cả [INFRA] tasks đã done + build OK
+    action: |
+      - Announce: "🏗️ Phase A ✅ — Build thành công. Chuyển sang Phase B (UI Shell)."
+      - Set current_phase = "B"
+      - Bắt đầu code UI tasks
+
+  phase_b_to_checkpoint:
+    signal: Tất cả [UI] tasks đã done
+    action: |
+      - ⛔ DẪNG CODE NGAY LẬP TỨC
+      - TRIGGER TP1.7 (User Test Checkpoint)
+      - CHỊ user confirm "✅ OK" trước khi làm bất cứ gì khác
+      - KHÔNG được tự ý skip bước này
+
+  checkpoint_to_phase_c:
+    signal: User confirmed "✅" hoặc "OK"
+    action: |
+      - Set phase_b_confirmed = true
+      - Set current_phase = "C"
+      - Announce: "🎨 Phase B ✅ — UI đã được duyệt. Chuyển sang Phase C (Logic)."
+      - Bắt đầu code [LOGIC] tasks
+
+  phase_c_per_feature:
+    signal: 1 feature [LOGIC] đã done + có UI impact
+    action: |
+      - TRIGGER TP1.7 (mini checkpoint)
+      - Batch các features nhỏ lại nếu có thể
+```
+
+### Enforcement Rules
+
+```
+❌ VI PHạM NẶNG:
+  - Code logic (Phase C) khi phase_b_confirmed = false
+  - Skip Phase Announcement Block
+  - Code UI và Logic lẫn lộn trong cùng 1 lượt (phải tách rõ phase)
+  - Tự giả vờ user confirm để skip checkpoint
+  - Không hiển thị Phase Announcement khi Three-Phase activated
+
+✅ BẮT BUỘC:
+  - Luôn announce phase transition rõ ràng
+  - Luôn tạo hướng dẫn test CỤ THỂ (không chung chung)
+  - Luôn dùng notify_user(BlockedOnUser=true) cho checkpoints
+  - Ghi lại phase state vào NeuralMemory khi chuyển phase
+```
 
 ---
 
@@ -171,13 +281,16 @@ symphony_report_progress(
 )
 ```
 
-**Progress Guide:**
+**Progress Guide (Three-Phase Model):**
 ```
   10% — Task created, đang research/đọc code
-  25% — Implementation plan approved
-  40% — Bắt đầu code changes
-  60% — Code changes xong, đang test
-  80% — Tests pass, đang verification
+  20% — Implementation plan approved
+  25% — Phase A done (build OK, dependencies ready)
+  30% — Phase B bắt đầu (UI shell coding)
+  45% — Phase B done → USER TEST CHECKPOINT #1 (UI review)
+  50% — Phase C bắt đầu (logic integration)
+  50-85% — Phase C per-feature (each feature = +5-10%)
+  85% — Phase C done, đang final verification
   90% — Walkthrough/docs tạo xong
  100% — Hoàn thành (auto-trigger TP2)
 ```
@@ -226,6 +339,80 @@ File patterns:
 **Enforcement:**
 - ❌ KHÔNG tự ý thêm cột/bảng ngoài approved design cho COMPLEX tasks
 - ✅ NÊN ghi lại mọi deviation attempt vào NeuralMemory cho future reference
+
+---
+
+### TP1.7: User Test Checkpoint (NEW v3.5 — Gate 4 Three-Phase)
+
+**Khi nào:** Trigger ở 2 thời điểm chính trong Gate 4:
+
+1. **Phase B → C Transition (BẮT BUỘC cho COMPLEX):**
+   - ALL UI screens đã code xong với mock data
+   - Navigation hoạt động full flow
+   - App build và chạy OK trên emulator/device
+
+2. **Sau mỗi feature trong Phase C (COMPLEX tasks):**
+   - Feature X đã thay mock bằng real data
+   - Feature works end-to-end trên device
+
+**Điều kiện kích hoạt:**
+```
+COMPLEX + có UI component → BẮT BUỘC TP1.7
+MODERATE + có UI component → OPTIONAL (recommend cho hardware features: camera, GPS, sensors)
+TRIVIAL → SKIP
+Backend-only tasks → SKIP
+```
+
+**Action:**
+```
+1. Report progress trước: symphony_report_progress(current_task, progress)
+
+2. Present User Test Checkpoint:
+
+   🧪 USER TEST CHECKPOINT #{N}
+   ══════════════════════════════════════
+   📱 Phase: {B|C} — {phase_name}
+   📋 Đã code xong: {summary of completed work}
+   📁 Files changed: {N} files
+   
+   🔍 Hướng dẫn test:
+     1. {step 1 — cụ thể, actionable}
+     2. {step 2 — expected behavior}
+     3. {step 3 — edge case to check}
+   
+   ⏳ Anh test xong reply:
+     ✅ OK — tiếp tục
+     ⚠️ Issue: {mô tả} — tôi sẽ fix trước khi đi tiếp
+   ══════════════════════════════════════
+
+3. Gọi notify_user(BlockedOnUser=true) — DỪNG và CHỜ user response
+
+4. User response handling:
+   → "OK" / "✅" → Tiếp tục phase tiếp / feature tiếp
+   → "Issue: ..." → Fix issue → re-run checkpoint
+   → "Skip" → Ghi note concern, tiếp tục (DONE_WITH_CONCERNS later)
+```
+
+**Test Guidance Generation:**
+```
+AI PHẢI tạo hướng dẫn test CỤ THỂ cho từng checkpoint:
+
+Phase B Examples (UI):
+  - "Mở app → bấm tab Health → xem Dashboard có hiển thị 4 cards không?"
+  - "Quay ngang màn hình → layout có bể không?"
+  - "Bấm nút Camera → xem preview có xuất hiện không?"
+
+Phase C Examples (Logic):
+  - "Mở Health Dashboard → data thật có load lên không? (nếu có wifi)"
+  - "Chụp ảnh thức ăn → kết quả AI có trả về trong 5s không?"
+  - "Bấm Save → quay lại list → record mới có xuất hiện không?"
+```
+
+**Enforcement:**
+- ❌ KHÔNG được chuyển từ Phase B → Phase C mà chưa có user confirm (COMPLEX)
+- ❌ KHÔNG được skip checkpoint cho hardware-related features (Camera, GPS, Sensors)
+- ✅ NÊN batch các features nhỏ lại thành 1 checkpoint (tránh quá nhiều interrupt)
+- ✅ Checkpoint cho logic KHÔNG cần nếu feature là pure-backend/invisible
 
 ---
 
@@ -470,3 +657,5 @@ Nếu completed:
 - Spec alignment tránh plan bị lệch khỏi project constraints
 - Atomic commits giúp rollback chính xác — 1 task = 1 commit (learned from GSD)
 - KHÔNG auto-push — chỉ commit local, push cần user confirm
+- Three-Phase WORKS vì AI CHỦ ĐỘNG announce — không chờ user gọi (learned from FitWitness v12.3)
+- User test sớm bắt lỗi sớm — code logic trên UI sai = double wasted (learned from FitWitness v12.3)

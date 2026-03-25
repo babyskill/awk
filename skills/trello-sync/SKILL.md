@@ -30,12 +30,13 @@ priority: 2
 KHÔNG CÓ NGOẠI LỆ:
 - 1 Dự án = 1 Trello Card (KHÔNG tạo card mới cho mỗi task).
 - **Mô tả Card (Description)** BẮT BUỘC phải được update chứa cái nhìn tổng thể về dự án (Mục tiêu, Tech Stack, Tình trạng chung) để Quản lý dễ nắm bắt.
-- Tiến độ = Checklist Items trên card dự án. CHỈ ghi lại các task ở mức High-level / Module / Tính năng lớn.
-- ⛔ KHÔNG BAO GIỜ đồng bộ từng sub-task chi tiết (từ file `.kiro/specs/tasks.md` hay Symphony) thành checklist item trên Trello, làm vậy sẽ gây rác board (spam).
+- **Trello (PM View) vs Kiro (Dev View):** Trello là màn hình dành cho Quản lý (PM, QC), còn `.kiro/specs/tasks.md` là nơi để AI/Dev làm việc. Hai khái niệm này hoàn toàn khác nhau.
+- Tiến độ = Checklist Items trên card dự án. CHỈ ghi lại các task ở mức High-level / Module / Tính năng lớn. KHÔNG BAO GIỜ bứng nguyên các task kỹ thuật chi tiết (VD: "Tạo file `BloodPressureViewModel.kt`") lên Trello.
+- **Cách đồng bộ task lên Trello hợp lý:** AI PHẢI tổng hợp, chuyển đổi các task chi tiết từ `.kiro/specs/tasks.md` thành các ĐẦU VIỆC NGHIỆP VỤ (Business Features) để PM hiểu được (VD từ hàng chục file code -> chuyển thành checklist item: "Hoàn thiện màn hình Huyết áp" hoặc "Tính năng tích hợp Camera AI").
+- BẮT BUỘC ĐỒNG BỘ TOÀN BỘ DANH SÁCH TASK TỔNG HỢP: Checklist của dự án cần liệt kê TOÀN BỘ các "Features" (cả những cái sẽ làm và đã làm xong) để PM nắm được tổng quan tiến độ đang ở đâu, thay vì chỉ tạo mỗi cái tên đề mục Module.
+- ⛔ TUYỆT ĐỐI CẤM sử dụng script để đồng bộ (bulk-sync) hàng loạt từng dòng text từ `tasks.md` sang Trello. Nếu vi phạm sẽ gây rác hệ thống (spam Trello board).
 - Card KHÔNG di chuyển giữa lists (list = team member, cố định).
-- Comment ở milestone quan trọng PHẢI bao gồm các quyết định kỹ thuật cốt lõi hoặc nguyên nhân gốc rễ, không chỉ ghi "Done" chung chung.
-- Comment chỉ ở milestone quan trọng, KHÔNG spam.
-- KHÔNG ĐƯỢC sinh script file python/bash (VD: `trello_sync_kiro.py`) để đồng bộ hàng loạt (bulk sync) từ file markdown lên Trello.
+- Comment ở milestone quan trọng PHẢI bao gồm các quyết định kỹ thuật cốt lõi hoặc nguyên nhân gốc rễ. KHÔNG spam mỗi dòng code thành 1 comment.
 ```
 
 ---

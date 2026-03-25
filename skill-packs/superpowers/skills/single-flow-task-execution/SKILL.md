@@ -110,6 +110,56 @@ digraph process {
 }
 ```
 
+## UI-First Task Ordering (Gate 4 Three-Phase — v12.3)
+
+When a task set includes UI components (COMPLEX or MODERATE), tasks MUST be ordered in three phases:
+
+### Phase A: Infrastructure Tasks
+```
+Priority: Execute FIRST
+Examples:
+  - Add dependencies (Gradle, SPM, CocoaPods)
+  - Create project structure (packages, modules, DI)
+  - Set up navigation skeleton (NavGraph, Router)
+  - Configure build variants, signing
+Gate: App MUST build successfully → proceed
+```
+
+### Phase B: UI Shell Tasks (Mock Data)
+```
+Priority: Execute SECOND, BEFORE any logic tasks
+Examples:
+  - Build all screen layouts with static/mock data
+  - Implement navigation between screens
+  - Add animations, transitions, loading/empty/error states
+  - Wire up UI components (no real API/DB calls)
+Gate: 🧪 USER TEST CHECKPOINT — user must test UI on device
+  → Present test guidance (see symphony-enforcer TP1.7)
+  → User confirms UI OK → proceed to Phase C
+  → User reports issue → fix → re-checkpoint
+```
+
+### Phase C: Logic Tasks (Per Feature)
+```
+Priority: Execute LAST, after UI is confirmed
+Examples:
+  - Replace mock data with real API/DB calls
+  - Implement business logic, validation
+  - Add error handling, retry, offline support
+  - Wire up hardware features (camera, GPS, sensors)
+Gate: 🧪 USER TEST CHECKPOINT per feature (batch small ones)
+  → Especially important for hardware-dependent features
+```
+
+### Task Sorting Rule
+```
+When creating task list from implementation plan:
+1. Tag each task: [INFRA] [UI] [LOGIC]  
+2. Sort: INFRA first → UI second → LOGIC last
+3. Within each phase: respect dependency ordering
+4. Between phases: MANDATORY checkpoint where indicated
+```
+
 ## Task Decomposition
 
 When facing multiple problems (e.g., 5 test failures across 3 files):

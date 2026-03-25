@@ -1,6 +1,6 @@
-# GEMINI.md — Antigravity v12.2
+# GEMINI.md — Antigravity v12.3
 
-> Rules + routing only. Gate details → skills. Updated: 2026-03-24
+> Rules + routing only. Gate details → skills. Updated: 2026-03-25
 
 ---
 
@@ -50,7 +50,7 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
 
-### 7-Gate Autonomous System (v12.2)
+### 7-Gate Autonomous System (v12.3)
 - orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.
 - COMPLEX tasks PHẢI qua 7 Gates tuần tự:
   - Gate 1 (Spec): `brainstorm-agent` → BRIEF.md / spec document
@@ -58,8 +58,22 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
   - Gate 2 (Architecture): `spec-gate` → design doc + user approve
   - Gate 2.5 (Visual Design): `visual-design-gate` → Thống nhất UI qua Pencil hoặc ảnh đính kèm
   - Gate 3 (Tasks): `symphony-enforcer` → tạo Symphony tickets
-  - Gate 4 (Execution): code theo ticket, đối chiếu design/UI doc
+  - Gate 4 (Execution — **3-Phase**): code theo ticket với **User Test Checkpoints**
+    - **Phase A** 🏗️ Infrastructure: dependencies, DI, navigation skeleton → build check
+    - **Phase B** 🎨 UI Shell: tất cả screens với mock data → **🧪 USER TEST CHECKPOINT** (user test UI trên device)
+    - **Phase C** ⚡ Logic: thay mock bằng real data, per-feature → **🧪 USER TEST CHECKPOINT** mỗi feature
   - Gate 5 (Verification): `verification-gate` + `code-review`
+- **Gate 4 Three-Phase Rules (AUTO-ENFORCE):**
+  - AI PHẢI **CHỦ ĐỘNG** kích hoạt Three-Phase — KHÔNG chờ user yêu cầu.
+  - AI PHẢI hiển thị **Phase Announcement Block** khi bắt đầu Gate 4.
+  - AI PHẢI **TỰ ĐỘNG dừng** và trigger User Test Checkpoint (TP1.7) khi Phase B xong.
+  - COMPLEX + có UI → BẮT BUỘC 3 phases + tất cả checkpoints.
+  - MODERATE + có UI → Phase A+C gộp, Phase B optional.
+  - TRIVIAL → bypass hoàn toàn (code thẳng).
+  - Phase B → C transition: PHẢI có user confirm UI OK trước khi code logic.
+  - Mỗi feature trong Phase C xong → checkpoint nhỏ cho user test.
+  - ⛔ Code logic khi chưa confirm UI = VI PHẠM NẶNG.
+  - Chi tiết: xem `symphony-enforcer/SKILL.md` (Three-Phase Auto-Enforcement Protocol).
 - **Kiro Spec Integration:** Khi `.kiro/specs/` tồn tại → auto-accelerate Gates 1, 1.5, 2, 3.
 - Gate 1.5 MANDATORY khi: COMPLEX + >3 modules hoặc port/migration projects.
 - Gate 1.5 SKIP khi: TRIVIAL/MODERATE hoặc single-module projects.
@@ -68,7 +82,7 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - MODERATE tasks → Gate 3 + 4 + 5.
 - AI tự detect gate state — user KHÔNG CẦN gọi workflow bằng tay.
 - Trong lúc code, nếu cần sửa schema/UI khác approved design → ⛔ DỪNG, quay Gate 2/2.5 tương ứng.
-- Chi tiết: xem `orchestrator/SKILL.md` (triage) + `visual-design-gate/SKILL.md` (Gate 2.5).
+- Chi tiết: xem `orchestrator/SKILL.md` (triage) + `symphony-enforcer/SKILL.md` (TP1.7 checkpoints).
 
 ### NeuralMemory
 - Brain = projectId. Switch trước mọi nmem call.
