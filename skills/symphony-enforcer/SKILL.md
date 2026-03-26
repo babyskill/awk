@@ -7,8 +7,8 @@ description: |
   v3.5: UI-First Three-Phase Execution with User Test Checkpoints.
 metadata:
   stage: core
-  version: "3.5"
-  replaces: "v3.4"
+  version: "3.6"
+  replaces: "v3.5"
   requires: symphony-orchestrator
   tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro, ui-first, user-test]
 agent: Symphony Enforcer
@@ -24,14 +24,15 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.5 — UI-First Three-Phase Execution + User Test Checkpoints
+# Symphony Enforcer v3.6 — UI-First Three-Phase Execution + Legacy Cleanup
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.5:**
+> **Key Changes v3.6:**
+> - **Step 0.5: Legacy Artifact Cleanup**: Auto-detect stale `.symphony/tasks.json` and warn user
 > - **Gate 4 Three-Phase Execution**: Phase A (Infra) → Phase B (UI Shell + User Test) → Phase C (Logic + User Test)
 > - **TP1.7: User Test Checkpoint**: Trigger dừng lại cho user test trên device thật
 > - **UI-First Task Ordering**: UI tasks PHẢI đi trước logic tasks trong Symphony
-> - Kế thừa tất cả features v3.4 (Kiro, Completion Status, Design Compliance).
+> - Kế thừa tất cả features v3.5 (Kiro, Completion Status, Design Compliance).
 > **Principle:** AI tự detect completion — user KHÔNG CẦN nói "xong".
 
 ---
@@ -52,8 +53,24 @@ KHÔNG CÓ NGOẠI LỆ:
 
 ## 🔒 STRICT STARTUP PROTOCOL (BẮT BUỘC)
 
-Mỗi khi bắt đầu task code/debug/plan, AI PHẢI đi qua **5 steps tuần tự**.
+Mỗi khi bắt đầu task code/debug/plan, AI PHẢI đi qua **6 steps tuần tự**.
 KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
+
+### Step 0.5: Legacy Artifact Cleanup (AUTO — v3.6)
+
+```
+→ Kiểm tra: .symphony/tasks.json tồn tại?
+→ CÓ  → ⚠️ CẢNH BÁO: "Legacy tasks.json detected. Symphony uses SQLite DB — this file is stale."
+       → Khuyên user xoá: "rm .symphony/tasks.json"
+       → KHÔNG tự xoá (safety guardrail) — chỉ cảnh báo.
+       → Ghi log vào NeuralMemory: "Legacy tasks.json found at {project}, warned user."
+→ KHÔNG → ✅ Clean (no legacy artifacts)
+→ Output: "🧹 Step 0.5: Legacy Check ✅ — No stale artifacts"
+```
+
+> **Lý do:** Symphony v2+ sử dụng SQLite DB (`symphony.db`) làm single source of truth.
+> File `tasks.json` là di sản từ phiên bản cũ (pre-SQLite). Nếu tồn tại song song sẽ gây
+> "split-brain" — một nửa tool đọc JSON, một nửa đọc DB → dữ liệu lệch pha.
 
 ### Step 1: Project Identity — `.project-identity`
 
@@ -61,7 +78,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
 → Kiểm tra: file .project-identity có tồn tại?
 → CÓ  → Đọc projectId, projectName
 → KHÔNG → ⛔ DỪNG. Hỏi user hoặc tạo .project-identity.
-→ Output: "📋 Step 1/5: Project Identity ✅ — {projectId}"
+→ Output: "📋 Step 1/6: Project Identity ✅ — {projectId}"
 ```
 
 ### Step 2: NeuralMemory Brain — Switch brain
@@ -69,7 +86,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
 ```
 → nmem brain use <projectId>
 → nmem_recap(level=1) — load context
-→ Output: "🧠 Step 2/5: Brain ✅ — switched to {projectId}"
+→ Output: "🧠 Step 2/6: Brain ✅ — switched to {projectId}"
 ```
 
 ### Step 3: Spec Alignment — Đọc Project Spec (v3.4 + Kiro)
@@ -82,7 +99,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
      - .kiro/specs/<module>/design.md → architecture
      - .kiro/specs/<module>/tasks.md → task breakdown (cho Step 4)
      → Extract constraints liên quan đến task hiện tại
-     → Output: "📐 Step 3/5: Kiro Specs Loaded ✅ — {N} modules, {M} design docs"
+     → Output: "📐 Step 3/6: Kiro Specs Loaded ✅ — {N} modules, {M} design docs"
 
 → CHECK 2 (fallback): docs/specs/PROJECT.md tồn tại?
   → CÓ  → Đọc silent: PROJECT.md + TECH-SPEC.md + REQUIREMENTS.md
@@ -90,8 +107,8 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
          → NẾU PLANNING mode:
             - Hỏi user 1-3 câu về constraints/UX cụ thể của feature
             - Ví dụ: "Feature này cần offline support không?"
-         → Output: "📐 Step 3/5: Spec Aligned ✅"
-  → KHÔNG → Skip (project chưa /init) → "📐 Step 3/5: No spec — skipped"
+         → Output: "📐 Step 3/6: Spec Aligned ✅"
+  → KHÔNG → Skip (project chưa /init) → "📐 Step 3/6: No spec — skipped"
 ```
 
 > **Quan trọng:** Nếu .kiro/specs hoặc TECH-SPEC.md có "Constraints & Non-Negotiables",
@@ -105,7 +122,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
      - Group theo module name
      - Đánh tag kèm module name
      → ⛔ CẢNH BÁO: KHÔNG đồng bộ hàng loạt các item nhỏ này lên Trello (để tránh rác board). Chỉ đồng bộ lên cấp module hoặc feature lớn.
-     → Output: "🎯 Step 4/5: Kiro Tasks Imported ✅ — {N} tasks created"
+     → Output: "🎯 Step 4/6: Kiro Tasks Imported ✅ — {N} tasks created"
      → Claim task phù hợp nhất với user request
   → CÓ + đã import → symphony_available_tasks → claim task phù hợp
 
@@ -114,7 +131,7 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
   → CÓ task ready phù hợp → symphony_claim_task
   → KHÔNG CÓ → symphony_create_task(title) → symphony_claim_task(new_id)
 → Lưu task_id cho TP1-TP4
-→ Output: "🎯 Step 4/5: Task ✅ — #sym-XYZ claimed"
+→ Output: "🎯 Step 4/6: Task ✅ — #sym-XYZ claimed"
 ```
 
 ### Step 5: Confirmation Block
@@ -122,11 +139,12 @@ KHÔNG được bắt đầu work cho đến khi TẤT CẢ steps ✅.
 ```
 🚦 STARTUP PROTOCOL COMPLETE
 ══════════════════════════════════════
-  Step 1: 📋 Project Identity  ✅  {projectId}
-  Step 2: 🧠 NeuralMemory      ✅  brain: {projectId}
-  Step 3: 📐 Spec Alignment     ✅  {constraints_count} constraints loaded
-  Step 4: 🎯 Task              ✅  #sym-XYZ — "{title}"
-  Step 5: ✅ READY TO WORK
+  Step 0.5: 🧹 Legacy Check     ✅  No stale artifacts
+  Step 1:   📋 Project Identity  ✅  {projectId}
+  Step 2:   🧠 NeuralMemory      ✅  brain: {projectId}
+  Step 3:   📐 Spec Alignment     ✅  {constraints_count} constraints loaded
+  Step 4:   🎯 Task              ✅  #sym-XYZ — "{title}"
+  Step 5:   ✅ READY TO WORK
 ══════════════════════════════════════
 ```
 

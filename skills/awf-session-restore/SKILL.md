@@ -6,8 +6,8 @@ description: |
   Enforces Project ID → Brain Switch → Memory Read order to prevent cross-project contamination.
 metadata:
   stage: core
-  version: "7.0"
-  replaces: "v6.4"
+  version: "7.1"
+  replaces: "v7.0"
   requires: symphony-orchestrator
   tags: [session, restore, context, symphony, neuralmemory, silent, multi-project]
 trigger: session_start
@@ -98,6 +98,16 @@ Hoặc nếu dùng cấu trúc brain khác:
 ```bash
 cat CODEBASE.md 2>/dev/null | head -5
 ```
+
+#### 3d. Legacy Artifact Detection (v7.1)
+```bash
+# Detect stale JSON task files — Symphony uses SQLite only
+test -f .symphony/tasks.json && echo "LEGACY_TASKS_JSON_FOUND" || echo "CLEAN"
+```
+
+Nếu phát hiện `LEGACY_TASKS_JSON_FOUND`:
+→ Ghi vào silent context: `legacy_artifacts: ["tasks.json"]`
+→ `symphony-enforcer` Step 0.5 sẽ warn user.
 
 #### 3c. Symphony Task State
 ```bash
