@@ -46,9 +46,15 @@ activation_keywords:
 5. **Giai đoạn Sản Xuất (20 Cost / Scene)**:
    - Nhận lệnh "OK/Duyệt" từ user.
    - Gọi lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py generate-video` sử dụng các prompt đã chốt từ ảnh tĩnh.
-6. **Giai đoạn Hậu Kỳ**:
+6. **Giai đoạn Hậu Kỳ (Auto-Mixer)**:
    - Gọi skill `lucylab-tts` (script `~/.gemini/antigravity/skills/lucylab-tts/scripts/lucylab_tts.py`) để tạo TTS track.
-   - Xài `ffmpeg` mix Video (`.mp4`), Voiceover, và Background Music.
+   - Chạy Auto-Mixer để tự động ghép video, audio, tạo chuyển cảnh (crossfade) và lồng nhạc nền:
+     ```bash
+     python3 ~/.gemini/antigravity/skills/short-maker/scripts/video_mixer.py \
+         --project-dir "outputs/<project-name>" \
+         --fade-duration 1.0 \
+         --bgm-volume 0.1
+     ```
 
 ## 📁 Định dạng Output Convention
 
