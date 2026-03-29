@@ -33,8 +33,8 @@ activation_keywords:
 **Bảo vệ Credit**: Mọi video Veo 3 đều tốn 20 credit. TUYỆT ĐỐI không gọi `gflow generate-video` khi chưa có xác nhận từ người dùng qua bước Storyboard.
 
 1. **Giai đoạn Setup (Authentication)**: AI CẦN PHẢI KIỂM TRA QUYỀN TRUY CẬP TRƯỚC:
-   - **Với LucyLab TTS**: Nếu trong `.env` của project chưa có `LUCYLAB_BEARER`, AI phải yêu cầu người dùng cung cấp API Key để lưu vào `.env`, không được chạy lỗi thủ công.
    - **Với Google Flow**: Kiểm tra xem file `~/.gflow/env` đã tồn tại chưa. Nếu chưa có (hoặc người dùng chưa auth), AI phải hướng dẫn người dùng chạy lệnh `python ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli/gflow/cli/main.py auth login` và đợi họ xác nhận đã đăng nhập thành công.
+   - *(Lưu ý: Authentication của LucyLab TTS được kiểm tra và xử lý tự động khi gọi skill `lucylab-tts`)*.
 2. **Giai đoạn Bootstrap**: Tạo thư mục dự án `outputs/<project-name>`, khởi tạo các file môi trường.
 
 3. **Giai đoạn Kịch Bản**: Sinh kịch bản `script.md` theo cấu trúc Prompt Templates. Xác định danh sách các cảnh (scenes) và lời thoại tương ứng. Nhạc nền lấy từ Pixabay/Tiengdong.com hoặc TikTok Trends (độ dài mặc định 30s).

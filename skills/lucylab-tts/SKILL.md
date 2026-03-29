@@ -29,6 +29,8 @@ activation_keywords:
 
 ## 🧱 Quy trình hoạt động (Mandatory Flow)
 
+0. **Giai đoạn Setup (Authentication)**: AI CẦN PHẢI KIỂM TRA QUYỀN TRUY CẬP TRƯỚC TIÊN:
+   - Quét file `.env` (tại thư mục làm việc hiện tại hoặc `~/.gemini/antigravity/.env`) tìm `LUCYLAB_BEARER`. Nếu KHÔNG TỒN TẠI, AI phải yêu cầu người dùng cung cấp API Key của LucyLab để lưu vào `.env`. Tuyệt đối không được chạy script trực tiếp để tránh lỗi do thiếu Authorization.
 1. **Chuẩn bị Kịch bản**: Kịch bản cần được đưa vào file text (ví dụ: `script.txt`) chứa thoại, hoặc truyền trực tiếp chữ thông qua `--text`.
 2. **Chọn Giọng đọc**: Dựa trên danh sách giọng trong `~/.gemini/antigravity/skills/lucylab-tts/resources/voices_library.json` hoặc truyền trực tiếp `--voice <id>`. Có các template phân nhóm: Nam/Nữ, miền Bắc/Nam.
 3. **Thực thi Tạo Audio**: 
