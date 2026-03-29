@@ -33,19 +33,19 @@ activation_keywords:
 **Bảo vệ Credit**: Mọi video Veo 3 đều tốn 20 credit. TUYỆT ĐỐI không gọi `gflow generate-video` khi chưa có xác nhận từ người dùng qua bước Storyboard.
 
 1. **Giai đoạn Setup (Authentication)**: AI CẦN PHẢI KIỂM TRA QUYỀN TRUY CẬP TRƯỚC:
-   - **Với Google Flow**: Kiểm tra xem file `~/.gflow/env` đã tồn tại chưa. Nếu chưa có (hoặc người dùng chưa auth), AI phải hướng dẫn người dùng chạy lệnh `python ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli/gflow/cli/main.py auth login` và đợi họ xác nhận đã đăng nhập thành công.
+   - **Với Google Flow**: Kiểm tra xem file `~/.gflow/env` đã tồn tại chưa. Nếu chưa có (hoặc người dùng chưa auth), AI phải hướng dẫn người dùng chạy lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py auth` và đợi họ xác nhận đã đăng nhập thành công.
    - *(Lưu ý: Authentication của LucyLab TTS được kiểm tra và xử lý tự động khi gọi skill `lucylab-tts`)*.
 2. **Giai đoạn Bootstrap**: Tạo thư mục dự án `outputs/<project-name>`, khởi tạo các file môi trường.
 
 3. **Giai đoạn Kịch Bản**: Sinh kịch bản `script.md` theo cấu trúc Prompt Templates. Xác định danh sách các cảnh (scenes) và lời thoại tương ứng. Nhạc nền lấy từ Pixabay/Tiengdong.com hoặc TikTok Trends (độ dài mặc định 30s).
 4. **Giai đoạn Concept (0 Cost)**: 
    - Sinh file `outputs/<project>/storyboard.json` từ kịch bản.
-   - Gọi `python ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli/gflow/cli/main.py generate-image` định dạng 16:9 cho từng cảnh.
+   - Gọi lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py generate-image` định dạng 16:9 cho từng cảnh.
    - Copy `templates/storyboard.html` sang thư mục output để Preview.
    - Yêu cầu người dùng mở `storyboard.html` để duyệt.
 5. **Giai đoạn Sản Xuất (20 Cost / Scene)**:
    - Nhận lệnh "OK/Duyệt" từ user.
-   - Gọi `python ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli/gflow/cli/main.py generate-video` sử dụng các prompt đã chốt từ ảnh tĩnh.
+   - Gọi lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py generate-video` sử dụng các prompt đã chốt từ ảnh tĩnh.
 6. **Giai đoạn Hậu Kỳ**:
    - Gọi skill `lucylab-tts` (script `~/.gemini/antigravity/skills/lucylab-tts/scripts/lucylab_tts.py`) để tạo TTS track.
    - Xài `ffmpeg` mix Video (`.mp4`), Voiceover, và Background Music.
