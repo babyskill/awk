@@ -3,12 +3,24 @@
   "projectId": "awkit",
   "projectType": "library",
   "icon": "⚡",
+  "autoVerification": false,
   "primaryLanguage": "en",
   "techStack": {
-    "runtime": ["Node.js 18+"],
-    "languages": ["JavaScript", "Markdown"],
-    "distribution": ["npm"],
-    "targets": ["Gemini Code Assist", "Claude Code", "Cursor AI"]
+    "runtime": [
+      "Node.js 18+"
+    ],
+    "languages": [
+      "JavaScript",
+      "Markdown"
+    ],
+    "distribution": [
+      "npm"
+    ],
+    "targets": [
+      "Gemini Code Assist",
+      "Claude Code",
+      "Cursor AI"
+    ]
   },
   "projectStage": "development",
   "targetAudience": "Internal AI agent developers who need structured workflows, persistent context, and curated skills for multi-platform development",
@@ -44,6 +56,11 @@
     "lineLength": 120
   },
   "documentationLanguage": "en",
+  "trello": {
+    "board": "Appdexter - Code Magic",
+    "list": "Kiên",
+    "card": "AWF Platform"
+  },
   "createdDate": "2026-02-22",
-  "lastUpdated": "2026-03-10"
+  "lastUpdated": "2026-03-27"
 }

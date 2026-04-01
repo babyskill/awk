@@ -45,7 +45,6 @@ description: ✨ Khởi tạo dự án chuẩn Antigravity (v5.0 - Spec-First + 
     mkdir -p docs/specs
     mkdir -p docs/architecture/decisions
     mkdir -p .planning/research
-    cp ~/.gemini/antigravity/templates/configs/trello-config.json .trello-config.json
     ```
 
 3.  **App Structure (Platform-Specific)**:

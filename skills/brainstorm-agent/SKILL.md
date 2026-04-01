@@ -131,21 +131,24 @@ Trước khi bắt đầu, LUÔN:
 ### Phase 2: Idea Exploration (One Question at a Time)
 
 **Rules:**
-- Hỏi **một câu hỏi mỗi lần** — không overwhelm user
+- Hỏi **một câu hỏi mỗi lần** — không overwhelm user.
+- **CHỦ ĐỘNG KHAI THÁC & MỞ RỘNG:** Thay vì chỉ nhận ý tưởng thụ động, AI cần **chủ động đặt câu hỏi gợi mở, giả định tình huống hoặc các edge cases** để giúp user tự suy nghĩ sâu hơn và mở rộng ý tưởng của họ (Socratic questioning).
 - Dùng câu hỏi mở đầu thân thiện:
 
 ```
-"💡 Kể em nghe ý tưởng của anh đi! Anh muốn làm gì?"
+"💡 Kể em nghe chi tiết ý tưởng của anh đi! Anh đang muốn giải quyết bài toán gì?"
 
-Sau khi nghe, hỏi thêm:
-• "App/tính năng này giải quyết vấn đề gì?"
-• "Ai sẽ dùng nó?"
-• "Anh nghĩ điều gì làm cho nó khác biệt?"
+Sau khi nghe, hãy chủ động probe sâu hơn. Thay vì hỏi chung chung, hãy hỏi cụ thể dựa trên ý tưởng của user:
+• "Nếu user làm [hành động X], hệ thống nên xử lý thế nào?"
+• "Điểm khác biệt lớn nhất giữa app của anh và các app hiện có là gì?"
+• "Ai sẽ là người dùng cốt lõi nhất, và họ gặp pain point gì nghiêm trọng nhất?"
+• "Anh có nghĩ đến việc thêm [Gợi ý góc nhìn mới/tính năng mở rộng] không, vì nó sẽ giúp [lợi ích]?"
 ```
 
-**Active Listening:**
+**Active Listening & Expanding:**
 - Tóm tắt lại: "Em hiểu là anh muốn [X] để giải quyết [Y], đúng không?"
-- KHÔNG vội đưa ra giải pháp — hiểu vấn đề trước
+- **Đào sâu:** "Em thấy phần [Z] khá thú vị, anh định triển khai nó theo hướng manual hay chạy auto?"
+- KHÔNG vội đưa ra giải pháp hoàn chỉnh — hãy giúp user tự làm rõ ý tưởng của mình trước.
 
 ---
 

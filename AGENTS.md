@@ -145,7 +145,7 @@ To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.
 This project syncs task progress to Trello board **Appdexter - Code Magic** for PM/QC/Dev visibility.
 
 > Auth: Global Environment Variables (`TRELLO_KEY`, `TRELLO_TOKEN`).
-> Config: `.trello-config.json` at project root (board, list, card).
+> Config: `"trello"` key in `.project-identity` (fallback: `.trello-config.json`).
 
 ## Quick Reference
 

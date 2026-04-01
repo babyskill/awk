@@ -48,48 +48,15 @@ If user request involves iOS-specific → Check if mobile-ios pack enabled
 If not enabled → Suggest: "awf enable-pack mobile-ios"
 ```
 
-### 3.5. Gate 4 Three-Phase Routing (v12.3 — AUTO-ENFORCE)
-
-> ⚠️ AI PHẢI CHỦ ĐỘNG kích hoạt — KHÔNG chờ user gọi.
-> Khi detect COMPLEX + UI → TỰ ĐỘNG announce Phase Announcement Block.
-
-```yaml
-gate4_triage:
-  trigger: After Gate 3 (tasks created), before execution begins
-  auto_activate: true  # AI proactively triggers, no user command needed
-  
-  complex_with_ui:
-    condition: complexity == COMPLEX AND task has UI components
-    action: Enforce Three-Phase Execution
-    phases:
-      - Phase A: Infrastructure (dependencies, DI, navigation skeleton)
-        → Must build successfully before Phase B
-      - Phase B: UI Shell (all screens with mock data)
-        → TRIGGER TP1.7: User Test Checkpoint (MANDATORY)
-        → User must confirm UI OK before Phase C
-      - Phase C: Logic Integration (per feature)
-        → TRIGGER TP1.7: after each feature (batch small ones)
-    task_ordering: UI tasks MUST be grouped before logic tasks in Symphony
-  
-  moderate_with_ui:
-    condition: complexity == MODERATE AND task has UI components
-    action: Phase A+C merged, Phase B optional (recommend for hardware features)
-  
-  trivial_or_backend:
-    condition: complexity == TRIVIAL OR no UI components
-    action: Skip phases, code straight through (no checkpoints)
-  
-  detect_ui_components:
-    signals:
-      - Task mentions: screen, view, layout, UI, button, form, navigation
-      - Files include: *.xml (Android), *.swift (iOS views), *.compose, *.tsx
-      - Spec references: wireframe, mockup, design, screenshot
-```
-
 ### 4. Fallback
 ```
 No match → Ask clarifying question (max 2 times)
 Still unclear → Suggest `/help`
+```
+
+### 5. Post-Action Rules
+```
+Build hoàn tất thành công (không có lỗi) → Tự động chạy git commit.
 ```
 
 ## Auto-Activation

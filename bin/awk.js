@@ -36,6 +36,7 @@ const HOME = process.env.HOME || process.env.USERPROFILE;
 
 const { generateClineRules, generateClineWorkflows, generateClineSkills } = require('./cline-generators');
 const { generateCodexAgentsMd, generateCodexSkills, generateCodexAgents } = require('./codex-generators');
+const { generateClaudeRules, generateClaudeSkills } = require('./claude-generators');
 
 // ─── Platform Definitions ──────────────────────────────────────────────────
 
@@ -72,6 +73,15 @@ const PLATFORMS = {
         dirs: {
             agents: 'agents',
             skills: '../.agents/skills',
+        },
+    },
+    claude: {
+        name: 'Claude Code',
+        globalRoot: process.cwd(), // Local to project
+        rulesFile: 'CLAUDE.md',
+        versionFile: '.claude/awk_version',
+        dirs: {
+            skills: '.claude/skills',
         },
     }
 };
@@ -290,35 +300,90 @@ function checkSymphony({ silent = false } = {}) {
     }
 }
 
-function cmdInstall(platformArg) {
+function cmdInstall(args = []) {
     log('');
     log(`${C.cyan}${C.bold}╔══════════════════════════════════════════════════════════╗${C.reset}`);
     log(`${C.cyan}${C.bold}║     🚀 AWK v${AWK_VERSION} — Antigravity Workflow Kit        ║${C.reset}`);
     log(`${C.cyan}${C.bold}╚══════════════════════════════════════════════════════════╝${C.reset}`);
     log('');
 
-    // Platform selection
-    let platform = platformArg || getActivePlatform();
+    const isUpdate = args.includes('--update');
+    let selectedPlatforms = [];
 
-    if (!PLATFORMS[platform]) {
-        err(`Unknown platform: ${platform}.`);
-        return;
+    if (args.includes('--all') || args.includes('-a') || args.includes('all')) {
+        selectedPlatforms = Object.keys(PLATFORMS);
+    } else {
+        if (args.includes('--gemini') || args.includes('-g') || args.includes('antigravity')) selectedPlatforms.push('antigravity');
+        if (args.includes('--cline') || args.includes('cline')) selectedPlatforms.push('cline');
+        if (args.includes('--codex') || args.includes('-x')) selectedPlatforms.push('codex');
+        if (args.includes('--claude-code') || args.includes('--claude') || args.includes('-c') || args.includes('claude')) selectedPlatforms.push('claude');
+
+        const pIdx = args.indexOf('--platform');
+        let legacyArg = null;
+        if (pIdx !== -1 && args[pIdx + 1]) {
+            legacyArg = args[pIdx + 1];
+        } else if (args.length > 0 && !args[0].startsWith('-') && args[0] !== 'all' && args[0] !== '--update') {
+            legacyArg = args[0];
+        }
+        
+        if (legacyArg && PLATFORMS[legacyArg] && !selectedPlatforms.includes(legacyArg)) {
+            selectedPlatforms.push(legacyArg);
+        }
     }
 
-    activePlatform = platform;
-    savePlatform(platform);
+    if (selectedPlatforms.length === 0) {
+        if (isUpdate) {
+            selectedPlatforms = [getActivePlatform()];
+        } else {
+            log(`${C.cyan}Select platforms to install (e.g., type "1,2", "all", or "1,2,3,4"):${C.reset}`);
+            log(`  1. Gemini Code Assist (antigravity)`);
+            log(`  2. Cline (VS Code)`);
+            log(`  3. Codex CLI (codex)`);
+            log(`  4. Claude Code (.claude/)`);
+            log(`  5. All of the above`);
+            const choice = promptChoice('Choice', '5').trim().toLowerCase();
+            
+            if (choice === '5' || choice === 'all' || choice === '') {
+                selectedPlatforms = Object.keys(PLATFORMS);
+            } else {
+                if (choice.includes('1')) selectedPlatforms.push('antigravity');
+                if (choice.includes('2')) selectedPlatforms.push('cline');
+                if (choice.includes('3')) selectedPlatforms.push('codex');
+                if (choice.includes('4')) selectedPlatforms.push('claude');
+            }
+        }
+    }
 
-    const plat = PLATFORMS[platform];
-    const target = plat.globalRoot;
+    if (selectedPlatforms.length === 0) {
+        selectedPlatforms = [getActivePlatform()];
+    }
 
-    info(`Installing for ${C.bold}${plat.name}${C.reset}...`);
-    log('');
+    log(`${C.cyan}Installing to: ${selectedPlatforms.map(p => PLATFORMS[p].name).join(', ')}${C.reset}`);
 
-    // 0. Check Symphony dependency
-    info('Checking dependencies...');
-    checkSymphony();
+    // Main installation loop
+    for (const platform of selectedPlatforms) {
+        if (!PLATFORMS[platform]) {
+            err(`Unknown platform: ${platform}.`);
+            continue;
+        }
 
-    // 1. Ensure target dirs exist
+        activePlatform = platform;
+        if (platform === selectedPlatforms[0]) {
+            savePlatform(platform); // Store primary platform
+        }
+
+        const plat = PLATFORMS[platform];
+        const target = plat.globalRoot;
+
+        log('');
+        info(`Installing for ${C.bold}${plat.name}${C.reset}...`);
+        log('');
+
+        // 0. Check Symphony dependency
+        info('Checking dependencies...');
+        checkSymphony({ silent: platform !== selectedPlatforms[0] });
+
+        // 1. Ensure target dirs exist
     info('Creating directories...');
     const dirKeys = Object.values(plat.dirs);
     for (const dir of dirKeys) {
@@ -339,6 +404,11 @@ function cmdInstall(platformArg) {
     } else if (platform === 'codex') {
         info('Generating Codex AGENTS.md...');
         generateCodexAgentsMd(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
+    } else if (platform === 'claude') {
+        info('Generating Claude Code CLAUDE.md...');
+        const claudeTemplateSrc = path.join(AWK_ROOT, 'core', 'CLAUDE.md');
+        const claudeRulesDest = path.join(target, plat.rulesFile);
+        generateClaudeRules(claudeTemplateSrc, claudeRulesDest);
     }
 
     // 3. Backup and install workflows
@@ -392,6 +462,8 @@ function cmdInstall(platformArg) {
             generateCodexSkills(skillsSrc, skillsDest);
             const agentsDest = path.join(target, plat.dirs.agents);
             generateCodexAgents(skillsSrc, agentsDest);
+        } else if (platform === 'claude') {
+            generateClaudeSkills(skillsSrc, skillsDest);
         } else {
             const skillCount = copyDirRecursive(skillsSrc, skillsDest);
             ok(`${skillCount} skill files installed`);
@@ -462,6 +534,7 @@ function cmdInstall(platformArg) {
     }
     log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
     log('');
+    } // End of platform loop
 }
 
 /**
@@ -570,7 +643,7 @@ function cmdUpdate() {
         }
         log('');
         info('Applying new workflows, skills & schemas...');
-        cmdInstall();
+        cmdInstall(['--update']);
         return;
     }
 
@@ -579,7 +652,7 @@ function cmdUpdate() {
         ok(`Already on latest version (v${AWK_VERSION}) — could not verify with npm`);
     } else {
         info(`Upgrading from v${installedVersion} → v${AWK_VERSION} (local only, npm unreachable)`);
-        cmdInstall();
+        cmdInstall(['--update']);
     }
 }
 
@@ -659,6 +732,77 @@ function cmdDoctor() {
         log(`${C.green}${C.bold}✅ All checks passed! AWK is healthy.${C.reset}`);
     } else {
         log(`${C.yellow}${C.bold}⚠️  ${issues} issue(s) found. Run 'awkit install' to fix.${C.reset}`);
+    }
+    log('');
+}
+
+/**
+ * Handle browser-related tasks (e.g., cleaning up recordings).
+ */
+function cmdBrowser(args) {
+    if (args[0] !== 'clean') {
+        err('Unknown browser command. Use "awkit browser clean".');
+        return;
+    }
+
+    const recordingsDir = path.join(TARGETS.antigravity, 'browser_recordings');
+    
+    log('');
+    log(`${C.cyan}${C.bold}🧹 AWK Browser Cleanup${C.reset}`);
+    log('');
+
+    if (!fs.existsSync(recordingsDir)) {
+        ok(`No browser_recordings directory found at ${recordingsDir}. Nothing to clean.`);
+        return;
+    }
+
+    const files = fs.readdirSync(recordingsDir).filter(f => f.endsWith('.webm') || f.endsWith('.webp') || f.endsWith('.mp4'));
+    if (files.length === 0) {
+        ok('No browser recordings found. Nothing to clean.');
+        return;
+    }
+
+    let keepDays = 7; // default 7 days
+    const daysArgIdx = args.indexOf('--days');
+    if (daysArgIdx !== -1 && args[daysArgIdx + 1]) {
+        keepDays = parseInt(args[daysArgIdx + 1], 10);
+    } else if (args.includes('--all')) {
+        keepDays = 0;
+    }
+
+    if (keepDays === 0) {
+        log(`Cleaning ${C.yellow}ALL${C.reset} browser recordings...`);
+    } else {
+        log(`Cleaning browser recordings older than ${C.yellow}${keepDays} days${C.reset}...`);
+    }
+    
+    const now = Date.now();
+    const cutoff = now - (keepDays * 24 * 60 * 60 * 1000);
+    let deletedCount = 0;
+    let totalSizeFreed = 0;
+
+    for (const file of files) {
+        const filePath = path.join(recordingsDir, file);
+        try {
+            const stats = fs.statSync(filePath);
+            if (stats.mtimeMs < cutoff) {
+                totalSizeFreed += stats.size;
+                fs.unlinkSync(filePath);
+                deletedCount++;
+                dim(`Deleted: ${file}`);
+            }
+        } catch (e) {
+            warn(`Failed to process ${file}: ${e.message}`);
+        }
+    }
+
+    log('');
+    const sizeMb = (totalSizeFreed / (1024 * 1024)).toFixed(2);
+    if (deletedCount > 0) {
+        ok(`Cleaned ${C.green}${C.bold}${deletedCount}${C.reset} recording(s).`);
+        ok(`Freed ${C.green}${C.bold}${sizeMb} MB${C.reset} of disk space.`);
+    } else {
+        ok(`No recordings older than ${keepDays} days found. Disk space is already optimized.`);
     }
     log('');
 }
@@ -1327,13 +1471,92 @@ function cmdSync() {
     log('');
 }
 
-function cmdAdmin() {
+async function cmdAdmin() {
     info('Mở Symphony Dashboard...');
     try {
-        execSync('symphony dashboard', { stdio: 'inherit' });
+        const http = require('http');
+        const isRunning = await new Promise((resolve) => {
+            const req = http.get('http://localhost:3100', (res) => {
+                resolve(true);
+            }).on('error', () => {
+                resolve(false);
+            });
+            req.setTimeout(1000, () => {
+                req.destroy();
+                resolve(false);
+            });
+        });
+
+        if (!isRunning) {
+            info('Symphony service chưa chạy. Đang khởi động ngầm...');
+            const { spawn } = require('child_process');
+            const child = spawn('symphony', ['start'], {
+                detached: true,
+                stdio: 'ignore'
+            });
+            child.unref();
+            
+            info('Vui lòng đợi 3 giây để service khởi động...');
+            await new Promise(r => setTimeout(r, 3000));
+        }
+
+        try {
+            execSync('symphony dashboard', { stdio: 'inherit' });
+        } catch (_) {
+            err('Không thể mở Symphony Dashboard.');
+        }
     } catch (e) {
         err('Không thể khởi động Symphony Dashboard.');
         dim('Vui lòng cài đặt: npm install -g @leejungkiin/awkit-symphony');
+    }
+}
+
+async function cmdRestart() {
+    info('Đang restart service awkit (Symphony)...');
+    try {
+        const { execSync, spawn } = require('child_process');
+        try {
+            // Find and kill process on port 3100
+            const pids = execSync('lsof -t -i:3100').toString().trim().split('\n');
+            for (const pid of pids) {
+                if (pid) {
+                    process.kill(parseInt(pid, 10), 'SIGTERM');
+                }
+            }
+            info('Đã dừng service hiện tại.');
+        } catch (e) {
+            // Probably no process running on port 3100
+            dim('Không tìm thấy service đang chạy.');
+        }
+        
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Auto-build production bundle so code changes take effect
+        const symphonyDir = path.join(AWK_ROOT, '..', 'symphony');
+        if (fs.existsSync(path.join(symphonyDir, 'package.json'))) {
+            info('Đang build production bundle...');
+            try {
+                execSync('npm run build', { cwd: symphonyDir, stdio: 'pipe' });
+                log(`${C.green}✅ Build thành công!${C.reset}`);
+            } catch (buildErr) {
+                warn('Build thất bại, sử dụng bundle cũ.');
+                dim(buildErr.message?.slice(0, 200));
+            }
+        }
+        
+        info('Đang khởi động lại service ngầm...');
+        const child = spawn('symphony', ['start'], {
+            detached: true,
+            stdio: 'ignore'
+        });
+        child.unref();
+        
+        info('Vui lòng đợi 3 giây để service khởi động...');
+        await new Promise(r => setTimeout(r, 3000));
+        
+        log(`${C.green}✅ Restart thành công!${C.reset}`);
+    } catch (e) {
+        err('Lỗi khi restart service: ' + e.message);
     }
 }
 
@@ -1362,6 +1585,15 @@ function cmdHelp() {
     log(`  ${C.gray}  --force${C.reset}            Overwrite existing files`);
     log(`  ${C.gray}  Generates: .project-identity, <Name>.code-workspace,${C.reset}`);
     log(`  ${C.gray}             CODEBASE.md, .symphony/ (Symphony task DB)${C.reset}`);
+    log('');
+
+    // Maintenance
+    log(`${C.bold}🧹  Maintenance${C.reset}`);
+    log(line);
+    log(`  ${C.green}serve${C.reset} [dir] [-p <port>] Start local HTTP server for assets in CWD`);
+    log(`  ${C.green}browser clean${C.reset}       Clean browser recordings`);
+    log(`  ${C.gray}  --days <N>${C.reset}         Keep recordings from last N days (default: 7)`);
+    log(`  ${C.gray}  --all${C.reset}              Delete all recordings`);
     log('');
 
     // Sync
@@ -1620,7 +1852,12 @@ function buildProjectIdentity(projectName, projectType, cwd, date) {
     };
 
     return {
+        _comments: {
+            projectId: 'Auto-generated. DO NOT change — used by Symphony for task scoping.',
+            trello: 'Fill in your Trello board/list/card names. Run "awkit trello info" to verify.',
+        },
         projectName,
+        projectId: bundleBase,
         projectType: cfg.projectType,
         ...(cfg.bundleIdentifier && { bundleIdentifier: cfg.bundleIdentifier }),
         ...(cfg.packageName && { packageName: cfg.packageName }),
@@ -1631,6 +1868,11 @@ function buildProjectIdentity(projectName, projectType, cwd, date) {
                 enabled: true,
                 features: ['analytics', 'crashlytics', 'remote-config', 'auth'],
             },
+        },
+        trello: {
+            board: 'Your Board Name',
+            list: 'Your List Name',
+            card: 'Your Card Name',
         },
         projectStage: 'development',
         codingStandards: cfg.codingStandards,
@@ -1800,25 +2042,38 @@ async function cmdInit(forceFlag = false) {
         ok(`${workspaceName} created`);
     }
 
-    // ── 3.5. .trello-config.json ───────────────────────────────────────────────
+    // ── 3.5. Trello config (embedded in .project-identity) ──────────────────────
+    // Migration: If .trello-config.json exists but identity has no trello key, merge it in
     const trelloConfigPath = path.join(cwd, '.trello-config.json');
-    if (fs.existsSync(trelloConfigPath) && !forceFlag) {
-        warn('.trello-config.json already exists — skipping (use --force to overwrite)');
+    if (fs.existsSync(trelloConfigPath)) {
+        try {
+            const oldCfg = JSON.parse(fs.readFileSync(trelloConfigPath, 'utf8'));
+            const currentIdentity = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+            if (!currentIdentity.trello) {
+                currentIdentity.trello = {
+                    board: oldCfg.BOARD_NAME || oldCfg.board || 'Your Board Name',
+                    list: oldCfg.LIST_NAME || oldCfg.list || 'Your List',
+                    card: oldCfg.CARD_NAME || oldCfg.card || 'Your Card',
+                };
+                fs.writeFileSync(identityPath, JSON.stringify(currentIdentity, null, 2) + '\n');
+                ok('Migrated Trello config from .trello-config.json → .project-identity');
+                dim('You can safely delete .trello-config.json now.');
+            }
+        } catch (_) { /* ignore migration errors */ }
     } else {
-        info('Creating .trello-config.json...');
-        const templatePath = path.join(TARGETS.antigravity, 'templates', 'configs', 'trello-config.json');
-        if (fs.existsSync(templatePath)) {
-            fs.copyFileSync(templatePath, trelloConfigPath);
-            ok('.trello-config.json created from template');
-        } else {
-            const defaultTrelloConfig = {
-                "BOARD_NAME": "Your Board Name",
-                "LIST_NAME": "Your Backlog List",
-                "CARD_NAME": "Project Card Name or ID"
-            };
-            fs.writeFileSync(trelloConfigPath, JSON.stringify(defaultTrelloConfig, null, 2) + '\n');
-            ok('.trello-config.json created with default values');
-        }
+        // Ensure identity has trello placeholder if not already present
+        try {
+            const currentIdentity = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+            if (!currentIdentity.trello) {
+                currentIdentity.trello = {
+                    board: 'Your Board Name',
+                    list: 'Your List',
+                    card: 'Your Card',
+                };
+                fs.writeFileSync(identityPath, JSON.stringify(currentIdentity, null, 2) + '\n');
+                ok('Added Trello config placeholder to .project-identity');
+            }
+        } catch (_) { /* ignore */ }
     }
 
     const trelloCred = trelloLoadCredentials();
@@ -1910,7 +2165,7 @@ async function cmdInit(forceFlag = false) {
     log('');
     dim(`Type:       ${projectType}`);
     dim(`Firebase:   analytics, crashlytics, remote-config, auth`);
-    dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md, .trello-config.json`);
+    dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md`);
     dim(`Symphony:     task tracking ready)`);
     log('');
     log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
@@ -2113,6 +2368,178 @@ function cmdTelegram(args) {
     }
 }
 
+// ─── Credentials Management ───────────────────────────────────────────────────
+
+const CREDENTIALS_CONFIG_PATH = path.join(TARGETS.antigravity, '.credentials.json');
+
+function credentialsLoad() {
+    if (!fs.existsSync(CREDENTIALS_CONFIG_PATH)) return {};
+    try {
+        return JSON.parse(fs.readFileSync(CREDENTIALS_CONFIG_PATH, 'utf8'));
+    } catch (_) {
+        return {};
+    }
+}
+
+function credentialsSave(config) {
+    const dir = path.dirname(CREDENTIALS_CONFIG_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(CREDENTIALS_CONFIG_PATH, JSON.stringify(config, null, 2) + '\n');
+}
+
+function credentialsHelp() {
+    log('');
+    log(`${C.cyan}${C.bold}🔑 Credentials Commands${C.reset}`);
+    log('');
+    log(`  ${C.green}awkit credentials list${C.reset}                    List all stored credentials`);
+    log(`  ${C.green}awkit credentials set${C.reset} <key> <value>       Set a credential`);
+    log(`  ${C.green}awkit credentials get${C.reset} <key>              Get a credential value`);
+    log(`  ${C.green}awkit credentials remove${C.reset} <key>           Remove a credential`);
+    log(`  ${C.green}awkit credentials setup${C.reset}                   Interactive setup wizard`);
+    log('');
+    log(`  ${C.gray}Known keys: gemini_api_key, lucylab_bearer${C.reset}`);
+    log(`  ${C.gray}Config: ${CREDENTIALS_CONFIG_PATH}${C.reset}`);
+    log('');
+}
+
+async function credentialsSetup() {
+    log('');
+    log(`${C.cyan}${C.bold}🔑 API Credentials Setup${C.reset}`);
+    log('');
+    log(`${C.gray}  Credentials are stored in: ${CREDENTIALS_CONFIG_PATH}${C.reset}`);
+    log(`${C.gray}  Used by Short Maker, Symphony Admin, and other services.${C.reset}`);
+    log('');
+
+    const readline = require('readline');
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    const question = (query) => new Promise(resolve => rl.question(query, resolve));
+    const sanitize = (s) => s.trim().replace(/^bearer\s+/i, '').replace(/\s+/g, '');
+
+    const config = credentialsLoad();
+
+    try {
+        // Gemini API Key
+        log(`${C.gray}  Get your key at: https://aistudio.google.com/apikey${C.reset}`);
+        const geminiKey = sanitize(await question(`  ${C.yellow}Gemini API Key${config.gemini_api_key ? ` [${config.gemini_api_key.slice(0, 8)}...]` : ''}: ${C.reset}`));
+        if (geminiKey) {
+            config.gemini_api_key = geminiKey;
+            ok('Gemini API Key saved');
+        } else if (config.gemini_api_key) {
+            dim('Kept existing Gemini API Key');
+        }
+
+        log('');
+
+        // LucyLab Bearer
+        log(`${C.gray}  LucyLab TTS bearer token for voice generation${C.reset}`);
+        const lucylabToken = sanitize(await question(`  ${C.yellow}LucyLab Bearer${config.lucylab_bearer ? ` [${config.lucylab_bearer.slice(0, 8)}...]` : ''}: ${C.reset}`));
+        if (lucylabToken) {
+            config.lucylab_bearer = lucylabToken;
+            ok('LucyLab Bearer saved');
+        } else if (config.lucylab_bearer) {
+            dim('Kept existing LucyLab Bearer');
+        }
+
+        credentialsSave(config);
+        log('');
+        ok(`Credentials saved to ${CREDENTIALS_CONFIG_PATH}`);
+        log('');
+    } catch (e) {
+        warn(`Failed to setup credentials: ${e.message}`);
+    } finally {
+        rl.close();
+    }
+}
+
+function cmdCredentials(args) {
+    const subCmd = args[0];
+    const key = args[1];
+    const value = args.slice(2).join(' ');
+
+    switch (subCmd) {
+        case 'list': {
+            const config = credentialsLoad();
+            const keys = Object.keys(config);
+            if (keys.length === 0) {
+                warn('No credentials stored. Run "awkit credentials setup" to configure.');
+                return;
+            }
+            log('');
+            log(`${C.cyan}${C.bold}🔑 Stored Credentials${C.reset}`);
+            log('');
+            for (const k of keys) {
+                const val = config[k];
+                const masked = val ? `${val.slice(0, 8)}${'•'.repeat(Math.max(0, val.length - 8))}` : '(empty)';
+                log(`  ${C.green}${k}${C.reset} = ${C.gray}${masked}${C.reset}`);
+            }
+            log('');
+            dim(`Config: ${CREDENTIALS_CONFIG_PATH}`);
+            log('');
+            break;
+        }
+
+        case 'set': {
+            let valueToSet = value;
+            if (valueToSet) {
+                valueToSet = valueToSet.trim().replace(/^bearer\s+/i, '').replace(/\s+/g, '');
+            }
+            if (!key || !valueToSet) {
+                err('Usage: awkit credentials set <key> <value>');
+                dim('Example: awkit credentials set gemini_api_key AIzaSy...');
+                return;
+            }
+            const config = credentialsLoad();
+            config[key] = valueToSet;
+            credentialsSave(config);
+            ok(`${key} saved ✅`);
+            break;
+        }
+
+        case 'get': {
+            if (!key) {
+                err('Usage: awkit credentials get <key>');
+                return;
+            }
+            const config = credentialsLoad();
+            if (config[key]) {
+                log(config[key]);
+            } else {
+                warn(`Key "${key}" not found.`);
+            }
+            break;
+        }
+
+        case 'remove':
+        case 'delete': {
+            if (!key) {
+                err('Usage: awkit credentials remove <key>');
+                return;
+            }
+            const config = credentialsLoad();
+            if (config[key]) {
+                delete config[key];
+                credentialsSave(config);
+                ok(`${key} removed`);
+            } else {
+                warn(`Key "${key}" not found.`);
+            }
+            break;
+        }
+
+        case 'setup':
+            credentialsSetup();
+            break;
+
+        default:
+            credentialsHelp();
+            break;
+    }
+}
+
 // ─── Trello Integration ───────────────────────────────────────────────────────
 
 /**
@@ -2127,10 +2554,28 @@ function trelloLoadCredentials() {
 }
 
 /**
- * Load Trello project config from .trello-config.json in CWD.
+ * Load Trello project config from .project-identity (preferred) or .trello-config.json (fallback).
  * Returns { board, list, card } or null.
  */
 function trelloLoadProjectConfig() {
+    // 1. Try .project-identity → trello key
+    const identityPath = path.join(process.cwd(), '.project-identity');
+    if (fs.existsSync(identityPath)) {
+        try {
+            const identity = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+            if (identity.trello) {
+                const t = identity.trello;
+                const board = t.board || t.BOARD_NAME;
+                const list = t.list || t.LIST_NAME;
+                const card = t.card || t.CARD_NAME;
+                if (board && list && card) {
+                    return { board, list, card };
+                }
+            }
+        } catch (_) { /* ignore parse error */ }
+    }
+
+    // 2. Fallback: .trello-config.json
     const configPath = path.join(process.cwd(), '.trello-config.json');
     if (!fs.existsSync(configPath)) return null;
     try {
@@ -2157,8 +2602,8 @@ function trelloExec(cliArgs, retries = 3) {
         return false;
     }
     if (!cfg) {
-        err('.trello-config.json not found in current directory.');
-        log(`  Run ${C.cyan}awkit init${C.reset} to generate one, or create it manually.`);
+        err('Trello config not found. Add "trello" key to .project-identity or create .trello-config.json.');
+        log(`  Run ${C.cyan}awkit init${C.reset} to set up, or add manually to .project-identity.`);
         return false;
     }
 
@@ -2207,9 +2652,12 @@ function trelloHelp() {
     log(`  ${C.green}awkit trello complete${C.reset} <name>    Mark checklist item ✅ complete`);
     log(`  ${C.green}awkit trello block${C.reset} <reason>     Label card Blocked + comment`);
     log(`  ${C.green}awkit trello checklist${C.reset} <name>   Create a new checklist on card`);
+    log(`  ${C.green}awkit trello info${C.reset}                 Show card details`);
+    log(`  ${C.green}awkit trello checklists${C.reset}           List checklists on card`);
+    log(`  ${C.green}awkit trello comments${C.reset}             List comments on card`);
     log('');
     log(`  ${C.gray}Credentials: env vars TRELLO_KEY and TRELLO_TOKEN${C.reset}`);
-    log(`  ${C.gray}Project config: .trello-config.json in CWD${C.reset}`);
+    log(`  ${C.gray}Project config: "trello" key in .project-identity (fallback: .trello-config.json)${C.reset}`);
     log('');
 }
 
@@ -2222,12 +2670,28 @@ function cmdTrello(args) {
         return;
     }
 
-    if (!text) {
+    const noTextCmds = ['info', 'checklists', 'comments'];
+    if (!text && !noTextCmds.includes(subCmd)) {
         err(`Missing argument for 'trello ${subCmd}'. Usage: awkit trello ${subCmd} <text>`);
         return;
     }
 
     switch (subCmd) {
+        case 'info':
+            info(`Fetching card details...`);
+            trelloExec(['card:show']);
+            break;
+
+        case 'checklists':
+            info(`Fetching card checklists...`);
+            trelloExec(['card:checklists']);
+            break;
+
+        case 'comments':
+            info(`Fetching card comments...`);
+            trelloExec(['card:comments']);
+            break;
+
         case 'desc':
             info(`Updating card description...`);
             trelloExec(['card:update', '--description', text]);
@@ -2347,6 +2811,98 @@ function checkAutoUpdate() {
     }
 }
 
+// ─── Native HTTP Server ───────────────────────────────────────────────────────
+
+function cmdServe(args) {
+    const http = require('http');
+    
+    let port = 8080;
+    let serveDir = process.cwd();
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--port' || args[i] === '-p') {
+            port = parseInt(args[++i], 10) || 8080;
+        } else if (!args[i].startsWith('-')) {
+            serveDir = path.resolve(process.cwd(), args[i]);
+        }
+    }
+
+    if (!fs.existsSync(serveDir)) {
+        err(`Directory not found: ${serveDir}`);
+        return;
+    }
+
+    const mimeTypes = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.wav': 'audio/wav',
+        '.mp4': 'video/mp4',
+        '.woff': 'application/font-woff',
+        '.ttf': 'application/font-ttf',
+        '.eot': 'application/vnd.ms-fontobject',
+        '.otf': 'application/font-otf',
+        '.wasm': 'application/wasm'
+    };
+
+    const server = http.createServer((request, response) => {
+        response.setHeader('Access-Control-Allow-Origin', '*');
+        response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (request.method === 'OPTIONS') {
+            response.writeHead(200);
+            response.end();
+            return;
+        }
+
+        let filePath = '.' + request.url.split('?')[0];
+        if (filePath === './') {
+            filePath = './index.html';
+        }
+
+        const absPath = path.join(serveDir, filePath);
+        const extname = String(path.extname(absPath)).toLowerCase();
+        const contentType = mimeTypes[extname] || 'application/octet-stream';
+
+        fs.readFile(absPath, (error, content) => {
+            if (error) {
+                if (error.code === 'ENOENT') {
+                    response.writeHead(404, { 'Content-Type': 'text/plain' });
+                    response.end('404 Not Found', 'utf-8');
+                } else {
+                    response.writeHead(500, { 'Content-Type': 'text/plain' });
+                    response.end('500 Internal Server Error: ' + error.code, 'utf-8');
+                }
+            } else {
+                response.writeHead(200, { 'Content-Type': contentType });
+                response.end(content, 'utf-8');
+            }
+        });
+    });
+
+    server.listen(port, '0.0.0.0', () => {
+        log('');
+        log(`${C.cyan}${C.bold}🚀 awkit serve running at:${C.reset}`);
+        log(`${C.green}   http://localhost:${port}${C.reset}`);
+        dim(`Serving directory: ${serveDir}`);
+        dim(`Press Ctrl+C to stop`);
+        log('');
+    }).on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
+            err(`Port ${port} is already in use. Try a different port with --port <number>`);
+        } else {
+            err(`Server error: ${e.message}`);
+        }
+    });
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 // Check for updates (max once per day) before continuing
@@ -2360,17 +2916,7 @@ const [, , command, ...args] = process.argv;
             await cmdInit(args.includes('--force'));
             break;
         case 'install':
-            // Parse platform from either first arg or --platform flag
-            {
-                const pIdx = args.indexOf('--platform');
-                let platformArg = null;
-                if (pIdx !== -1 && args[pIdx + 1]) {
-                    platformArg = args[pIdx + 1];
-                } else if (args[0] && !args[0].startsWith('-')) {
-                    platformArg = args[0];
-                }
-                cmdInstall(platformArg);
-            }
+            cmdInstall(args);
             break;
         case 'uninstall':
             cmdUninstall();
@@ -2389,6 +2935,9 @@ const [, , command, ...args] = process.argv;
             break;
         case 'doctor':
             cmdDoctor();
+            break;
+        case 'browser':
+            cmdBrowser(args);
             break;
         case 'enable-pack':
             cmdEnablePack(args[0]);
@@ -2414,8 +2963,18 @@ const [, , command, ...args] = process.argv;
         case 'telegram':
             cmdTelegram(args);
             break;
+        case 'credentials':
+        case 'creds':
+            cmdCredentials(args);
+            break;
+        case 'serve':
+            cmdServe(args);
+            break;
         case 'admin':
             cmdAdmin();
+            break;
+        case 'restart':
+            await cmdRestart();
             break;
         case 'help':
         case '--help':

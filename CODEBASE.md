@@ -2,7 +2,7 @@
 
 > **Source of Truth:** `/Users/trungkientn/Dev/NodeJS/main-awf`
 > **Runtime Target:** `~/.gemini/antigravity/`
-> **Last Updated:** 2026-03-10
+> **Last Updated:** 2026-03-27
 
 ---
 
@@ -99,3 +99,15 @@ awkit status      # Show diff
 awkit doctor      # Health check
 awkit version     # Show version
 ```
+
+---
+
+## 📝 Update Changelog (Delta)
+
+### 2026-03-27 Sync
+| Path | Layer | Purpose |
+|------|-------|---------|
+| `skills/*/SKILL.md` | Agent Skills | Added 30+ specialized skills (ASO, App Marketing, Analytics, Conductors) |
+| `workflows/*.md` | Workflows | Added `conductor-codex`, `conductor`, `smart-git-ops`, `decompile` |
+| `symphony/` | Infrastructure | Added complete Symphony task tracking system (Next.js, MCP, DB tools) |
+| `package.json`, `VERSION` | Config | Bumped versions up to `1.1.6` |

@@ -31,6 +31,10 @@ BEFORE claiming any status or expressing satisfaction:
    - If NO: State actual status with evidence
    - If YES: State claim WITH evidence
 5. ONLY THEN: Make the claim
+6. AUTO-COMMIT: Build 0 errors → git add → git commit → git push (non-force)
+   - Do NOT ask user permission for regular commits
+   - Use conventional commit message (fix:/feat:/refactor:)
+   - If push fails → git pull --rebase && git push (retry once)
 
 Skip any step = lying, not verifying
 ```
@@ -53,7 +57,7 @@ Skip any step = lying, not verifying
 | Linter clean | Linter output: 0 errors | Partial check, extrapolation |
 | Build succeeds | Build command: exit 0 | Linter passing, looks good |
 | Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Feature works | Demo/run showing behavior | Code written, assumed works |
+| Feature works | Maestro MCP auto run/Screenshot | Code written, assumed works |
 | Requirements met | Line-by-line checklist | Tests passing |
 | Deploy succeeded | Health check: 200 OK | Deploy command completed |
 
@@ -93,14 +97,21 @@ If you catch yourself thinking any of these, STOP and run verification:
 
 **Build:**
 ```
-✅ [Run build] → [See: BUILD SUCCEEDED] → "Build passes"
+✅ [Run build] → [See: BUILD SUCCEEDED] → auto git add+commit+push → "Build passes, committed & pushed"
 ❌ "Linter passed so build is fine"
+❌ Build succeeded but forgot to commit
 ```
 
 **Bug Fix:**
 ```
 ✅ Write regression test → Run (FAIL) → Fix → Run (PASS) → "Bug is fixed"
 ❌ "I've changed the code, bug should be fixed"
+```
+
+**UI/Feature Verification:**
+```
+✅ Run Automated App Build → Run mcp_maestro_launch_app → Take mcp_maestro_take_screenshot → "UI renders correctly and no crash"
+❌ "Code looks good, layouts conform to specs, should render fine."
 ```
 
 **Requirements:**

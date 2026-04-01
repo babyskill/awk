@@ -4,13 +4,13 @@ description: |
   Mandatory Symphony checkpoint system. Ensures AI never forgets to create,
   update, or complete tasks in Symphony. Enforces progress reporting at every
   milestone and auto-detects task completion without waiting for user confirmation.
-  v3.5: UI-First Three-Phase Execution with User Test Checkpoints.
+  v3.7: UI-First Three-Phase Execution with Auto Device Checkpoints (Maestro).
 metadata:
   stage: core
-  version: "3.6"
-  replaces: "v3.5"
+  version: "3.7"
+  replaces: "v3.6"
   requires: symphony-orchestrator
-  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro, ui-first, user-test]
+  tags: [symphony, enforcement, checkpoint, task-lifecycle, core, spec-first, auto-next, kiro, ui-first, user-test, maestro, automated-verification]
 agent: Symphony Enforcer
 allowed-tools:
   - symphony_create_task
@@ -24,13 +24,13 @@ invocation-type: auto
 priority: 1
 ---
 
-# Symphony Enforcer v3.6 — UI-First Three-Phase Execution + Legacy Cleanup
+# Symphony Enforcer v3.7 — UI-First Three-Phase Execution + Auto Device Checkpoints
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.
-> **Key Changes v3.6:**
+> **Key Changes v3.7:**
 > - **Step 0.5: Legacy Artifact Cleanup**: Auto-detect stale `.symphony/tasks.json` and warn user
-> - **Gate 4 Three-Phase Execution**: Phase A (Infra) → Phase B (UI Shell + User Test) → Phase C (Logic + User Test)
-> - **TP1.7: User Test Checkpoint**: Trigger dừng lại cho user test trên device thật
+> - **Gate 4 Three-Phase Execution**: Phase A (Infra) → Phase B (UI Shell + Auto Check) → Phase C (Logic + Auto Check)
+> - **TP1.7: Auto Device Checkpoint (ADC)**: Tự động build & quét UI bằng Maestro MCP thay vì chờ user test thủ công
 > - **UI-First Task Ordering**: UI tasks PHẢI đi trước logic tasks trong Symphony
 > - Kế thừa tất cả features v3.5 (Kiro, Completion Status, Design Compliance).
 > **Principle:** AI tự detect completion — user KHÔNG CẦN nói "xong".
@@ -163,8 +163,8 @@ LIÊN KẾT TỰ ĐỘNG:
 
 THREE-PHASE MAPPING (Gate 4 — COMPLEX tasks với UI):
 - Phase A done (build OK)     → report_progress(25%) + checkpoint build
-- Phase B done (UI mock)      → report_progress(45%) + TRIGGER TP1.7 (User Test)
-- Phase C per-feature done    → report_progress(50-85%) + TRIGGER TP1.7 (User Test)
+- Phase B done (UI mock)      → report_progress(45%) + TRIGGER TP1.7 (Auto Device Checkpoint)
+- Phase C per-feature done    → report_progress(50-85%) + TRIGGER TP1.7 (Auto Device Checkpoint)
 - Phase C all features done   → report_progress(90%) → Gate 5
 ```
 
@@ -217,10 +217,10 @@ Khi kích hoạt Three-Phase, AI PHẢI hiển thị:
    → {list tasks for Phase A}
 🎨 Phase B: UI Shell (Mock Data)
    → {list tasks for Phase B}
-   → 🧪 USER TEST sau phase này
+   → 🧪 AUTO DEVICE TEST (Maestro) sau phase này
 ⚡ Phase C: Logic Integration
    → {list tasks for Phase C}
-   → 🧪 USER TEST mỗi feature
+   → 🧪 AUTO DEVICE TEST (Maestro) mỗi feature
 ══════════════════════════════════════
 Bắt đầu Phase A...
 ```
@@ -241,13 +241,19 @@ auto_triggers:
   phase_b_to_checkpoint:
     signal: Tất cả [UI] tasks đã done
     action: |
-      - ⛔ DẪNG CODE NGAY LẬP TỨC
-      - TRIGGER TP1.7 (User Test Checkpoint)
-      - CHỊ user confirm "✅ OK" trước khi làm bất cứ gì khác
-      - KHÔNG được tự ý skip bước này
+      - ⛔ TRIGGER TP1.7 (Checkpoint)
+      - Đọc `.project-identity` -> `autoVerification`
+      - NẾU `true`: 
+        + Chạy Auto Build → check exit code 0
+        + Dùng mcp_maestro_launch_app và take_screenshot
+        + NẾU fail → DỪNG (notify_user BlockedOnUser=true)
+        + NẾU pass → Báo cáo Screenshot (BlockedOnUser=false) và làm tiếp Phase C
+      - NẾU `false` (default):
+        + DỪNG VÀ CHỜ user test thủ công (notify_user BlockedOnUser=true)
+        + CHỜ user xác nhận "OK" mới đi tiếp Phase C
 
   checkpoint_to_phase_c:
-    signal: User confirmed "✅" hoặc "OK"
+    signal: Build success & App launched (autoVerification=true) HOẶC User confirmed "OK" (autoVerification=false)
     action: |
       - Set phase_b_confirmed = true
       - Set current_phase = "C"
@@ -265,16 +271,16 @@ auto_triggers:
 
 ```
 ❌ VI PHạM NẶNG:
-  - Code logic (Phase C) khi phase_b_confirmed = false
+  - Code logic (Phase C) khi phase_b_confirmed = false (chưa pass Phase B checkpoint)
   - Skip Phase Announcement Block
-  - Code UI và Logic lẫn lộn trong cùng 1 lượt (phải tách rõ phase)
-  - Tự giả vờ user confirm để skip checkpoint
-  - Không hiển thị Phase Announcement khi Three-Phase activated
+  - Bỏ qua TP1.7
+  - Chạy Auto-verification khi `autoVerification: false` (bỏ qua thủ công)
+  - Chờ user test thủ công khi `autoVerification: true` (lười setup auto)
 
 ✅ BẮT BUỘC:
   - Luôn announce phase transition rõ ràng
-  - Luôn tạo hướng dẫn test CỤ THỂ (không chung chung)
-  - Luôn dùng notify_user(BlockedOnUser=true) cho checkpoints
+  - Luôn đọc `autoVerification` trong `.project-identity` trước khi trigger check.
+  - Gắn BlockedOnUser = true cho mode manual, false cho mode auto.
   - Ghi lại phase state vào NeuralMemory khi chuyển phase
 ```
 
@@ -360,77 +366,39 @@ File patterns:
 
 ---
 
-### TP1.7: User Test Checkpoint (NEW v3.5 — Gate 4 Three-Phase)
+### TP1.7: Flexible Checkpoint (Manual v/s Auto) (UPDATE v3.7)
 
-**Khi nào:** Trigger ở 2 thời điểm chính trong Gate 4:
+**Cấu hình Mode Verification:**
+Quy trình Verification được quyết định bởi thuộc tính `"autoVerification"` trong `.project-identity`:
+- `{"autoVerification": true}` → **Auto Device Checkpoint (ADC)**: Dùng Maestro tự build & chụp ảnh screenshot. Tiến thẳng sang bước tiếp (BlockedOnUser=false).
+- `{"autoVerification": false}` (hoặc không khai báo) → **Manual Checkpoint**: Dừng lại chờ user test thủ công (BlockedOnUser=true). Đây là **MẶC ĐỊNH an toàn**.
+
+**Khi nào trigger TP1.7:**
 
 1. **Phase B → C Transition (BẮT BUỘC cho COMPLEX):**
-   - ALL UI screens đã code xong với mock data
-   - Navigation hoạt động full flow
-   - App build và chạy OK trên emulator/device
+   - ALL UI screens đã code xong
 
 2. **Sau mỗi feature trong Phase C (COMPLEX tasks):**
-   - Feature X đã thay mock bằng real data
-   - Feature works end-to-end trên device
+   - Feature X đã code xong logic
 
-**Điều kiện kích hoạt:**
-```
-COMPLEX + có UI component → BẮT BUỘC TP1.7
-MODERATE + có UI component → OPTIONAL (recommend cho hardware features: camera, GPS, sensors)
-TRIVIAL → SKIP
-Backend-only tasks → SKIP
-```
-
-**Action:**
+**Action (Tùy theo Mode):**
 ```
 1. Report progress trước: symphony_report_progress(current_task, progress)
+2. Kiểm tra cờ `autoVerification` trong .project-identity.
 
-2. Present User Test Checkpoint:
+=== TRƯỜNG HỢP 1: autoVerification = false (Default Manual) ===
+   - Announce "🧪 MANUAL USER TEST CHECKPOINT #{N}"
+   - Đưa hướng dẫn test cụ thể (e.g. "Mở app -> Bấm nút A -> Xem kết quả B")
+   - Gọi notify_user(BlockedOnUser=true) — DỪNG và CHỜ user response
+   - Chỉ đi tiếp khi user reply "OK".
 
-   🧪 USER TEST CHECKPOINT #{N}
-   ══════════════════════════════════════
-   📱 Phase: {B|C} — {phase_name}
-   📋 Đã code xong: {summary of completed work}
-   📁 Files changed: {N} files
-   
-   🔍 Hướng dẫn test:
-     1. {step 1 — cụ thể, actionable}
-     2. {step 2 — expected behavior}
-     3. {step 3 — edge case to check}
-   
-   ⏳ Anh test xong reply:
-     ✅ OK — tiếp tục
-     ⚠️ Issue: {mô tả} — tôi sẽ fix trước khi đi tiếp
-   ══════════════════════════════════════
-
-3. Gọi notify_user(BlockedOnUser=true) — DỪNG và CHỜ user response
-
-4. User response handling:
-   → "OK" / "✅" → Tiếp tục phase tiếp / feature tiếp
-   → "Issue: ..." → Fix issue → re-run checkpoint
-   → "Skip" → Ghi note concern, tiếp tục (DONE_WITH_CONCERNS later)
+=== TRƯỜNG HỢP 2: autoVerification = true (Auto Maestro) ===
+   - Chạy Auto Build
+   - Chạy mcp_maestro_launch_app, mcp_maestro_take_screenshot
+   - Announce "🤖 AUTO DEVICE CHECKPOINT #{N}" + Log + Evidence
+   - NẾU Build/Run Lỗi: BlockedOnUser=true (bắt user xem lỗi).
+   - NẾU Pass: BlockedOnUser=false. Lập tức đi tiếp phase tiếp theo! KHÔNG DỪNG.
 ```
-
-**Test Guidance Generation:**
-```
-AI PHẢI tạo hướng dẫn test CỤ THỂ cho từng checkpoint:
-
-Phase B Examples (UI):
-  - "Mở app → bấm tab Health → xem Dashboard có hiển thị 4 cards không?"
-  - "Quay ngang màn hình → layout có bể không?"
-  - "Bấm nút Camera → xem preview có xuất hiện không?"
-
-Phase C Examples (Logic):
-  - "Mở Health Dashboard → data thật có load lên không? (nếu có wifi)"
-  - "Chụp ảnh thức ăn → kết quả AI có trả về trong 5s không?"
-  - "Bấm Save → quay lại list → record mới có xuất hiện không?"
-```
-
-**Enforcement:**
-- ❌ KHÔNG được chuyển từ Phase B → Phase C mà chưa có user confirm (COMPLEX)
-- ❌ KHÔNG được skip checkpoint cho hardware-related features (Camera, GPS, Sensors)
-- ✅ NÊN batch các features nhỏ lại thành 1 checkpoint (tránh quá nhiều interrupt)
-- ✅ Checkpoint cho logic KHÔNG cần nếu feature là pure-backend/invisible
 
 ---
 

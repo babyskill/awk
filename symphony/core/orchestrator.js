@@ -130,11 +130,11 @@ function markIdle(agentId) {
  * Get full system status.
  * @returns {Object}
  */
-function getStatus() {
+function getStatus(projectId) {
     const agents = getAgents();
-    const locks = fileLockManager.getAllLocks();
-    const stats = taskManager.getStats();
-    const readyTasks = taskManager.listTasks({ status: 'ready', limit: 10 });
+    let locks = fileLockManager.getAllLocks();
+    const stats = taskManager.getStats(projectId);
+    const readyTasks = taskManager.listTasks({ status: 'ready', project: projectId, limit: 10 });
 
     return {
         agents: agents.map(a => ({

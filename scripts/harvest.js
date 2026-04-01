@@ -98,6 +98,10 @@ function copyDirRecursive(src, dest) {
     let count = 0;
     for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
         if (entry.name === '.DS_Store') continue;
+        if (entry.name === '.git') continue;
+        if (entry.name === '__pycache__') continue;
+        if (entry.name === 'node_modules') continue;
+        if (entry.name === '.venv') continue;
         const srcPath = path.join(src, entry.name);
         const destPath = path.join(dest, entry.name);
         if (entry.isDirectory()) {

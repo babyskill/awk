@@ -37,6 +37,8 @@ export default function Dashboard() {
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [projectStats, setProjectStats] = useState([]);
   const [showAddProject, setShowAddProject] = useState(false);
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [editProjectForm, setEditProjectForm] = useState(null);
 
   // Responsive side panel
   const [showSidePanel, setShowSidePanel] = useState(true);
@@ -89,10 +91,10 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData();
     // Pause auto-refresh when a modal is open (prevents confirm() dialog from being dismissed)
-    if (selectedTask || showModal || showRoleModal || editingRole || showAddProject) return;
+    if (selectedTask || showModal || showRoleModal || editingRole || showAddProject || showEditProject) return;
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
-  }, [fetchData, selectedTask, showModal, showRoleModal, editingRole, showAddProject]);
+  }, [fetchData, selectedTask, showModal, showRoleModal, editingRole, showAddProject, showEditProject]);
 
   // Responsive: auto-collapse side panel on small screens
   useEffect(() => {
@@ -143,6 +145,42 @@ export default function Dashboard() {
   const handleShowAllProjects = () => {
     setActiveProject(null);
     setShowProjectDropdown(false);
+  };
+
+  const handleEditProject = async (formData) => {
+    try {
+      await fetch("/api/projects", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      setShowEditProject(false);
+      fetchData();
+    } catch (err) {
+      console.error("Failed to edit project:", err);
+    }
+  };
+
+  const handleDeleteProject = async (id) => {
+    if (!confirm(`Xoá dự án "${id}"? Lưu ý: Các task thuộc dự án này sẽ không bị xoá, nhưng sẽ mất liên kết dự án nếu bạn xoá.`)) return;
+    try {
+      const res = await fetch(`/api/projects?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(`Lỗi: ${data.error}`);
+        return;
+      }
+      setShowEditProject(false);
+      if (activeProject?.id === id) {
+        setActiveProject(null);
+      }
+      fetchData();
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert("Đã xảy ra lỗi khi xoá dự án.");
+    }
   };
 
   const handleAddProject = async (formData) => {
@@ -416,6 +454,16 @@ export default function Dashboard() {
                   <span>＋</span>
                   <span>Đăng ký dự án</span>
                 </div>
+                {activeProject && (
+                  <div className="project-option edit-project" onClick={() => { 
+                    setEditProjectForm({ ...activeProject }); 
+                    setShowEditProject(true); 
+                    setShowProjectDropdown(false); 
+                  }}>
+                    <span>✏️</span>
+                    <span>Sửa dự án hiện tại</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -694,6 +742,14 @@ export default function Dashboard() {
           item={showKnowledgeEditor}
           onClose={() => setShowKnowledgeEditor(null)}
           onRefresh={() => fetch('/api/knowledge').then(r => r.json()).then(d => setKnowledgeItems(d.items || []))}
+        />
+      )}
+      {showEditProject && editProjectForm && (
+        <EditProjectModal
+          initialData={editProjectForm}
+          onClose={() => setShowEditProject(false)}
+          onSubmit={handleEditProject}
+          onDelete={handleDeleteProject}
         />
       )}
       {showAddProject && (
@@ -1717,6 +1773,103 @@ function RoleModal({ role, onClose, onSubmit }) {
           <div className="modal-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>Huỷ</button>
             <button type="submit" className="create-btn">{role ? "💾 Lưu" : "＋ Thêm Vai trò"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Edit Project Modal ───────────────────────────────────────────────────────
+
+function EditProjectModal({ onClose, onSubmit, onDelete, initialData }) {
+  const [form, setForm] = useState({
+    id: initialData?.id || "",
+    name: initialData?.name || "",
+    path: initialData?.path || "",
+    icon: initialData?.icon || "📁",
+    color: initialData?.color || "#4f7cff",
+  });
+
+  const iconPresets = ["📁", "🍎", "🤖", "🌐", "📷", "🪷", "🎮", "💊", "📊", "🛒"];
+  const colorPresets = ["#ef4444", "#f59e0b", "#22c55e", "#4f7cff", "#7c5cff", "#ec4899", "#8888a0"];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.id.trim() || !form.name.trim()) return;
+    onSubmit(form);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Sửa Dự án</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Tên dự án *</label>
+            <input
+              className="form-input"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="FitBite Pro, FilmCam..."
+              autoFocus
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">ID dự án (không thể đổi)</label>
+            <input
+              className="form-input"
+              value={form.id}
+              disabled
+              style={{ fontFamily: 'monospace', opacity: 0.6 }}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Đường dẫn (tuỳ chọn)</label>
+            <input
+              className="form-input"
+              value={form.path}
+              onChange={(e) => setForm({ ...form, path: e.target.value })}
+              placeholder="/Users/.../Dev/iOS/FitBitePro"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Biểu tượng</label>
+            <div className="color-presets">
+              {iconPresets.map((ic) => (
+                <button
+                  key={ic}
+                  type="button"
+                  className={`icon-preset ${form.icon === ic ? "active" : ""}`}
+                  onClick={() => setForm({ ...form, icon: ic })}
+                >
+                  {ic}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Màu sắc</label>
+            <div className="color-presets">
+              {colorPresets.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`color-preset ${form.color === c ? "active" : ""}`}
+                  style={{ background: c }}
+                  onClick={() => setForm({ ...form, color: c })}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="modal-actions">
+             {onDelete && (
+                <button type="button" className="btn-danger" onClick={() => onDelete(form.id)} style={{ marginRight: 'auto' }}>
+                  🗑️ Xoá
+                </button>
+             )}
+             <button type="button" className="btn-cancel" onClick={onClose}>Huỷ</button>
+             <button type="submit" className="create-btn">✏️ Lưu thay đổi</button>
           </div>
         </form>
       </div>

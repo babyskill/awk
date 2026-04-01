@@ -2,13 +2,13 @@
 name: short-maker
 description: |
   Đạo diễn sản xuất video quảng cáo App (App Promo) bằng AI. Tự động hóa quy trình viết kịch bản AIDA,
-  tạo UI Storyboard Preview (JSON + HTML), gọi Google Flow (Veo 3) render video và LucyLab đọc thoại.
-  Hỗ trợ Mimic Mode bóc tách nội dung trending từ YouTube/TikTok.
+  quản lý storyboard qua ShortMaker Studio MCP Server, và gọi Google Flow (Veo 3) render video bối cảnh thật
+  kèm Native Voice. Hỗ trợ Mimic Mode bóc tách nội dung trending từ YouTube/TikTok.
 metadata:
   stage: workflow
-  version: "1.0"
-  requires: "google-flow-cli (embedded), youtube-transcript-api, yt-dlp, ffmpeg"
-  tags: [video, marketing, ads, app-promo, veo, gflow, tiktok, youtube, shorts]
+  version: "2.0"
+  requires: "ShortMaker Studio (MCP Server), google-flow-cli, ffmpeg"
+  tags: [video, marketing, ads, app-promo, veo, gflow, tiktok, youtube, shorts, mcp]
 trigger: explicit
 activation_keywords:
   - "/short"
@@ -18,10 +18,22 @@ activation_keywords:
   - "chạy video flow"
 ---
 
-# 🎬 Short Maker (App Promo Video Director)
+# 🎬 Short Maker v2.0 (MCP Client Mode)
 
 > **Mục tiêu**: Tối đa hóa traffic miễn phí từ Video ngắn (TikTok, YouTube Shorts, Reels)
 > bằng cách tự động sản xuất video quảng cáo App với cấu trúc AIDA hoặc copy (Mimic) hook viral.
+
+## ⚠️ Prerequisites (BẮT BUỘC)
+
+Skill này hoạt động như **MCP Client** — mọi thao tác project/storyboard/render đều gọi qua **ShortMaker Studio MCP Server**.
+
+**Trước khi bắt đầu, KIỂM TRA:**
+1. ShortMaker Studio MCP Server đang chạy (IDE đã kết nối qua MCP config)
+2. Gọi thử `shortmaker_list_projects` — nếu thành công → MCP Server OK
+3. Google Flow auth: kiểm tra `~/.gflow/env` tồn tại. Nếu chưa:
+   ```bash
+   cd ~/Dev2/MacOS/Shortmaker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py auth
+   ```
 
 ## 📡 Chế độ hoạt động (Triggers)
 
@@ -30,39 +42,109 @@ activation_keywords:
 
 ## 🧱 Quy trình hoạt động (Mandatory Flow)
 
-**Bảo vệ Credit**: Mọi video Veo 3 đều tốn 20 credit. TUYỆT ĐỐI không gọi `gflow generate-video` khi chưa có xác nhận từ người dùng qua bước Storyboard.
+**Bảo vệ Credit**: Mọi video Veo 3 đều tốn 20 credit. TUYỆT ĐỐI không gọi render khi chưa có xác nhận từ người dùng qua bước Storyboard Review.
 
-1. **Giai đoạn Setup (Authentication)**: AI CẦN PHẢI KIỂM TRA QUYỀN TRUY CẬP TRƯỚC:
-   - **Với Google Flow**: Kiểm tra xem file `~/.gflow/env` đã tồn tại chưa. Nếu chưa có (hoặc người dùng chưa auth), AI phải hướng dẫn người dùng chạy lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py auth` và đợi họ xác nhận đã đăng nhập thành công.
-   - *(Lưu ý: Authentication của LucyLab TTS được kiểm tra và xử lý tự động khi gọi skill `lucylab-tts`)*.
-2. **Giai đoạn Bootstrap**: Tạo thư mục dự án `outputs/<project-name>`, khởi tạo các file môi trường.
+### Giai đoạn 1: Bootstrap Project
 
-3. **Giai đoạn Kịch Bản**: Sinh kịch bản `script.md` theo cấu trúc Prompt Templates. Xác định danh sách các cảnh (scenes) và lời thoại tương ứng. Nhạc nền lấy từ Pixabay/Tiengdong.com hoặc TikTok Trends (độ dài mặc định 30s).
-4. **Giai đoạn Concept (0 Cost)**: 
-   - Sinh file `outputs/<project>/storyboard.json` từ kịch bản.
-   - Gọi lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py generate-image` định dạng 16:9 cho từng cảnh.
-   - Copy `templates/storyboard.html` sang thư mục output để Preview.
-   - Yêu cầu người dùng mở `storyboard.html` để duyệt.
-5. **Giai đoạn Sản Xuất (20 Cost / Scene)**:
-   - Nhận lệnh "OK/Duyệt" từ user.
-   - Gọi lệnh `cd ~/.gemini/antigravity/skills/short-maker/scripts/google-flow-cli && PYTHONPATH=. python3 gflow/cli/main.py generate-video` sử dụng các prompt đã chốt từ ảnh tĩnh.
-6. **Giai đoạn Hậu Kỳ (Auto-Mixer)**:
-   - Gọi skill `lucylab-tts` (script `~/.gemini/antigravity/skills/lucylab-tts/scripts/lucylab_tts.py`) để tạo TTS track.
-   - Chạy Auto-Mixer để tự động ghép video, audio, tạo chuyển cảnh (crossfade) và lồng nhạc nền:
-     ```bash
-     python3 ~/.gemini/antigravity/skills/short-maker/scripts/video_mixer.py \
-         --project-dir "outputs/<project-name>" \
-         --fade-duration 1.0 \
-         --bgm-volume 0.1
-     ```
+Gọi MCP tool để tạo project:
+```
+shortmaker_create_project(name: "FitWitness Promo", appName: "FitWitness", description: "30s TikTok promo")
+```
+→ Trả về `projectId` và `path`. Dùng `projectId` cho tất cả các bước sau.
 
-## 📁 Định dạng Output Convention
+### Giai đoạn 2: Kịch Bản & Character Casting
 
-Toàn bộ tài nguyên được lưu tại: `outputs/<project-name>/`
-- `script.md`
-- `storyboard.json` (Trạng thái và metadata từng cảnh)
-- `storyboard.html` (Tool preview)
-- `storyboard/scene-01.png`
-- `segments/scene-01.mp4`
-- `audio/voice.mp3` & `audio/bgm.mp3`
-- `final/promo-final.mp4`
+1. Sinh kịch bản `script.md` (dùng template `aida_script.md` hoặc `mimic_analyzer.md`).
+2. **Character Setup** — gọi MCP tool:
+   ```
+   shortmaker_setup_character(projectId: "...", prompt: "A young Vietnamese woman, long black hair...", seed: "123456")
+   ```
+3. **Xử lý ảnh tham chiếu**:
+   - User cung cấp ảnh → AI phân tích, viết `character_prompt`, copy ảnh vào project dir
+   - User không có ảnh → AI thiết kế character, gọi `generate-image` tạo mẫu
+4. **Actor Approval**: Trình bày ảnh cho User. CHỈ TIẾP TỤC khi User chốt nhân vật.
+
+### Giai đoạn 3: Storyboard (0 Cost)
+
+Gọi MCP tool lặp lại cho từng scene:
+```
+shortmaker_add_scene(
+  projectId: "...",
+  prompt: "A woman standing in a modern gym, looking at her phone...",
+  speech: "Tired of forgetting your workouts?",
+  duration: 8,
+  transition: "fade",
+  sceneType: "hook"
+)
+```
+
+**Quy tắc prompt**:
+- **ƯU TIÊN MÔI TRƯỜNG THẬT**: TUYỆT ĐỐI KHÔNG dùng Greenscreen/Chroma key mặc định
+- Character prompt sẽ được auto-prepend bởi MCP Server
+- BẮT BUỘC truyền `--seed` đã chốt khi render
+
+Sau khi thêm đủ scenes, hướng dẫn User mở **ShortMaker Studio** để review storyboard trực quan.
+Hoặc AI tự review bằng:
+```
+shortmaker_get_storyboard(projectId: "...")
+```
+
+Sửa scene nếu cần:
+```
+shortmaker_update_scene(projectId: "...", sceneId: "scene-01", speech: "Updated narration")
+```
+
+**CHỈ TIẾP TỤC khi User xác nhận đã duyệt xong Storyboard.**
+
+### Giai đoạn 4: Render (Batch)
+
+Gọi MCP tool:
+```
+shortmaker_trigger_render(projectId: "...", fadeDuration: 1.0, bgmVolume: 0.1)
+```
+
+User có thể theo dõi tiến trình trên ShortMaker Studio GUI.
+
+## 🔀 Hiệu ứng Chuyển Cảnh (Transitions)
+
+Các hiệu ứng được hỗ trợ (truyền vào `transition` khi `add_scene`):
+- `fade` — Chuyển mờ dần (mặc định)
+- `slideleft` / `slideright` — Trượt sang trái/phải
+- `wipeleft` / `wiperight` — Quét sang trái/phải
+- `circlecrop` — Thu nhỏ hình tròn
+- `dissolve` — Hòa tan
+- `none` — Cắt thẳng, không hiệu ứng
+
+## 🌿 Green Screen (Fallback Option)
+
+Nếu User ĐẶC BIỆT yêu cầu greenscreen:
+- Thêm "on a solid chroma green screen background" vào prompt scene
+- Render pipeline sẽ tự xử lý chroma key với background được cung cấp
+
+## 📁 Output Convention
+
+Projects được lưu tại `~/ShortMaker-Projects/<project-id>/`:
+```
+<project-id>/
+├── shortmaker.config.json    # Project config (auto-managed)
+├── storyboard.json           # Scene data (auto-managed)
+├── assets/                   # Character ref, BGM
+├── storyboard/               # Scene preview images
+├── segments/                 # Rendered video segments
+├── tts/                      # TTS audio files
+├── temp/                     # Temporary processing files
+└── final/                    # Final mixed output
+```
+
+## 🔧 MCP Tools Reference
+
+| Tool | Mục đích |
+|------|----------|
+| `shortmaker_list_projects` | Liệt kê projects hiện có |
+| `shortmaker_create_project` | Tạo project mới |
+| `shortmaker_setup_character` | Chốt nhân vật (prompt + seed) |
+| `shortmaker_add_scene` | Thêm scene vào storyboard |
+| `shortmaker_update_scene` | Sửa scene đã có |
+| `shortmaker_get_storyboard` | Xem toàn bộ storyboard |
+| `shortmaker_trigger_render` | Bắt đầu render pipeline (async, chạy ngầm) |
+| `shortmaker_get_render_status` | Kiểm tra tiến trình render đang chạy (polling) |

@@ -259,17 +259,8 @@ export function getActiveProject() {
     return db.prepare('SELECT * FROM projects WHERE is_active = 1').get() || null;
 }
 
-/**
- * Resolve the project ID: use explicit param only.
- * Returns null if no project specified (= show ALL tasks across projects).
- * Active project is for UI display only — does NOT affect queries.
- */
-function resolveProjectId(projectParam) {
-    if (projectParam === '__all__') return null;
-    if (projectParam) return String(projectParam).toLowerCase();
-    // No auto-scoping — return null to show all
-    return null;
-}
+import projectResolver from '../core/project-resolver.js';
+const { loadProjectIdentity, resolveProjectId } = projectResolver;
 
 export function createProject({ id, name, projectPath, icon, color }) {
     if (id) id = String(id).toLowerCase();

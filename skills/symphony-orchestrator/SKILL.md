@@ -8,7 +8,7 @@ metadata:
   stage: core
   version: "3.0"
   replaces: null
-  requires: "@leejungkiin/awkit-symphony" (npm i -g @leejungkiin/awkit-symphony)
+  requires: "@leejungkiin/awkit-symphony (npm i -g @leejungkiin/awkit-symphony)"
   tags: [symphony, setup, server, orchestration, core, preflight, multi-project, agent]
 agent: Symphony Conductor
 allowed-tools:

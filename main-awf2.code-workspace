@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../../../Dev2/Android/FitWitness"
+		},
+		{
+			"path": "../../../Dev2/MacOS/Shortmaker"
 		}
 	],
 	"settings": {}

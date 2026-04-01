@@ -11,6 +11,8 @@ const path = require('path');
 const SYMPHONY_ROOT = path.join(__dirname, '..');
 process.env.SYMPHONY_ROOT = SYMPHONY_ROOT;
 
+const { resolveProjectId } = require(path.join(SYMPHONY_ROOT, 'core', 'project-resolver'));
+
 const program = new Command();
 
 program
@@ -32,7 +34,7 @@ taskCmd
         const tm = require(path.join(SYMPHONY_ROOT, 'core', 'task-manager'));
         const tasks = tm.listTasks({
             status: opts.status || undefined,
-            project: opts.project || undefined,
+            project: resolveProjectId(opts.project) || undefined,
             limit: parseInt(opts.limit),
         });
 
@@ -76,7 +78,7 @@ taskCmd
             description: opts.description,
             acceptance: opts.acceptance,
             phase: opts.phase,
-            projectId: opts.project,
+            projectId: resolveProjectId(opts.project),
         };
         if (opts.skills) {
             taskOpts.requiredSkills = opts.skills.split(',').map(s => s.trim());
@@ -246,6 +248,36 @@ taskCmd
         closeDb();
     });
 
+// ─── TODO Command ───────────────────────────────────────────────────────────
+
+taskCmd
+    .command('todo')
+    .description('List pending (ready) tasks, scoped to the current project')
+    .option('-p, --project <id>', 'Project ID filter (overrides auto-detection)')
+    .action((opts) => {
+        const tm = require(path.join(SYMPHONY_ROOT, 'core', 'task-manager'));
+        const { resolveProjectId } = require(path.join(SYMPHONY_ROOT, 'core', 'project-resolver'));
+        const projectId = opts.project || resolveProjectId();
+
+        const filter = { status: 'ready', limit: 30 };
+        if (projectId && projectId !== '__all__') {
+            filter.project = projectId;
+        }
+
+        const tasks = tm.listTasks(filter);
+        if (tasks.length === 0) {
+            console.log('\n✅ No pending tasks — all caught up!\n');
+        } else {
+            console.log(`\n📋 TODO List${projectId && projectId !== '__all__' ? ` [Project: ${projectId}]` : ''} (${tasks.length}):\n`);
+            for (let i = 0; i < tasks.length; i++) {
+                const t = tasks[i];
+                console.log(`   ${i + 1}. [P${t.priority}] [${t.id}] ${t.title}`);
+            }
+            console.log('');
+        }
+        closeDb();
+    });
+
 taskCmd
     .command('update <id>')
     .description('Update task fields')
@@ -281,6 +313,86 @@ taskCmd
         closeDb();
     });
 
+// ─── Project Commands ────────────────────────────────────────────────────────
+
+const projectCmd = program.command('project').description('Project management');
+
+projectCmd
+    .command('list')
+    .description('List all registered projects')
+    .action(async () => {
+        try {
+            const core = await import('file://' + path.join(SYMPHONY_ROOT, 'lib', 'core.mjs'));
+            const projects = core.listProjects();
+            if (projects.length === 0) {
+                console.log('No projects found.');
+                return;
+            }
+            console.log(`\n${'ID'.padEnd(25)} ${'Name'.padEnd(30)} ${'Path'}`);
+            console.log('─'.repeat(90));
+            for (const p of projects) {
+                console.log(`${p.id.padEnd(25)} ${(p.icon + ' ' + p.name).padEnd(30)} ${p.path || '(no path)'}`);
+            }
+            console.log(`\nTotal: ${projects.length} project(s)\n`);
+        } catch (e) {
+            console.error(`\n❌ Error: ${e.message}\n`);
+        }
+    });
+
+projectCmd
+    .command('edit <id>')
+    .description('Edit a project')
+    .option('-n, --name <name>', 'New project name')
+    .option('-p, --path <path>', 'New project path')
+    .option('-i, --icon <icon>', 'New project icon')
+    .option('-c, --color <color>', 'New project color')
+    .action(async (id, opts) => {
+        try {
+            const core = await import('file://' + path.join(SYMPHONY_ROOT, 'lib', 'core.mjs'));
+            const updates = {};
+            if (opts.name) updates.name = opts.name;
+            if (opts.path) updates.path = opts.path;
+            if (opts.icon) updates.icon = opts.icon;
+            if (opts.color) updates.color = opts.color;
+
+            if (Object.keys(updates).length === 0) {
+                console.log('No fields to update provided.');
+                return;
+            }
+
+            const updated = core.updateProject(id, updates);
+            if (!updated) {
+                console.error(`\n❌ Project not found: ${id}\n`);
+                return;
+            }
+            console.log(`\n✅ Project updated: ${updated.id}`);
+            console.log(`   Name:  ${updated.icon} ${updated.name}`);
+            console.log(`   Path:  ${updated.path || '(none)'}`);
+            console.log(`   Color: ${updated.color || '(none)'}\n`);
+        } catch (e) {
+            console.error(`\n❌ Error: ${e.message}\n`);
+        }
+    });
+
+projectCmd
+    .command('delete <id>')
+    .description('Delete a project (Warning: tasks will lose their project association)')
+    .option('-f, --force', 'Force delete without confirmation (for scripts)')
+    .action(async (id, opts) => {
+        try {
+            if (!opts.force) {
+                console.log(`\n⚠️  WARNING: Deleting project '${id}' will orphan all its tasks (they will remain but without a project).`);
+                console.log(`Run this command again with --force to confirm deletion.\n`);
+                return;
+            }
+            const core = await import('file://' + path.join(SYMPHONY_ROOT, 'lib', 'core.mjs'));
+            core.deleteProject(id);
+            console.log(`\n🗑️  Project deleted: ${id}\n`);
+        } catch (e) {
+            console.error(`\n❌ Error: ${e.message}\n`);
+        }
+    });
+
 // ─── Agent Commands (Project-Scoped) ────────────────────────────────────────
 
 const agentCmd = program.command('agent').description('Agent management (project-scoped)');
@@ -297,7 +409,9 @@ agentCmd
         const am = require(path.join(SYMPHONY_ROOT, 'core', 'agent-manager'));
         try {
             const skills = opts.skills ? opts.skills.split(',').map(s => s.trim()) : [];
-            const agent = am.createAgent(id, opts.project, opts.name || id, skills, {
+            const project = resolveProjectId(opts.project);
+            if (!project) throw new Error("Agent requires a valid project ID.");
+            const agent = am.createAgent(id, project, opts.name || id, skills, {
                 icon: opts.icon,
                 color: opts.color,
             });
@@ -319,7 +433,7 @@ agentCmd
     .action((opts) => {
         const am = require(path.join(SYMPHONY_ROOT, 'core', 'agent-manager'));
         const agents = am.listAgents({
-            project: opts.project || undefined,
+            project: resolveProjectId(opts.project) || undefined,
             status: opts.status || undefined,
         });
 
@@ -618,11 +732,19 @@ program
 program
     .command('status')
     .description('Show system status')
-    .action(() => {
+    .option('-p, --project <id>', 'Project ID filter (overrides auto-detection)')
+    .action((opts) => {
         const orchestrator = require(path.join(SYMPHONY_ROOT, 'core', 'orchestrator'));
-        const status = orchestrator.getStatus();
+        const { resolveProjectId } = require(path.join(SYMPHONY_ROOT, 'core', 'project-resolver'));
+        const projectId = opts.project || resolveProjectId();
+        
+        let targetProject = null;
+        if (projectId && projectId !== '__all__') {
+            targetProject = projectId;
+        }
+        const status = orchestrator.getStatus(targetProject);
 
-        console.log('\n🎼 AWKit Symphony Status\n');
+        console.log(`\n🎼 AWKit Symphony Status${targetProject ? ` [Project: ${targetProject}]` : ''}\n`);
 
         // Agents
         console.log(`🤖 Agents (${status.agents.length}/${status.config.maxAgents}):`);
@@ -669,7 +791,8 @@ program
         const http = require('http');
 
         // Try API first (server already running)
-        const url = `http://localhost:3100/api/preflight${opts.project ? `?project=${opts.project}` : ''}`;
+        const projectId = resolveProjectId(opts.project);
+        const url = `http://localhost:3100/api/preflight${projectId ? `?project=${projectId}` : ''}`;
 
         try {
             const data = await new Promise((resolve, reject) => {
