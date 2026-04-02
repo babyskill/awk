@@ -1,0 +1,16 @@
+{
+    "name": "mobile-ios",
+    "auto_install": false,
+    "description": "iOS development skills: Xcode, Swift, SwiftUI, reverse engineering, build optimization, and SPM analysis",
+    "skills": [
+        "ios-engineer",
+        "smali-to-swift",
+        "swiftui-pro",
+        "xcode-build-benchmark",
+        "xcode-build-fixer",
+        "xcode-build-orchestrator",
+        "xcode-compilation-analyzer",
+        "xcode-project-analyzer",
+        "spm-build-analysis"
+    ]
+}

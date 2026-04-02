@@ -1,0 +1,10 @@
+{
+    "name": "mobile-android",
+    "auto_install": false,
+    "description": "Android development skills: Kotlin, Jetpack Compose, reverse engineering, AdMob ROAS, and APK analysis",
+    "skills": [
+        "smali-to-kotlin",
+        "android-re-analyzer",
+        "admob-roas"
+    ]
+}
