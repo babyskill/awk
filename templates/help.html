@@ -177,44 +177,93 @@
             </div>
 
             <div class="card">
-                <h2>⚡ Các Workflow Cốt Lõi</h2>
-                <p>Sử dụng các Slash Command này trực tiếp trong cửa sổ Chat với AI để kích hoạt các quy trình tự động do AWKit điều khiển:</p>
+                <h2>⚡ Cách Sử Dụng AWKit</h2>
+                <p>AWKit hoạt động theo nguyên tắc <strong>"nói gì làm nấy"</strong>. Bạn chỉ cần mô tả yêu cầu bằng ngôn ngữ tự nhiên trong cửa sổ Chat, AI sẽ tự động kích hoạt đúng quy trình (7-Gate) mà không cần gõ lệnh thủ công.</p>
                 
+                <h3>🤖 AI Tự Động Xử Lý (Không cần gõ lệnh)</h3>
+                <p>Các quy trình sau được hệ thống Skill tự động nhận diện và kích hoạt khi bạn chat:</p>
+                <ul>
+                    <li><strong>Brainstorm:</strong> "Tôi muốn làm tính năng X" → AI tự chạy Gate 1 (Spec)</li>
+                    <li><strong>Thiết kế:</strong> "Thiết kế kiến trúc cho module Auth" → AI tự chạy Gate 2 (Architecture)</li>
+                    <li><strong>Code:</strong> "Code màn hình đăng nhập" → AI tự chạy Gate 4 (Execution) với 3-Phase</li>
+                    <li><strong>Debug:</strong> "App crash khi bấm nút Save" → AI tự kích hoạt systematic debugging</li>
+                    <li><strong>Refactor:</strong> "Đổi tên class UserManager" → AI dùng GitNexus rename an toàn</li>
+                </ul>
+
+                <h3>⌨️ Quick Shortcuts (Phím tắt hữu ích)</h3>
+                <p>Một số lệnh ngắn vẫn hữu ích khi bạn cần truy cập nhanh:</p>
                 <table class="command-table">
                     <thead>
                         <tr>
-                            <th>Lệnh (Command)</th>
-                            <th>Mô tả chức năng</th>
+                            <th>Lệnh</th>
+                            <th>Chức năng</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><code>/brainstorm</code></td>
-                            <td>Tìm kiếm và lên ý tưởng tính năng. Sẽ tự động xuất ra tài liệu Spec/BRIEF.md.</td>
-                        </tr>
-                        <tr>
-                            <td><code>/plan</code></td>
-                            <td>Thiết kế kiến trúc hệ thống và cách tiếp cận cấu trúc trước khi code.</td>
-                        </tr>
-                        <tr>
-                            <td><code>/code</code></td>
-                            <td>Nhờ AI bắt tay vào lập trình trực tiếp (production code) sau khi đã có Spec.</td>
-                        </tr>
-                        <tr>
-                            <td><code>/debug</code></td>
-                            <td>Kích hoạt quy trình sửa lỗi hệ thống (Tìm nguyên nhân → Tạo phương án → Sửa lỗi).</td>
-                        </tr>
-                        <tr>
                             <td><code>/next</code></td>
-                            <td>Hỏi nhanh "Tôi nên làm gì tiếp theo?". AI sẽ đọc tiến độ của lệnh Symphony và báo cáo cho bạn.</td>
+                            <td>Hỏi nhanh "Tôi nên làm gì tiếp?" — AI đọc Symphony và đề xuất bước tiếp theo.</td>
                         </tr>
                         <tr>
                             <td><code>/recap</code></td>
-                            <td>Tổng hợp lại tình trạng dự án hiện tại (báo cáo ngắn).</td>
+                            <td>Tổng hợp tình trạng dự án: tiến độ, task đang chạy, vấn đề tồn đọng.</td>
                         </tr>
                         <tr>
-                            <td><code>/gitnexus</code></td>
-                            <td>Phân tích mã nguồn và tra cứu thư viện theo dạng biểu đồ (Knowledge Graph).</td>
+                            <td><code>/debug</code></td>
+                            <td>Kích hoạt chế độ sửa lỗi hệ thống (Tìm nguyên nhân → Phân tích → Sửa → Xác nhận).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/codebase-sync</code></td>
+                            <td>Cập nhật lại tài liệu <code>CODEBASE.md</code> cho khớp với code thực tế.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>📖 Workflow Chuyên Biệt (Step-by-step, gõ khi cần)</h3>
+                <p>Các quy trình này có hướng dẫn từng bước, phù hợp cho các tác vụ đặc thù:</p>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th>Lệnh</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/admob</code></td>
+                            <td>Tích hợp quảng cáo AdMob vào ứng dụng (Banner, Interstitial, Native, Rewarded).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/reverse-android</code></td>
+                            <td>Dịch ngược APK Android → App Kotlin hiện đại (Jetpack Compose, Clean Architecture).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/reverse-ios</code></td>
+                            <td>Dịch ngược IPA iOS → App Swift hiện đại (SwiftUI, Clean Architecture).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/smali-ads-flow</code></td>
+                            <td>Tích hợp Ads Flow vào APK mod (Smali): Splash → Ads → Onboarding → Home.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/ship-to-code</code></td>
+                            <td>Chuyển đổi mã nguồn từ ngôn ngữ bất kỳ sang ngôn ngữ bất kỳ.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/deploy</code></td>
+                            <td>Quy trình deploy lên Production (kiểm tra trước, build, push).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/hotfix</code></td>
+                            <td>Sửa lỗi khẩn cấp Production — quy trình nhanh, có rollback.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/conductor</code></td>
+                            <td>Gọi Gemini CLI phân tích project-wide — khi cần tầm nhìn rộng hơn 1 model.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/conductor-codex</code></td>
+                            <td>Gọi Codex CLI rà soát code, debug, review logic — second opinion từ GPT 5.4.</td>
                         </tr>
                     </tbody>
                 </table>
