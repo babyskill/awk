@@ -1861,7 +1861,7 @@ function cmdHelp() {
     log(`  ${C.green}init${C.reset}                Init mobile project (Firebase) in CWD`);
     log(`  ${C.gray}  --force${C.reset}            Overwrite existing files`);
     log(`  ${C.gray}  Generates: .project-identity, <Name>.code-workspace,${C.reset}`);
-    log(`  ${C.gray}             CODEBASE.md, .symphony/ (Symphony task DB)${C.reset}`);
+    log(`  ${C.gray}             CODEBASE.md, thiết lập router (AGENTS.md, CLAUDE.md)${C.reset}`);
     log('');
 
     // Maintenance
@@ -2264,7 +2264,7 @@ function buildCodebaseMd(projectName, projectType, identity) {
  *   .project-identity
  *   <ProjectName>.code-workspace
  *   CODEBASE.md
- *   .symphony/ (via Symphony)
+ *   Router files (AGENTS.md, CLAUDE.md)
  */
 async function cmdInit(forceFlag = false) {
     const cwd = process.cwd();
@@ -2494,21 +2494,20 @@ Additional project context can be found in:
         ok('.gitignore created');
     }
 
-    // ── 5. Symphony folder ───────────────────────────────────────────────────────
-    const symphonyDir = path.join(cwd, '.symphony');
-    if (fs.existsSync(symphonyDir) && !forceFlag) {
-        warn('.symphony/ folder already exists');
-    } else {
-        info('Creating .symphony/ folder to mark project context...');
-        fs.mkdirSync(symphonyDir, { recursive: true });
-        // Create an empty .gitignore just in case
-        fs.writeFileSync(path.join(symphonyDir, '.gitignore'), '*\n');
-        ok('Symphony project marker created (.symphony/)');
-        
-        const symReady = checkSymphony({ silent: true });
-        if (!symReady) {
-            dim('Symphony CLI is not installed. Run: npm i -g @leejungkiin/awkit-symphony');
+    // ── 5. Symphony CLI Initialization ───────────────────────────────────────────
+    info('Checking Symphony CLI...');
+    const symReady = checkSymphony({ silent: true });
+    if (!symReady) {
+        info('Symphony CLI is not installed. Installing automatically...');
+        try {
+            execSync('npm install -g @leejungkiin/awkit-symphony', { stdio: 'inherit' });
+            ok('Symphony CLI installed successfully.');
+        } catch (e) {
+            err('Failed to auto-install Symphony CLI.');
+            dim('Please install manually: npm i -g @leejungkiin/awkit-symphony');
         }
+    } else {
+        ok('Symphony CLI is ready.');
     }
 
     // ── 5.5. GitNexus: Code Intelligence Index ──────────────────────────────
