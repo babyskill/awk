@@ -172,7 +172,7 @@
                     <li><code>.project-identity</code>: Chứa cấu hình dự án (Tên, Tech Stack, Bundle ID). Hãy chỉnh sửa file này để thay đổi định nghĩa gốc của dự án.</li>
                     <li><code>CODEBASE.md</code>: Tài liệu sống về kiến trúc của bộ code. Mở chat AI và gõ <code>/codebase-sync</code> để AI tự động đánh giá và cập nhật.</li>
                     <li><code>AGENTS.md</code> & <code>CLAUDE.md</code>: Các tệp định tuyến (Router files) hỗ trợ AI IDE (như Cline, Roo, Cursor) nhận diện bộ quy tắc tập trung từ hệ thống.</li>
-                    <li><code>.symphony/</code>: Thư mục dùng để theo dõi timeline và danh sách các tác vụ thông qua Symphony Orchestrator.</li>
+                    <li><code>.symphony/</code>: Thư mục đánh dấu (marker) cho dự án. Dữ liệu Symphony thực tế được lưu ở cơ sở dữ liệu toàn cục (<code>~/.gemini/antigravity/symphony/</code>), nên bạn không cần lo ngại về dung lượng hay commit nhầm.</li>
                 </ul>
             </div>
 
@@ -243,20 +243,27 @@ npx gitnexus analyze --embeddings</code></pre>
 
             <div class="card">
                 <h2>📋 Symphony - Quản Lý Tiến Độ Tác Vụ</h2>
-                <p>Symphony là trái tim của việc chia nhỏ và đánh dấu tiến độ công việc trong AWKit. Việc dùng Symphony sẽ ngăn AI khỏi tình trạng quên hoặc làm lệch hướng.</p>
+                <p>Symphony là trái tim của việc chia nhỏ và đánh dấu tiến độ công việc trong AWKit. Dữ liệu được lưu trữ ở <strong>cơ sở dữ liệu toàn cục</strong> (<code>~/.gemini/antigravity/symphony/</code>), không nằm trong thư mục dự án. Thư mục <code>.symphony/</code> trong project chỉ đóng vai trò đánh dấu (marker) để AI nhận diện phạm vi dự án.</p>
+                
+                <h3>Cài đặt Symphony CLI (chỉ cần 1 lần):</h3>
+                <pre><code># Cài đặt toàn cục
+npm install -g @leejungkiin/awkit-symphony
+
+# Kiểm tra đã cài xong
+symphony status</code></pre>
                 
                 <h3>Các thao tác CLI hữu ích:</h3>
                 <pre><code># Hệ thống quản lý
-symphony status         # Xem thông tin cấu hình và server trạng thái
-symphony reset          # Xoá database cục bộ (NẾU BỊ LỖI DATABAASE)
+symphony status                     # Xem thông tin cấu hình và trạng thái server
+symphony reset                      # Xoá database toàn cục (CHỈ KHI BỊ LỖI DATABASE)
 
 # Thao tác với Task
-symphony task list      # Xem danh sách tất cả các task hiện tại
-symphony task add "Làm màn hình Đăng Nhập" 
+symphony task list                  # Xem danh sách tất cả các task hiện tại
+symphony task add "Làm màn hình Đăng Nhập"
 symphony task claim &lt;id&gt;            # Bắt đầu làm task
 symphony task complete &lt;id&gt;         # Đánh dấu hoàn thành
-symphony task block &lt;id&gt; "Lý do"      # Đánh dấu bị chặn vì lỗi</code></pre>
-                <p>Hệ thống AI AWKit sẽ <strong>luôn tự động</strong> thực hiện các hành động trên cho bạn trong quá trình thực thi hệ thống 7-Gate.</p>
+symphony task block &lt;id&gt; "Lý do"   # Đánh dấu bị chặn vì lỗi</code></pre>
+                <p>Hệ thống AI AWKit sẽ <strong>luôn tự động</strong> thực hiện các hành động trên cho bạn trong quá trình thực thi hệ thống 7-Gate. Bạn không cần gõ lệnh thủ công trừ khi muốn kiểm tra tiến độ.</p>
             </div>
 
             <div class="card">
@@ -299,6 +306,70 @@ awkit tg send --topic 1234 "App đã build xong nhé!"</code></pre>
                     <li><strong>Gate 3 (Tasks):</strong> Xé rách dự án thành các thẻ Symphony Tickets.</li>
                     <li><strong>Gate 4 (Execution):</strong> Thực thi theo 3-Phase (Code Kiến trúc chuẩn → Làm giao diện → Gắn Code Logic Data) với các bước <strong>Dừng User Test</strong>.</li>
                     <li><strong>Gate 5 (Verification):</strong> Review code, test và dùng AI xác nhận Git Commit an toàn.</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h2>🧩 Chiến Lược Đa IDE & Đa AI Model</h2>
+                <p>AWKit được thiết kế để tận dụng <strong>sức mạnh của nhiều AI Model cùng lúc</strong>. Hệ thống gồm 3 Model chính, mỗi cái phục vụ một mục đích khác nhau, chia làm 2 kênh truy cập:</p>
+
+                <h3>Kênh 1: Antigravity (IDE tích hợp — VS Code / Cursor)</h3>
+                <p>Đây là kênh chính để code, debug, và điều phối dự án. Hoạt động qua Agent trong IDE.</p>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Thế mạnh</th>
+                            <th>Khi nào dùng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Claude Opus 4.6</strong> <span class="badge">Mặc định</span></td>
+                            <td>Suy luận sâu, tuân thủ quy tắc tốt nhất, kiến trúc phức tạp</td>
+                            <td>Mọi task chính: code Feature, Debug logic phức tạp, Thiết kế kiến trúc, Gate 1–5</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gemini 3.1 Pro</strong> <span class="badge success">Bổ trợ</span></td>
+                            <td>Context window cực lớn (2M tokens), xử lý nhanh, phân tích file dài</td>
+                            <td>Đọc/phân tích codebase lớn, Refactor đa file, Brainstorm ý tưởng, Review nhanh</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><em>💡 Mẹo: Chuyển đổi model trực tiếp trong Antigravity bằng nút chọn Model ở thanh chat. Dùng Opus cho task cần chính xác cao, dùng Gemini khi cần quét/phân tích khối lượng lớn.</em></p>
+
+                <h3>Kênh 2: Codex CLI / Extension (chạy nền song song)</h3>
+                <p><strong>Codex (GPT 5.4)</strong> hoạt động như một "trợ lý thứ hai" chạy song song, <strong>hoàn toàn READ-ONLY</strong>. Codex không chỉnh sửa code — nó chỉ đọc, phân tích, và xuất báo cáo.</p>
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th>Cách dùng</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Codex CLI</strong></td>
+                            <td>Chạy trong Terminal: <code>codex</code> rồi nhập câu hỏi. Phù hợp để debug, review logic, và audit code.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>VS Code Extension</strong></td>
+                            <td>Cài extension "Codex" trong VS Code để dùng trực tiếp trong IDE song song với Antigravity.</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <pre><code># Ví dụ dùng Codex CLI kiểm tra logic
+codex "Review function validateBloodPressure và tìm edge case bị bỏ sót"
+
+# Hoặc AWKit tự gọi Codex khi cần second opinion
+/conductor-codex "Rà soát toàn bộ authentication flow"</code></pre>
+
+                <h3>Chiến lược tối ưu khi dùng đa model:</h3>
+                <ol>
+                    <li><strong>Opus 4.6 dẫn đầu:</strong> Mọi task chính (code, debug, plan) đều chạy trên Opus. Đây là model có khả năng tuân thủ quy tắc AWKit và suy luận chuỗi tốt nhất.</li>
+                    <li><strong>Gemini 3.1 Pro mở rộng:</strong> Khi cần đọc file dài, phân tích codebase >1000 dòng, hoặc brainstorm nhanh — chuyển sang Gemini để tận dụng context window lớn và tốc độ.</li>
+                    <li><strong>Codex chạy song song:</strong> Mở terminal thứ 2, chạy <code>codex</code> để hỏi second opinion, review code đã viết, hoặc tìm bug mà model chính bỏ sót. Codex dùng quota riêng nên không ảnh hưởng Opus/Gemini.</li>
+                    <li><strong>Không trùng lặp:</strong> Chỉ 1 model chỉnh sửa file tại 1 thời điểm. Codex chỉ đọc và báo cáo, không ghi file.</li>
                 </ol>
             </div>
             
