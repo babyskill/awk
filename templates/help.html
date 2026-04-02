@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWKit Documentation</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --text-color: #cbd5e1;
+            --heading-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --code-bg: #0b1120;
+            --border-color: #334155;
+            --success-color: #34d399;
+            --warning-color: #fbbf24;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #e2e8f0;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .command-table th, .command-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .command-table th {
+            color: var(--heading-color);
+            font-weight: 600;
+        }
+
+        .command-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            background-color: var(--accent-color);
+            color: #0f172a;
+            padding: 0.1rem 0.4rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        
+        .badge.warning {
+            background-color: var(--warning-color);
+        }
+        
+        .badge.success {
+            background-color: var(--success-color);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AWKit Documentation</h1>
+            <p>Welcome to your newly initialized Antigravity project!</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>🚀 Getting Started</h2>
+                <p><strong>AWKit</strong> (Antigravity Kit) is an advanced tool for project orchestration, code generation, and AI agent coordination. Your project has been initialized with following essential files:</p>
+                <ul>
+                    <li><code>.project-identity</code>: Contains project metadata (Name, Tech Stack, Bundle ID). Edit this to change project constraints.</li>
+                    <li><code>CODEBASE.md</code>: The living documentation of your codebase architecture. Run <code>/codebase-sync</code> in your AI Chat to update it automatically.</li>
+                    <li><code>AGENTS.md</code> & <code>CLAUDE.md</code>: Router files that point your AI IDE (Cline, Roo, Cursor, Claude Code) to the central rulebook.</li>
+                    <li><code>.symphony/</code>: Tracks tasks and progress via Symphony Orchestrator.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>⚡ Core Workflows</h2>
+                <p>Use these slash commands in your AI chat to trigger expert behaviors:</p>
+                
+                <table class="command-table">
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/brainstorm</code></td>
+                            <td>Ideate and research new features. Outputs a Spec/Brief document.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/plan</code></td>
+                            <td>Design architecture and technical approach before coding.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/code</code></td>
+                            <td>Write production code based on a completed Spec.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/debug</code></td>
+                            <td>Systematic debugging process (diagnose → verify → fix).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/next</code></td>
+                            <td>Ask context-aware "What should I do next?" (Syncs with Symphony & NeuralMemory).</td>
+                        </tr>
+                        <tr>
+                            <td><code>/recap</code></td>
+                            <td>Generate a summary of the project and current state.</td>
+                        </tr>
+                        <tr>
+                            <td><code>/gitnexus</code></td>
+                            <td>Explore codebase via Knowledge Graph.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>🧠 GitNexus Code Intelligence</h2>
+                <p>AWKit uses <strong>GitNexus</strong> to understand the entire architecture, blast radiuses, and execution flows. It builds a graph of your code.</p>
+                <p><strong>Important CLI Commands:</strong></p>
+                <pre><code># Re-analyze code and update graph (Run this after major changes)
+npx gitnexus analyze
+
+# Force full update including embeddings
+npx gitnexus analyze --embeddings</code></pre>
+                <p><em>AI Agents: Always use GitNexus tools like <code>gitnexus_impact</code> before refactoring, and <code>gitnexus_query</code> to explore.</em></p>
+            </div>
+
+            <div class="card">
+                <h2>📋 Symphony Task Tracking</h2>
+                <p>AWKit uses <strong>Symphony</strong> to track what's currently being worked on. Symphony serves as the brain for the context boundaries.</p>
+                <pre><code># View current tasks
+symphony task list
+
+# Add a manual task
+symphony task add "Update UI configuration"
+
+# Check system status
+symphony status</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>🤖 The 7-Gate Autonomous System</h2>
+                <p>Complex tasks requested in AWKit follow a strict, reliable process known as the 7-Gate pipeline:</p>
+                <ol>
+                    <li><strong>Gate 1 (Spec):</strong> Create requirements / BRIEF.md</li>
+                    <li><strong>Gate 1.5 (Module Spec):</strong> Drill down into screen flows and business rules.</li>
+                    <li><strong>Gate 2 (Architecture):</strong> Technical DB/API design.</li>
+                    <li><strong>Gate 2.5 (Visual):</strong> Pencil MCP or reference screenshots.</li>
+                    <li><strong>Gate 3 (Tasks):</strong> Break into Symphony tickets.</li>
+                    <li><strong>Gate 4 (Execution):</strong> 3-Phase approach (Infrastructure → UI Shell → Logic) with User Checkpoints.</li>
+                    <li><strong>Gate 5 (Verification):</strong> Code review, testing, and Git operations.</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h2>🔌 Plugins & Integrations</h2>
+                <ul>
+                    <li><strong>Trello Sync:</strong> Run <code>awkit trello setup</code> and <code>awkit trello sync</code> to connect the project to Trello. Automatically updates checklists based on Symphony.</li>
+                    <li><strong>Neural Memory:</strong> Contextual long-term memory for AI agents to remember edge cases, architecture decisions, and logic across sessions.</li>
+                    <li><strong>Telegram Notify:</strong> Send build output or deployment updates to Telegram via <code>awkit tg send "Message"</code>.</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>Generated by <strong>AWKit</strong> v12.3</p>
+            <p><small>Keep this file around as your permanent pocket guide.</small></p>
+        </footer>
+    </div>
+</body>
+</html>

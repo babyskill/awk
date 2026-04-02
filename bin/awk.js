@@ -2452,6 +2452,21 @@ Additional project context can be found in:
         ok(`${file} created/updated`);
     }
 
+    // ── 4.2. Help Documentation (help.html) ───────────────────────────────────
+    const helpPath = path.join(cwd, 'help.html');
+    if (fs.existsSync(helpPath) && !forceFlag) {
+        warn('help.html already exists — skipping (use --force to overwrite)');
+    } else {
+        info('Creating help.html...');
+        const tmplHelpPath = path.join(AWK_ROOT, 'templates', 'help.html');
+        if (fs.existsSync(tmplHelpPath)) {
+            fs.copyFileSync(tmplHelpPath, helpPath);
+            ok('help.html created');
+        } else {
+            warn('Template help.html not found, skipped.');
+        }
+    }
+
     // ── 4.5. .gitignore ────────────────────────────────────────────────────────
     const gitignorePath = path.join(cwd, '.gitignore');
     const ignoreRules = ['log.txt', 'tmp/', '.gitnexus/', 'node_modules/'];
