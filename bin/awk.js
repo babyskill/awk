@@ -2419,6 +2419,39 @@ async function cmdInit(forceFlag = false) {
         ok('CODEBASE.md created');
     }
 
+    // ── 4.1. IDE Agent Router Files (AGENTS.md & CLAUDE.md) ───────────────────
+    const agentRouterContent = `# AI Agent Strategy
+> **NOTICE:** This project uses Antigravity (AWKit) as the central orchestrator.
+> All core system rules, behaviors, and workflows are defined globally.
+
+**CRITICAL INSTRUCTION FOR ALL AI AGENTS:**
+Before reading any other context or starting work, you MUST read the global system instructions file located at:
+
+\`\`\`bash
+cat ~/.gemini/antigravity/GEMINI.md
+\`\`\`
+
+If you cannot read the file directly, you must ask the user to provide its contents. 
+Please follow ALL rules defined in that global file.
+
+Additional project context can be found in:
+- \`.project-identity\`
+- \`CODEBASE.md\`
+`;
+
+    const routerFiles = ['AGENTS.md', 'CLAUDE.md'];
+    for (const file of routerFiles) {
+        const filePath = path.join(cwd, file);
+        if (fs.existsSync(filePath)) {
+            const bakPath = path.join(cwd, `${file}.bak`);
+            fs.copyFileSync(filePath, bakPath);
+            warn(`Backed up existing ${file} to ${file}.bak`);
+        }
+        info(`Creating ${file} (Router to GEMINI.md)...`);
+        fs.writeFileSync(filePath, agentRouterContent);
+        ok(`${file} created/updated`);
+    }
+
     // ── 4.5. .gitignore ────────────────────────────────────────────────────────
     const gitignorePath = path.join(cwd, '.gitignore');
     const ignoreRules = ['log.txt', 'tmp/', '.gitnexus/', 'node_modules/'];
