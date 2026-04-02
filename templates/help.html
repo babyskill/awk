@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWKit Documentation</title>
+    <title>Tài Liệu Hướng Dẫn AWKit</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -39,7 +39,7 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             color: var(--heading-color);
         }
 
@@ -74,6 +74,11 @@
             gap: 0.5rem;
         }
 
+        h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
         code {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             background-color: var(--code-bg);
@@ -96,7 +101,7 @@
             padding: 0;
         }
 
-        ul {
+        ul, ol {
             padding-left: 1.5rem;
         }
 
@@ -155,118 +160,154 @@
 <body>
     <div class="container">
         <header>
-            <h1>AWKit Documentation</h1>
-            <p>Welcome to your newly initialized Antigravity project!</p>
+            <h1>Tài Liệu Hướng Dẫn AWKit</h1>
+            <p>Chào mừng bạn đến với dự án Antigravity đã được khởi tạo!</p>
         </header>
 
         <main>
             <div class="card">
-                <h2>🚀 Getting Started</h2>
-                <p><strong>AWKit</strong> (Antigravity Kit) is an advanced tool for project orchestration, code generation, and AI agent coordination. Your project has been initialized with following essential files:</p>
+                <h2>🚀 Bắt Đầu (Getting Started)</h2>
+                <p><strong>AWKit</strong> (Antigravity Kit) là công cụ điều phối dự án, tạo code, và quản lý AI agent chuyên sâu. Dự án của bạn đã được khởi tạo với các file quan trọng sau đây:</p>
                 <ul>
-                    <li><code>.project-identity</code>: Contains project metadata (Name, Tech Stack, Bundle ID). Edit this to change project constraints.</li>
-                    <li><code>CODEBASE.md</code>: The living documentation of your codebase architecture. Run <code>/codebase-sync</code> in your AI Chat to update it automatically.</li>
-                    <li><code>AGENTS.md</code> & <code>CLAUDE.md</code>: Router files that point your AI IDE (Cline, Roo, Cursor, Claude Code) to the central rulebook.</li>
-                    <li><code>.symphony/</code>: Tracks tasks and progress via Symphony Orchestrator.</li>
+                    <li><code>.project-identity</code>: Chứa cấu hình dự án (Tên, Tech Stack, Bundle ID). Hãy chỉnh sửa file này để thay đổi định nghĩa gốc của dự án.</li>
+                    <li><code>CODEBASE.md</code>: Tài liệu sống về kiến trúc của bộ code. Mở chat AI và gõ <code>/codebase-sync</code> để AI tự động đánh giá và cập nhật.</li>
+                    <li><code>AGENTS.md</code> & <code>CLAUDE.md</code>: Các tệp định tuyến (Router files) hỗ trợ AI IDE (như Cline, Roo, Cursor) nhận diện bộ quy tắc tập trung từ hệ thống.</li>
+                    <li><code>.symphony/</code>: Thư mục dùng để theo dõi timeline và danh sách các tác vụ thông qua Symphony Orchestrator.</li>
                 </ul>
             </div>
 
             <div class="card">
-                <h2>⚡ Core Workflows</h2>
-                <p>Use these slash commands in your AI chat to trigger expert behaviors:</p>
+                <h2>⚡ Các Workflow Cốt Lõi</h2>
+                <p>Sử dụng các Slash Command này trực tiếp trong cửa sổ Chat với AI để kích hoạt các quy trình tự động do AWKit điều khiển:</p>
                 
                 <table class="command-table">
                     <thead>
                         <tr>
-                            <th>Command</th>
-                            <th>Description</th>
+                            <th>Lệnh (Command)</th>
+                            <th>Mô tả chức năng</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td><code>/brainstorm</code></td>
-                            <td>Ideate and research new features. Outputs a Spec/Brief document.</td>
+                            <td>Tìm kiếm và lên ý tưởng tính năng. Sẽ tự động xuất ra tài liệu Spec/BRIEF.md.</td>
                         </tr>
                         <tr>
                             <td><code>/plan</code></td>
-                            <td>Design architecture and technical approach before coding.</td>
+                            <td>Thiết kế kiến trúc hệ thống và cách tiếp cận cấu trúc trước khi code.</td>
                         </tr>
                         <tr>
                             <td><code>/code</code></td>
-                            <td>Write production code based on a completed Spec.</td>
+                            <td>Nhờ AI bắt tay vào lập trình trực tiếp (production code) sau khi đã có Spec.</td>
                         </tr>
                         <tr>
                             <td><code>/debug</code></td>
-                            <td>Systematic debugging process (diagnose → verify → fix).</td>
+                            <td>Kích hoạt quy trình sửa lỗi hệ thống (Tìm nguyên nhân → Tạo phương án → Sửa lỗi).</td>
                         </tr>
                         <tr>
                             <td><code>/next</code></td>
-                            <td>Ask context-aware "What should I do next?" (Syncs with Symphony & NeuralMemory).</td>
+                            <td>Hỏi nhanh "Tôi nên làm gì tiếp theo?". AI sẽ đọc tiến độ của lệnh Symphony và báo cáo cho bạn.</td>
                         </tr>
                         <tr>
                             <td><code>/recap</code></td>
-                            <td>Generate a summary of the project and current state.</td>
+                            <td>Tổng hợp lại tình trạng dự án hiện tại (báo cáo ngắn).</td>
                         </tr>
                         <tr>
                             <td><code>/gitnexus</code></td>
-                            <td>Explore codebase via Knowledge Graph.</td>
+                            <td>Phân tích mã nguồn và tra cứu thư viện theo dạng biểu đồ (Knowledge Graph).</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="card">
-                <h2>🧠 GitNexus Code Intelligence</h2>
-                <p>AWKit uses <strong>GitNexus</strong> to understand the entire architecture, blast radiuses, and execution flows. It builds a graph of your code.</p>
-                <p><strong>Important CLI Commands:</strong></p>
-                <pre><code># Re-analyze code and update graph (Run this after major changes)
+                <h2>🧠 GitNexus - Trí Tuệ Mã Nguồn</h2>
+                <p>AWKit tích hợp <strong>GitNexus</strong> để hiểu toàn bộ kiến trúc, rà soát mô hình tham chiếu (blast radiuses), và vẽ luồng hoạt động mã nguồn theo dạng đồ thị. </p>
+                
+                <h3>Cách dùng CLI (Terminal)</h3>
+                <pre><code># Quét và đánh index lại dự án (Nên chạy sau mỗi lần commit lớn)
 npx gitnexus analyze
 
-# Force full update including embeddings
+# Quét đầy đủ bao gồm phân tích Embedding
 npx gitnexus analyze --embeddings</code></pre>
-                <p><em>AI Agents: Always use GitNexus tools like <code>gitnexus_impact</code> before refactoring, and <code>gitnexus_query</code> to explore.</em></p>
-            </div>
-
-            <div class="card">
-                <h2>📋 Symphony Task Tracking</h2>
-                <p>AWKit uses <strong>Symphony</strong> to track what's currently being worked on. Symphony serves as the brain for the context boundaries.</p>
-                <pre><code># View current tasks
-symphony task list
-
-# Add a manual task
-symphony task add "Update UI configuration"
-
-# Check system status
-symphony status</code></pre>
-            </div>
-
-            <div class="card">
-                <h2>🤖 The 7-Gate Autonomous System</h2>
-                <p>Complex tasks requested in AWKit follow a strict, reliable process known as the 7-Gate pipeline:</p>
-                <ol>
-                    <li><strong>Gate 1 (Spec):</strong> Create requirements / BRIEF.md</li>
-                    <li><strong>Gate 1.5 (Module Spec):</strong> Drill down into screen flows and business rules.</li>
-                    <li><strong>Gate 2 (Architecture):</strong> Technical DB/API design.</li>
-                    <li><strong>Gate 2.5 (Visual):</strong> Pencil MCP or reference screenshots.</li>
-                    <li><strong>Gate 3 (Tasks):</strong> Break into Symphony tickets.</li>
-                    <li><strong>Gate 4 (Execution):</strong> 3-Phase approach (Infrastructure → UI Shell → Logic) with User Checkpoints.</li>
-                    <li><strong>Gate 5 (Verification):</strong> Code review, testing, and Git operations.</li>
-                </ol>
-            </div>
-
-            <div class="card">
-                <h2>🔌 Plugins & Integrations</h2>
+                
+                <h3>Sử dụng với AI (MCP Tools)</h3>
+                <p>Mọi AI Agent đi kèm AWKit đều có nhiệm vụ dùng các GitNexus Tool để tính toán rủi ro:</p>
                 <ul>
-                    <li><strong>Trello Sync:</strong> Run <code>awkit trello setup</code> and <code>awkit trello sync</code> to connect the project to Trello. Automatically updates checklists based on Symphony.</li>
-                    <li><strong>Neural Memory:</strong> Contextual long-term memory for AI agents to remember edge cases, architecture decisions, and logic across sessions.</li>
-                    <li><strong>Telegram Notify:</strong> Send build output or deployment updates to Telegram via <code>awkit tg send "Message"</code>.</li>
+                    <li><code>gitnexus_impact</code>: Kiểm tra "blast radius" – Phải báo cáo xem có file nào hỏng không trước khi thay đổi (Refactoring).</li>
+                    <li><code>gitnexus_query</code>: Để lục tìm concept (e.g. "Tìm thư mục chứa Auth Flow").</li>
+                    <li><code>gitnexus_detect_changes</code>: Rà soát xem git local thay đổi những gì, có rủi ro nào ở scope khác không.</li>
+                    <li><code>gitnexus_rename</code>: Đổi tên một class hoặc biến an toàn thông qua Knowledge Graph thay vì chỉ Find and Replace.</li>
                 </ul>
             </div>
+
+            <div class="card">
+                <h2>📋 Symphony - Quản Lý Tiến Độ Tác Vụ</h2>
+                <p>Symphony là trái tim của việc chia nhỏ và đánh dấu tiến độ công việc trong AWKit. Việc dùng Symphony sẽ ngăn AI khỏi tình trạng quên hoặc làm lệch hướng.</p>
+                
+                <h3>Các thao tác CLI hữu ích:</h3>
+                <pre><code># Hệ thống quản lý
+symphony status         # Xem thông tin cấu hình và server trạng thái
+symphony reset          # Xoá database cục bộ (NẾU BỊ LỖI DATABAASE)
+
+# Thao tác với Task
+symphony task list      # Xem danh sách tất cả các task hiện tại
+symphony task add "Làm màn hình Đăng Nhập" 
+symphony task claim &lt;id&gt;            # Bắt đầu làm task
+symphony task complete &lt;id&gt;         # Đánh dấu hoàn thành
+symphony task block &lt;id&gt; "Lý do"      # Đánh dấu bị chặn vì lỗi</code></pre>
+                <p>Hệ thống AI AWKit sẽ <strong>luôn tự động</strong> thực hiện các hành động trên cho bạn trong quá trình thực thi hệ thống 7-Gate.</p>
+            </div>
+
+            <div class="card">
+                <h2>🔌 Tích Hợp Dự Án (Trello & Telegram & Neural Memory)</h2>
+                
+                <h3>1. Trello Sync</h3>
+                <p>Đồng bộ công việc của bạn (hoặc AI tạo ra) thẳng lên một Card Trello dưới dạng Checklists và ghi chú (Comments). Giúp Quản lý (PM) có thể theo dõi tiến độ dễ dàng.</p>
+                <pre><code># Cài đặt ban đầu (Nhập API/Token)
+awkit trello setup
+
+# Câu lệnh hệ thống dành cho Trello (Hoặc AI tự chạy)
+awkit trello desc "Mô tả của dự án"
+awkit trello checklist "Tên Sprint/Phase"
+awkit trello item "Tên Task"
+awkit trello complete "Tên Task"
+awkit trello comment "Báo cáo nhanh cho PM..."</code></pre>
+
+                <h3>2. Telegram Notify</h3>
+                <p>Hỗ trợ gửi thông báo cho nhóm điều hành qua Box chat Telegram (Push, Lỗi, Hoàn thành CI/CD).</p>
+                <pre><code># Thiết lập Token Bot Telegram và lấy ID Box Chat
+awkit tg setup
+
+# Gửi tin nhắn test
+awkit tg send "Chào anh em, AWKit đã ready!"
+# Hoặc gửi kèm Topic
+awkit tg send --topic 1234 "App đã build xong nhé!"</code></pre>
+
+                <h3>3. Neural Memory</h3>
+                <p>Là bộ nhớ Graph "Contextual" lưu trữ các bài học (Edge Cases, Architecture Pattern) của từng Project dựa trên Project ID, đảm bảo AI không lặp lại lỗi cũ qua các session dài ngày. Hệ thống sẽ tự động sử dụng trong nền.</p>
+            </div>
+
+            <div class="card">
+                <h2>🤖 Hệ Thống 7 Cổng (7-Gate) Tự Động</h2>
+                <p>Bất cứ khi nào bạn nhờ AWKit làm một tác vụ có độ phức tạp cao, AI sẽ chạy theo quy trình vòng kín 7-Gate khắt khe này để kiểm soát chất lượng:</p>
+                <ol>
+                    <li><strong>Gate 1 (Spec):</strong> Thu thập yêu cầu, tạo file <code>BRIEF.md</code></li>
+                    <li><strong>Gate 1.5 (Module Spec):</strong> Viết sâu vào từng Flow người dùng và Rules validation trước khi code.</li>
+                    <li><strong>Gate 2 (Architecture):</strong> Thống nhất Database Schema, API Contract.</li>
+                    <li><strong>Gate 2.5 (Visual):</strong> Tạo mock-up UI với hệ thống tích hợp Pencil MCP hoặc ảnh chụp màn hình.</li>
+                    <li><strong>Gate 3 (Tasks):</strong> Xé rách dự án thành các thẻ Symphony Tickets.</li>
+                    <li><strong>Gate 4 (Execution):</strong> Thực thi theo 3-Phase (Code Kiến trúc chuẩn → Làm giao diện → Gắn Code Logic Data) với các bước <strong>Dừng User Test</strong>.</li>
+                    <li><strong>Gate 5 (Verification):</strong> Review code, test và dùng AI xác nhận Git Commit an toàn.</li>
+                </ol>
+            </div>
+            
         </main>
 
         <footer>
             <p>Generated by <strong>AWKit</strong> v12.3</p>
-            <p><small>Keep this file around as your permanent pocket guide.</small></p>
+            <p>Bản quyền © 2026. Nếu có vấn đề kỹ thuật, liên hệ email dự án: <a href="mailto:leejungkiin@gmail.com" style="color:var(--text-color);">leejungkiin@gmail.com</a></p>
+            <p><small>Vui lòng giữ tài liệu này như cuốn cẩm nang bỏ túi của bạn trong suốt dự án.</small></p>
         </footer>
     </div>
 </body>
