@@ -1,0 +1,10 @@
+{
+  "name": "creator-studio",
+  "auto_install": false,
+  "description": "Optional media creation skills for sprite generation, short-form video workflows, and LucyLab TTS automation",
+  "skills": [
+    "ai-sprite-maker",
+    "lucylab-tts",
+    "short-maker"
+  ]
+}

@@ -1,110 +1,122 @@
 ---
 name: writing-skills
-description: Use when creating or modifying AWKit skills and workflows. Applies TDD methodology to process documentation. Ensures skills are testable, anti-rationalization-proof, and follow consistent structure.
+description: Use when creating or updating AWKit skills or workflow documentation and you need a lean, searchable, testable skill structure.
 ---
 
-# Writing Skills
+# Writing Skills — Router
 
 ## Overview
 
-Writing skills IS Test-Driven Development applied to process documentation.
+**Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
+Write pressure scenarios, observe failure, write the minimum useful skill, then close loopholes without bloating the main file.
+
+**Core principle:** If you did not watch an agent fail without the skill, you do not know whether the skill teaches the right behavior.
+
+**Required background:** `test-driven-development` from the `superpowers` pack when you need the full RED-GREEN-REFACTOR discipline.
 
 ## What is a Skill?
 
-A **skill** is a reference guide for proven techniques, patterns, or tools.
+**Skills are:** Reusable techniques, patterns, tools, reference guides
+**Skills are not:** Session narratives or one-off implementation logs
 
-**Skills ARE:** Reusable techniques, patterns, tools, reference guides
-**Skills are NOT:** Narratives about how you solved a problem once
+### Skill Types
 
-## Standard Skill Structure
+- **Technique** — Concrete method with steps
+- **Pattern** — Decision framework or mental model
+- **Reference** — API docs, syntax guides, environment-specific notes
 
-Every AWKit skill MUST follow this structure:
+## Topic Index
+
+| Topic | When to Load | File |
+|-------|--------------|------|
+| Search optimization and descriptions | Naming skills and writing trigger metadata | `examples/cso-optimization.md` |
+| TDD for skills | Designing validation for skills and workflow docs | `examples/tdd-for-skills.md` |
+| Anti-rationalization patterns | Hardening discipline skills against loopholes | `examples/anti-rationalization.md` |
+
+## SKILL.md Structure
+
+**Frontmatter:** Only `name` and `description`
+
+- `name`: letters, numbers, hyphens only
+- `description`: start with `Use when...`
+- Keep the description focused on trigger conditions, not on the workflow internals
 
 ```markdown
 ---
 name: skill-name
-description: When to use + auto-trigger description (for CATALOG.md matching)
+description: Use when [triggering conditions and symptoms]
 ---
 
-# Skill Title
-
-## Overview (1-2 sentences — what + why)
-## The Iron Law (core rule, no exceptions — for discipline skills)
-## When to Use / When NOT to Use
-## The Process (step by step)
-## Red Flags — STOP (catch rationalization)
-## Anti-Rationalization Table (excuse → reality)
-## Integration (related skills + workflows)
+# Skill Name
+## Overview
+## When to Use / When Not to Use
+## Core Pattern
+## Quick Reference
+## Implementation
+## Common Mistakes
 ```
 
-**Required sections:** Overview, When to Use, The Process
-**Recommended for discipline skills:** Iron Law, Red Flags, Anti-Rationalization Table
+## Directory Structure
 
-## When to Create a Skill
+```text
+skills/skill-name/
+├── SKILL.md
+├── examples/
+├── references/
+└── scripts/
+```
 
-**Create when:**
-- Technique wasn't intuitively obvious
-- You'd reference this again across projects
-- Pattern applies broadly (not project-specific)
-- An agent repeatedly makes the same mistake
+Put only the routing logic and core rules in `SKILL.md`. Push heavy references and extended examples into side files.
 
-**Don't create for:**
-- One-off solutions
-- Standard practices well-documented elsewhere
-- Project-specific conventions (put in GEMINI.md or docs/specs/)
+## Code Examples
 
-## Skill Types
+**One excellent example beats many mediocre ones.**
 
-### Rigid Skills (Follow Exactly)
-- `verification-gate` — No shortcuts for verification
-- `systematic-debugging` — 4-phase process mandatory
-- TDD enforcement — RED-GREEN-REFACTOR cycle
+Prefer one real, runnable example over five thin examples in different languages.
 
-### Flexible Skills (Adapt Principles)
-- `brainstorm-agent` — Adapt questions to context
-- `ios-engineer` — Apply patterns per project needs
+## Flowchart Usage
 
-**The skill itself tells you which type it is.**
+Use flowcharts only for non-obvious branching or loops where agents commonly stop too early. Use plain markdown for linear instructions and reference material.
 
-## Key Writing Principles
+## The Iron Law
 
-### 1. Token Efficiency (Critical)
-- Every token competes for agent context
-- Use tables over paragraphs for rules
-- Use bullet points over prose
-- Eliminate redundancy ruthlessly
+```text
+NO SKILL WITHOUT A FAILING TEST FIRST
+```
 
-### 2. Bulletproofing Against Rationalization
-- Agents are smart and WILL find loopholes under pressure
-- Close every loophole explicitly
-- Build rationalization table with common excuses
-- Create Red Flags list
+No exceptions for "small doc updates" or "just adding one section".
 
-### 3. Cross-Referencing
-- Link related skills: `**Related:** verification-gate, systematic-debugging`
-- Note integration points: "Used by single-flow-task-execution"
-- Reference workflows: `/debug`, `/code`, `/deploy`
+## Skill Creation Checklist
 
-## Checklist: Before Publishing Skill
+**RED**
 
-- [ ] SKILL.md follows standard structure
-- [ ] `name` and `description` in frontmatter
-- [ ] When to Use is clear and specific
-- [ ] Process steps are numbered and unambiguous
-- [ ] Anti-rationalization table covers common excuses
-- [ ] Integration section lists related skills/workflows
-- [ ] File < 500 lines
-- [ ] No narrative/story sections — only reference content
-- [ ] Updated CATALOG.md entry
+- [ ] Create pressure scenarios or realistic retrieval tasks
+- [ ] Run them without the skill
+- [ ] Capture exact failures and rationalizations
+
+**GREEN**
+
+- [ ] Write the minimum skill that addresses the observed failures
+- [ ] Keep trigger metadata short and precise
+- [ ] Add only the references/examples required to teach the missing behavior
+
+**REFACTOR**
+
+- [ ] Add explicit counters for new loopholes
+- [ ] Keep `SKILL.md` lean and move detail to side files
+- [ ] Re-run the same validation after every material change
+
+## Stop Rule
+
+Do not batch-create multiple skills without validating each one first.
 
 ## Integration
 
-**Related:**
-- `awf-version-tracker` — Auto-snapshot skill changes
-- CATALOG.md — Skill registry
+- `awf-version-tracker` — snapshot skill changes
+- `single-flow-task-execution` — useful when implementing multi-step skill refactors
+- `superpowers` pack — deeper TDD and verification references when you need them
 
-**Workflows:**
-- `/skill-health` — Check skill system health
-- `/skill-rollback` — Rollback broken skill changes
+---
+
+*writing-skills — Lean Router Architecture*

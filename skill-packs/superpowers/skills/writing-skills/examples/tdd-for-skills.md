@@ -25,7 +25,7 @@ Run same scenarios WITH skill. Agent should now comply.
 
 Agent found new rationalization? Add explicit counter. Re-test until bulletproof.
 
-**Testing methodology:** See `testing-skills-with-subagents.md` for the complete testing methodology.
+If you need a deeper validation harness, keep it in a separate reference file instead of inflating `SKILL.md`.
 
 ---
 

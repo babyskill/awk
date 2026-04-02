@@ -1,7 +1,13 @@
 {
     "name": "neural-memory",
-    "auto_install": true,
+    "auto_install": false,
     "description": "NeuralMemory-powered ambient brain sync with spreading activation recall",
+    "skills": [
+        "nm-memory-sync",
+        "nm-memory-intake",
+        "nm-memory-audit",
+        "nm-memory-evolution"
+    ],
     "requires": [
         {
             "type": "pip",

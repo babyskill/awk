@@ -2,6 +2,7 @@
     "name": "superpowers",
     "auto_install": false,
     "description": "Structured development workflows ported from Claude Code Superpowers: TDD, code review, planning, debugging, git worktree isolation, and two-stage review loops",
+    "skills": ["single-flow-task-execution", "writing-skills"],
     "origin": "https://github.com/skainguyen1412/antigravity-superpowers",
     "requires": [],
     "post_install": [],

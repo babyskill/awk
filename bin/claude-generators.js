@@ -25,14 +25,16 @@ function generateClaudeRules(sourcePath, destPath) {
  * Preserves full directory structure: <skill-name>/SKILL.md + scripts/ + templates/
  * Injects YAML frontmatter if missing.
  */
-function generateClaudeSkills(srcDir, destDir) {
+function generateClaudeSkills(srcDir, destDir, selectedSkills = null) {
     if (!fs.existsSync(srcDir)) return;
 
     fs.mkdirSync(destDir, { recursive: true });
     const skills = fs.readdirSync(srcDir);
+    const allowed = selectedSkills ? new Set(selectedSkills) : null;
 
     let count = 0;
     for (const skill of skills) {
+        if (allowed && !allowed.has(skill)) continue;
         const skillSrcDir = path.join(srcDir, skill);
         if (!fs.statSync(skillSrcDir).isDirectory()) continue;
         if (skill === '.DS_Store') continue;

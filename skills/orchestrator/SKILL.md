@@ -42,21 +42,30 @@ ads_intent:
   action: Suggest `/ads-audit` or `/adsExpert`
 ```
 
-### 3. Skill Pack Check
+### 3. Lean Runtime + Skill Pack Check
 ```
-If user request involves iOS-specific → Check if mobile-ios pack enabled
-If not enabled → Suggest: "awf enable-pack mobile-ios"
+Default runtime is intentionally lean. Domain-heavy skills should be enabled on demand.
+
+If user request involves iOS / Swift / Xcode / App Clip / SwiftUI
+  → Suggest: "awkit enable-pack mobile-ios"
+
+If user request involves Android / Kotlin / Compose / AdMob / APK reverse engineering
+  → Suggest: "awkit enable-pack mobile-android"
+
+If user request involves ASO / App Store marketing / ASA / competitor tracking / ratings
+  → Suggest: "awkit enable-pack marketing"
+
+If user request involves sprite generation / LucyLab TTS / short-form video production
+  → Suggest: "awkit enable-pack creator-studio"
+
+If user request involves NeuralMemory audits / intake / evolution workflows
+  → Suggest: "awkit enable-pack neural-memory"
 ```
 
 ### 4. Fallback
 ```
 No match → Ask clarifying question (max 2 times)
 Still unclear → Suggest `/help`
-```
-
-### 5. Post-Action Rules
-```
-Build hoàn tất thành công (không có lỗi) → Tự động chạy git commit.
 ```
 
 ## Auto-Activation

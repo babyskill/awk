@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "defaultProfile": "core",
+  "profiles": {
+    "core": {
+      "description": "Lean default runtime. Installs only cross-project workflow, orchestration, planning, debugging, verification, and repo-management skills.",
+      "skills": [
+        "auto-save",
+        "awf-adaptive-language",
+        "awf-context-help",
+        "awf-error-translator",
+        "awf-session-restore",
+        "awf-version-tracker",
+        "brainstorm-agent",
+        "code-review",
+        "codex-conductor",
+        "gemini-conductor",
+        "gitnexus-intelligence",
+        "module-spec-writer",
+        "nm-memory-sync",
+        "orchestrator",
+        "ship-to-code",
+        "single-flow-task-execution",
+        "skill-creator",
+        "spec-gate",
+        "symphony-enforcer",
+        "symphony-orchestrator",
+        "systematic-debugging",
+        "telegram-notify",
+        "trello-sync",
+        "verification-gate",
+        "visual-design-gate",
+        "writing-skills"
+      ]
+    }
+  }
+}

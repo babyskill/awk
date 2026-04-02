@@ -33,7 +33,7 @@ awkit install
 # 2. Symphony (Task Management & Multi-Agent Orchestration)
 npm install -g @leejungkiin/awkit-symphony
 
-# 3. NeuralMemory (AI Memory Engine — requires Python >= 3.11)
+# 3. Optional: NeuralMemory pack (AI Memory Engine — requires Python >= 3.11)
 pip install neural-memory
 nmem init
 
@@ -43,15 +43,17 @@ symphony --version
 nmem --version
 ```
 
-> 💡 **Bước 2 & 3 được tự động cài khi chạy `awkit install`** nếu môi trường đầy đủ.
-> AI agent cũng tự detect và cài các dependency thiếu khi init session.
+> 💡 `awkit install` giờ chỉ cài **core runtime profile** cho **active platform** mặc định để giữ context nhẹ và tránh generate artifact không cần thiết cho Cline/Claude.
+> Các skill chuyên sâu theo domain sẽ được bật sau bằng `awkit enable-pack <name>`.
+> Dùng `awkit install --all` chỉ khi anh/chị thực sự muốn regenerate tất cả platform cùng lúc.
 
 
 ## 📦 Commands
 
 | Command | Description |
 |---------|-------------|
-| `awkit install` | Deploy AWKit vào `~/.gemini/antigravity/` |
+| `awkit install` | Deploy AWKit core runtime vào active platform hiện tại |
+| `awkit install --all` | Deploy AWKit core runtime cho mọi platform được hỗ trợ |
 | `awkit update` | Update lên version mới nhất |
 | `awkit init` | Khởi tạo project mới (tạo .project-identity, CODEBASE.md, etc.) |
 | `awkit sync` | Full sync: harvest + install (one shot) |
@@ -74,8 +76,11 @@ awkit status
 # 2a. You edited in ~/.gemini/ → pull back to repo
 awkit harvest
 
-# 2b. You edited in repo → deploy to ~/.gemini/
+# 2b. You edited in repo → deploy to active runtime
 awkit install
+
+# 2b-alt. Regenerate every platform on purpose
+awkit install --all
 
 # 2c. Both directions (full round-trip)
 awkit sync
@@ -107,15 +112,20 @@ main-awf/ (AWKit v1.1.x — Source of Truth)
 │   ├── roles/                  tech-lead, pm, qa...
 │   ├── meta/                   customize, file-protection...
 │   └── _uncategorized/         misc files
-├── skills/                     ← 10+ skills (auto-activate)
+├── skills/                     ← Source skill library
 │   ├── orchestrator/
 │   ├── memory-sync/
 │   ├── brainstorm-agent/
 │   ├── symphony-orchestrator/
 │   ├── awf-session-restore/
 │   └── ...
-├── skill-packs/                ← Optional add-ons
-│   └── neural-memory/          (Phase 3 - coming soon)
+├── skill-packs/                ← Optional add-ons, installed on demand
+│   ├── mobile-ios/
+│   ├── mobile-android/
+│   ├── marketing/
+│   ├── creator-studio/
+│   ├── neural-memory/
+│   └── superpowers/
 ├── schemas/                    ← JSON schemas
 ├── templates/                  ← Project templates
 ├── scripts/
@@ -147,6 +157,16 @@ main-awf/ (edit here)
     ▼  AI reads from here
 Gemini / Claude / Any AI
 ```
+
+## 🪶 Lean Runtime
+
+`awkit install` no longer copies the full source skill library into runtime by default.
+
+- Default install = **core work profile** only: orchestration, planning, debugging, verification, review, and project coordination.
+- Default target = **active platform only**, which keeps repo-local generated files like `CLAUDE.md` and `.clinerules/*` untouched unless you explicitly choose them.
+- Domain-heavy skills like mobile reverse engineering, ASO/marketing, and media production stay out of runtime until you opt in.
+- `awkit status` now compares runtime against the active core profile + enabled packs, so optional skills no longer show as false drift.
+- Re-running `awkit install` archives old managed optional skills from runtime, which helps shrink the skill catalog exposed to the agent.
 
 ## 📨 Telegram Integration
 
@@ -184,7 +204,10 @@ AI agent của hệ thống cũng tự động gọi qua cổng GitNexus bằng 
 ```bash
 awkit list-packs
 awkit enable-pack neural-memory
-awkit enable-pack ios-dev
+awkit enable-pack mobile-ios
+awkit enable-pack mobile-android
+awkit enable-pack marketing
+awkit enable-pack creator-studio
 ```
 
 ## 🏗️ Versioning

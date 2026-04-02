@@ -59,7 +59,9 @@ Use words Antigravity would search for:
 
 ## 5. Cross-Referencing Other Skills
 
-- ✅ `**REQUIRED SKILL:** Use .agent/skills/test-driven-development/SKILL.md`
-- ❌ `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
+- ✅ `**Required skill:** test-driven-development`
+- ✅ `See examples/tdd-for-skills.md`
+- ❌ Hardcode platform-specific paths like `.agent/skills/...`
+- ❌ Force-load with `@...` when a plain reference is enough
 
-**Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context.
+**Why no forced load:** it burns context before the agent knows whether the deeper file is actually needed.

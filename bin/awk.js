@@ -5,7 +5,8 @@
  * Unified installer, updater, and manager for AI agent workflows.
  * 
  * Usage:
- *   awkit install        Install AWK into ~/.gemini/antigravity/
+ *   awkit install        Install AWK into the active platform runtime
+ *   awkit install --all  Install AWK into every supported platform
  *   awkit uninstall      Remove AWK from system
  *   awkit update         Update to latest version
  *   awkit init           Init a new mobile project with Firebase setup
@@ -122,6 +123,9 @@ const SYNC_MAP = {
     'templates': 'templates',
 };
 
+const SKILL_RUNTIME_MANIFEST = path.join(AWK_ROOT, 'core', 'skill-runtime-manifest.json');
+const INSTALL_STATE_FILENAME = '.awkit-install-state.json';
+
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
 const C = {
@@ -175,6 +179,156 @@ function promptChoice(question, defaultVal = '') {
 
 // ─── Utility Functions ──────────────────────────────────────────────────────
 
+function readJsonFile(filePath, fallback = null) {
+    if (!fs.existsSync(filePath)) return fallback;
+    try {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (_) {
+        return fallback;
+    }
+}
+
+function listSkillDirs(rootDir) {
+    if (!fs.existsSync(rootDir)) return [];
+    return fs.readdirSync(rootDir, { withFileTypes: true })
+        .filter(d => d.isDirectory() && fs.existsSync(path.join(rootDir, d.name, 'SKILL.md')))
+        .map(d => d.name)
+        .sort();
+}
+
+function loadSkillRuntimeManifest() {
+    const manifest = readJsonFile(SKILL_RUNTIME_MANIFEST);
+    if (!manifest?.profiles || !manifest.defaultProfile || !manifest.profiles[manifest.defaultProfile]) {
+        throw new Error(`Invalid skill runtime manifest: ${SKILL_RUNTIME_MANIFEST}`);
+    }
+    return manifest;
+}
+
+function getDefaultSkillProfileName() {
+    return loadSkillRuntimeManifest().defaultProfile;
+}
+
+function getDefaultRuntimeSkills() {
+    const manifest = loadSkillRuntimeManifest();
+    return manifest.profiles[manifest.defaultProfile].skills || [];
+}
+
+function getPackSkillNames(packName) {
+    const packSrc = path.join(AWK_ROOT, 'skill-packs', packName);
+    const config = readJsonFile(path.join(packSrc, 'pack.json'), {});
+    if (Array.isArray(config.skills) && config.skills.length > 0) {
+        return [...config.skills];
+    }
+    return listSkillDirs(path.join(packSrc, 'skills'));
+}
+
+function resolvePackSkillSources(packName) {
+    const packSrc = path.join(AWK_ROOT, 'skill-packs', packName);
+    const packSkillsDir = path.join(packSrc, 'skills');
+    const localSkills = listSkillDirs(packSkillsDir);
+
+    if (localSkills.length > 0) {
+        return localSkills.map(skill => ({
+            name: skill,
+            src: path.join(packSkillsDir, skill)
+        }));
+    }
+
+    return getPackSkillNames(packName)
+        .map(skill => ({
+            name: skill,
+            src: path.join(AWK_ROOT, 'skills', skill)
+        }))
+        .filter(item => fs.existsSync(path.join(item.src, 'SKILL.md')));
+}
+
+function getManagedSkillNames() {
+    const managed = new Set(listSkillDirs(path.join(AWK_ROOT, 'skills')));
+    const packsDir = path.join(AWK_ROOT, 'skill-packs');
+    if (!fs.existsSync(packsDir)) return managed;
+
+    const packs = fs.readdirSync(packsDir, { withFileTypes: true }).filter(d => d.isDirectory());
+    for (const pack of packs) {
+        for (const skill of getPackSkillNames(pack.name)) {
+            managed.add(skill);
+        }
+    }
+    return managed;
+}
+
+function getPlatformStateRoot(platform = activePlatform) {
+    const plat = PLATFORMS[platform];
+    switch (platform) {
+        case 'cline':
+            return path.join(plat.globalRoot, '.clinerules');
+        case 'claude':
+            return path.join(plat.globalRoot, '.claude');
+        default:
+            return plat.globalRoot;
+    }
+}
+
+function getPlatformBackupRoot(platform = activePlatform) {
+    return path.join(getPlatformStateRoot(platform), 'backup');
+}
+
+function getInstallStatePath(platform = activePlatform) {
+    return path.join(getPlatformStateRoot(platform), INSTALL_STATE_FILENAME);
+}
+
+function readInstallState(platform = activePlatform) {
+    const fallback = {
+        version: 1,
+        profile: getDefaultSkillProfileName(),
+        enabledPacks: []
+    };
+    return readJsonFile(getInstallStatePath(platform), fallback) || fallback;
+}
+
+function writeInstallState(state, platform = activePlatform) {
+    const filePath = getInstallStatePath(platform);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(state, null, 2) + '\n');
+}
+
+function getDesiredSkillSet(enabledPacks = []) {
+    const desired = new Set(getDefaultRuntimeSkills());
+    for (const packName of enabledPacks) {
+        for (const skill of getPackSkillNames(packName)) {
+            desired.add(skill);
+        }
+    }
+    return desired;
+}
+
+function collectFileBasenames(dir, ext = '*') {
+    const result = new Set();
+    if (!fs.existsSync(dir)) return result;
+
+    function walk(current) {
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+            if (entry.name === '.DS_Store') continue;
+            const fullPath = path.join(current, entry.name);
+            if (entry.isDirectory()) {
+                walk(fullPath);
+            } else if (ext === '*' || entry.name.endsWith(ext)) {
+                result.add(entry.name);
+            }
+        }
+    }
+
+    walk(dir);
+    return result;
+}
+
+function getPackWorkflowNames(packName) {
+    return collectFileBasenames(path.join(AWK_ROOT, 'skill-packs', packName, 'workflows'));
+}
+
+function getPackSchemaNames(packName) {
+    return collectFileBasenames(path.join(AWK_ROOT, 'skill-packs', packName, 'schemas'), '.json');
+}
+
 /**
  * Recursively copy directory, preserving structure.
  * Does NOT overwrite files prefixed with `.` (user configs).
@@ -218,6 +372,49 @@ function copyDirRecursive(src, dest, options = {}) {
     }
 
     return count;
+}
+
+function copySelectedSkillDirs(srcDir, destDir, selectedSkills) {
+    const wanted = new Set(selectedSkills);
+    let count = 0;
+
+    if (!fs.existsSync(srcDir)) return count;
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+    for (const skill of wanted) {
+        const skillSrc = path.join(srcDir, skill);
+        if (!fs.existsSync(path.join(skillSrc, 'SKILL.md'))) continue;
+        const skillDest = path.join(destDir, skill);
+        count += copyDirRecursive(skillSrc, skillDest);
+    }
+
+    return count;
+}
+
+function backupAndPruneManagedSkills(destDir, desiredSkills) {
+    if (!fs.existsSync(destDir)) return 0;
+
+    const managed = getManagedSkillNames();
+    const installed = fs.readdirSync(destDir, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+        .map(d => d.name);
+
+    const stale = installed.filter(skill => managed.has(skill) && !desiredSkills.has(skill));
+    if (stale.length === 0) return 0;
+
+    const backupRoot = path.join(getPlatformBackupRoot(), 'pruned-skills');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupDir = path.join(backupRoot, timestamp);
+    fs.mkdirSync(backupDir, { recursive: true });
+
+    for (const skill of stale) {
+        const from = path.join(destDir, skill);
+        const to = path.join(backupDir, skill);
+        fs.renameSync(from, to);
+        dim(`Archived optional skill: ${skill}`);
+    }
+
+    return stale.length;
 }
 
 /**
@@ -335,15 +532,19 @@ function cmdInstall(args = []) {
         if (isUpdate) {
             selectedPlatforms = [getActivePlatform()];
         } else {
+            const platformOrder = ['antigravity', 'cline', 'codex', 'claude'];
+            const defaultPlatform = getActivePlatform();
+            const defaultChoice = String(Math.max(platformOrder.indexOf(defaultPlatform), 0) + 1);
             log(`${C.cyan}Select platforms to install (e.g., type "1,2", "all", or "1,2,3,4"):${C.reset}`);
             log(`  1. Gemini Code Assist (antigravity)`);
             log(`  2. Cline (VS Code)`);
             log(`  3. Codex CLI (codex)`);
             log(`  4. Claude Code (.claude/)`);
             log(`  5. All of the above`);
-            const choice = promptChoice('Choice', '5').trim().toLowerCase();
+            log(`${C.gray}Press Enter to install only the active platform: ${PLATFORMS[defaultPlatform].name}.${C.reset}`);
+            const choice = promptChoice('Choice', defaultChoice).trim().toLowerCase();
             
-            if (choice === '5' || choice === 'all' || choice === '') {
+            if (choice === '5' || choice === 'all') {
                 selectedPlatforms = Object.keys(PLATFORMS);
             } else {
                 if (choice.includes('1')) selectedPlatforms.push('antigravity');
@@ -374,6 +575,8 @@ function cmdInstall(args = []) {
 
         const plat = PLATFORMS[platform];
         const target = plat.globalRoot;
+        const coreSkills = getDefaultRuntimeSkills();
+        const previousState = readInstallState(platform);
 
         log('');
         info(`Installing for ${C.bold}${plat.name}${C.reset}...`);
@@ -419,7 +622,7 @@ function cmdInstall(args = []) {
 
         // Backup existing workflows
         if (fs.existsSync(wfDest)) {
-            const backupDir = path.join(target, 'backup');
+            const backupDir = getPlatformBackupRoot(platform);
             if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -451,24 +654,24 @@ function cmdInstall(args = []) {
     }
 
     // 5. Copy skills
-    if (plat.dirs.skills) {
-        info('Installing skills...');
-        const skillsSrc = path.join(AWK_ROOT, 'skills');
-        const skillsDest = path.join(target, plat.dirs.skills);
+        if (plat.dirs.skills) {
+            info('Installing skills...');
+            const skillsSrc = path.join(AWK_ROOT, 'skills');
+            const skillsDest = path.join(target, plat.dirs.skills);
 
-        if (platform === 'cline') {
-            generateClineSkills(skillsSrc, skillsDest);
-        } else if (platform === 'codex') {
-            generateCodexSkills(skillsSrc, skillsDest);
-            const agentsDest = path.join(target, plat.dirs.agents);
-            generateCodexAgents(skillsSrc, agentsDest);
-        } else if (platform === 'claude') {
-            generateClaudeSkills(skillsSrc, skillsDest);
-        } else {
-            const skillCount = copyDirRecursive(skillsSrc, skillsDest);
-            ok(`${skillCount} skill files installed`);
+            if (platform === 'cline') {
+                generateClineSkills(skillsSrc, skillsDest, coreSkills);
+            } else if (platform === 'codex') {
+                generateCodexSkills(skillsSrc, skillsDest, coreSkills);
+                const agentsDest = path.join(target, plat.dirs.agents);
+                generateCodexAgents(skillsSrc, agentsDest, coreSkills);
+            } else if (platform === 'claude') {
+                generateClaudeSkills(skillsSrc, skillsDest, coreSkills);
+            } else {
+                const skillCount = copySelectedSkillDirs(skillsSrc, skillsDest, coreSkills);
+                ok(`${skillCount} core skill files installed`);
+            }
         }
-    }
 
     // 6. Copy orchestrator
     if (platform === 'antigravity') {
@@ -501,10 +704,34 @@ function cmdInstall(args = []) {
     fs.writeFileSync(plat.versionFile, AWK_VERSION);
     ok(`Version ${AWK_VERSION} saved`);
 
-    // 10. Install default skill packs
-    const defaultPacks = installDefaultPacks();
+        // 10. Install default skill packs
+        const defaultPacks = installDefaultPacks();
+        const activePacks = [...new Set([...(previousState.enabledPacks || []), ...defaultPacks])].sort();
 
-    // 11. Summary
+        for (const packName of activePacks) {
+            if (defaultPacks.includes(packName)) continue;
+            info(`Re-enabling preserved pack: ${packName}`);
+            cmdEnablePack(packName, { autoMode: true });
+        }
+
+        const desiredSkills = getDesiredSkillSet(activePacks);
+
+        if (plat.dirs.skills) {
+            const skillsDest = path.join(target, plat.dirs.skills);
+            const removedSkills = backupAndPruneManagedSkills(skillsDest, desiredSkills);
+            if (removedSkills > 0) {
+                ok(`${removedSkills} managed optional skill(s) archived from runtime`);
+            }
+        }
+
+        writeInstallState({
+            version: 1,
+            profile: getDefaultSkillProfileName(),
+            enabledPacks: activePacks
+        }, platform);
+        ok(`Install state saved (${desiredSkills.size} active skills)`);
+
+        // 11. Summary
     log('');
     log(`${C.gray}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
     log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed for ${plat.name}!${C.reset}`);
@@ -519,8 +746,8 @@ function cmdInstall(args = []) {
     if (plat.rulesFile) {
         dim(`Global Rules: ${plat.rulesFile}`);
     }
-    if (defaultPacks.length > 0) {
-        dim(`Packs:      ${defaultPacks.join(', ')} (auto-enabled)`);
+    if (activePacks.length > 0) {
+        dim(`Packs:      ${activePacks.join(', ')}`);
     }
     if (platform === 'antigravity') {
         dim(`Symphony:   task tracking ready`);
@@ -662,6 +889,7 @@ function cmdDoctor() {
     log('');
 
     let issues = 0;
+    const installState = readInstallState();
 
     // 1. Check GEMINI.md
     if (fs.existsSync(TARGETS.geminiMd)) {
@@ -695,12 +923,20 @@ function cmdDoctor() {
             .map(d => d.name);
         ok(`${skills.length} skills found`);
 
-        // Check essential skills
-        const essentialSkills = ['orchestrator', 'symphony-orchestrator', 'awf-session-restore'];
-        for (const s of essentialSkills) {
-            if (!skills.includes(s)) {
-                warn(`Essential skill missing: ${s}`); issues++;
+        // Check expected skills based on manifest and enabled packs
+        try {
+            const expectedSkills = getDesiredSkillSet(installState.enabledPacks || []);
+            let missingSkills = [];
+            for (const s of expectedSkills) {
+                if (!skills.includes(s)) missingSkills.push(s);
             }
+            if (missingSkills.length > 0) {
+                warn(`Missing ${missingSkills.length} expected skill(s): ${missingSkills.join(', ')}`); issues++;
+            } else {
+                ok('All expected skills are present');
+            }
+        } catch (e) {
+            warn(`Failed to validate expected skills: ${e.message}`); issues++;
         }
     } else {
         err('skills/ directory missing'); issues++;
@@ -725,6 +961,11 @@ function cmdDoctor() {
     } else {
         warn('Version file missing. Run "awkit install" first.'); issues++;
     }
+
+    log('');
+    log(`${C.bold}Runtime Profile:${C.reset}`);
+    log(`  Profile: ${C.cyan}${installState.profile}${C.reset}`);
+    log(`  Optional packs: ${installState.enabledPacks?.length ? installState.enabledPacks.join(', ') : C.gray + 'none' + C.reset}`);
 
     // Summary
     log('');
@@ -1142,16 +1383,14 @@ function cmdEnablePack(packName, { autoMode = false } = {}) {
     info(`Enabling skill pack: ${packName}`);
     let totalCount = 0;
 
-    // 1. Copy skills/ subdirs → ~/.gemini/antigravity/skills/
-    const packSkillsDir = path.join(packSrc, 'skills');
-    if (fs.existsSync(packSkillsDir)) {
-        const skillDirs = fs.readdirSync(packSkillsDir, { withFileTypes: true }).filter(d => d.isDirectory());
-        for (const skillDir of skillDirs) {
-            const src = path.join(packSkillsDir, skillDir.name);
-            const dest = path.join(TARGETS.antigravity, 'skills', skillDir.name);
-            const n = copyDirRecursive(src, dest);
+    // 1. Copy pack skills into runtime.
+    const packSkills = resolvePackSkillSources(packName);
+    if (packSkills.length > 0) {
+        for (const skill of packSkills) {
+            const dest = path.join(TARGETS.antigravity, 'skills', skill.name);
+            const n = copyDirRecursive(skill.src, dest);
             totalCount += n;
-            dim(`Skill: ${skillDir.name} (${n} files)`);
+            dim(`Skill: ${skill.name} (${n} files)`);
         }
     }
 
@@ -1178,6 +1417,15 @@ function cmdEnablePack(packName, { autoMode = false } = {}) {
     // Handle pack.json requirements (pip deps, post-install, MCP setup)
     handlePackRequirements(packSrc, packName, { autoMode });
 
+    const state = readInstallState();
+    const enabledPacks = new Set(state.enabledPacks || []);
+    enabledPacks.add(packName);
+    writeInstallState({
+        version: 1,
+        profile: getDefaultSkillProfileName(),
+        enabledPacks: [...enabledPacks].sort()
+    });
+
     log('');
     log(`${C.cyan}👉 Skills available: type skill name in your AI chat.${C.reset}`);
     log(`${C.cyan}👉 Workflows available: use /nm-recall, /memory-audit, etc.${C.reset}`);
@@ -1197,15 +1445,17 @@ function cmdDisablePack(packName) {
         return;
     }
 
-    // Get list of skill dirs from pack/skills/
-    const packSkillsDir = path.join(packSrc, 'skills');
-    const skillDirs = fs.existsSync(packSkillsDir)
-        ? fs.readdirSync(packSkillsDir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name)
-        : [];
+    const skillDirs = getPackSkillNames(packName);
 
     const target = path.join(TARGETS.antigravity, 'skills');
-    const backupDir = path.join(TARGETS.antigravity, 'backup', 'skills');
+    const backupDir = path.join(getPlatformBackupRoot(), 'skills');
     if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+    const coreSkills = new Set(getDefaultRuntimeSkills());
+    const coreSkillsSrc = path.join(AWK_ROOT, 'skills');
+    const workflowTarget = path.join(TARGETS.antigravity, 'global_workflows');
+    const workflowBackupDir = path.join(getPlatformBackupRoot(), 'workflows');
+    const schemaTarget = path.join(TARGETS.antigravity, 'schemas');
+    const schemaBackupDir = path.join(getPlatformBackupRoot(), 'schemas');
 
     for (const skillDir of skillDirs) {
         const destPath = path.join(target, skillDir);
@@ -1213,7 +1463,38 @@ function cmdDisablePack(packName) {
             fs.renameSync(destPath, path.join(backupDir, skillDir));
             dim(`Moved to backup: ${skillDir}`);
         }
+
+        if (coreSkills.has(skillDir)) {
+            const srcPath = path.join(coreSkillsSrc, skillDir);
+            if (fs.existsSync(path.join(srcPath, 'SKILL.md'))) {
+                copyDirRecursive(srcPath, destPath);
+                dim(`Restored core skill: ${skillDir}`);
+            }
+        }
     }
+
+    if (!fs.existsSync(workflowBackupDir)) fs.mkdirSync(workflowBackupDir, { recursive: true });
+    for (const workflowFile of getPackWorkflowNames(packName)) {
+        const livePath = path.join(workflowTarget, workflowFile);
+        if (!fs.existsSync(livePath)) continue;
+        fs.renameSync(livePath, path.join(workflowBackupDir, workflowFile));
+        dim(`Moved workflow to backup: ${workflowFile}`);
+    }
+
+    if (!fs.existsSync(schemaBackupDir)) fs.mkdirSync(schemaBackupDir, { recursive: true });
+    for (const schemaFile of getPackSchemaNames(packName)) {
+        const livePath = path.join(schemaTarget, schemaFile);
+        if (!fs.existsSync(livePath)) continue;
+        fs.renameSync(livePath, path.join(schemaBackupDir, schemaFile));
+        dim(`Moved schema to backup: ${schemaFile}`);
+    }
+
+    const state = readInstallState();
+    writeInstallState({
+        version: 1,
+        profile: getDefaultSkillProfileName(),
+        enabledPacks: (state.enabledPacks || []).filter(name => name !== packName)
+    });
 
     ok(`Skill pack "${packName}" disabled (skills backed up to ${backupDir})`);
 }
@@ -1240,10 +1521,15 @@ function cmdListPacks() {
 
     for (const pack of packs) {
         const readmePath = path.join(packsDir, pack.name, 'README.md');
+        const configPath = path.join(packsDir, pack.name, 'pack.json');
         let desc = '';
         if (fs.existsSync(readmePath)) {
             const content = fs.readFileSync(readmePath, 'utf8');
             desc = content.split('\n').find(l => l.trim() && !l.startsWith('#')) || '';
+        }
+        if (!desc && fs.existsSync(configPath)) {
+            const config = readJsonFile(configPath, {});
+            desc = config.description || '';
         }
         log(`  ${C.green}${pack.name}${C.reset}  ${C.gray}${desc}${C.reset}`);
     }
@@ -1340,23 +1626,6 @@ function cmdLint() {
 
 // ─── Status: Diff repo vs installed ──────────────────────────────────────────
 
-/**
- * Collect all .md files under a directory (recursively, flat list of basenames)
- */
-function collectFiles(dir, ext = '.md') {
-    const result = new Set();
-    if (!fs.existsSync(dir)) return result;
-    function walk(current) {
-        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-            if (entry.name === '.DS_Store') continue;
-            if (entry.isDirectory()) { walk(path.join(current, entry.name)); }
-            else if (entry.name.endsWith(ext) || ext === '*') { result.add(entry.name); }
-        }
-    }
-    walk(dir);
-    return result;
-}
-
 function cmdStatus() {
     log('');
     log(`${C.cyan}${C.bold}📊 AWK Status — Repo vs Installed${C.reset}`);
@@ -1364,13 +1633,19 @@ function cmdStatus() {
 
     const repoWfDir = path.join(AWK_ROOT, 'workflows');
     const liveWfDir = path.join(TARGETS.antigravity, 'global_workflows');
-    const repoSkillDir = path.join(AWK_ROOT, 'skills');
     const liveSkillDir = path.join(TARGETS.antigravity, 'skills');
+    const installState = readInstallState();
+    const expectedSkills = getDesiredSkillSet(installState.enabledPacks || []);
 
     // ── Workflows ──────────────────────────────────────────────────────────
     log(`${C.bold}Workflows:${C.reset}`);
-    const repoWf = collectFiles(repoWfDir);
-    const liveWf = collectFiles(liveWfDir);
+    const repoWf = collectFileBasenames(repoWfDir);
+    for (const packName of installState.enabledPacks || []) {
+        for (const wf of getPackWorkflowNames(packName)) {
+            repoWf.add(wf);
+        }
+    }
+    const liveWf = collectFileBasenames(liveWfDir);
 
     const onlyInRepo = [...repoWf].filter(f => !liveWf.has(f));
     const onlyInLive = [...liveWf].filter(f => !repoWf.has(f));
@@ -1393,15 +1668,14 @@ function cmdStatus() {
 
     // ── Skills ─────────────────────────────────────────────────────────────
     log(`${C.bold}Skills:${C.reset}`);
-    const repoSkills = fs.existsSync(repoSkillDir)
-        ? new Set(fs.readdirSync(repoSkillDir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name))
-        : new Set();
+    const repoSkills = new Set(expectedSkills);
     const liveSkills = fs.existsSync(liveSkillDir)
         ? new Set(fs.readdirSync(liveSkillDir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name))
         : new Set();
 
     const skillsOnlyRepo = [...repoSkills].filter(s => !liveSkills.has(s));
-    const skillsOnlyLive = [...liveSkills].filter(s => !repoSkills.has(s));
+    const managedSkills = getManagedSkillNames();
+    const skillsOnlyLive = [...liveSkills].filter(s => managedSkills.has(s) && !repoSkills.has(s));
     const skillsInBoth = [...repoSkills].filter(s => liveSkills.has(s));
 
     log(`  ${C.green}✅ In sync:${C.reset}        ${skillsInBoth.length} skills`);
@@ -1416,6 +1690,9 @@ function cmdStatus() {
     if (skillsOnlyRepo.length === 0 && skillsOnlyLive.length === 0) {
         log(`  ${C.green}Perfect sync! ✨${C.reset}`);
     }
+
+    log(`  ${C.gray}Profile:${C.reset}         ${installState.profile}`);
+    log(`  ${C.gray}Optional packs:${C.reset}  ${installState.enabledPacks?.length ? installState.enabledPacks.join(', ') : 'none'}`);
 
     log('');
 
@@ -1672,7 +1949,8 @@ function cmdHelp() {
     log(line);
     log(`  ${C.cyan}# First time setup${C.reset}`);
     log(`  ${C.gray}npm install -g @leejungkiin/awkit${C.reset}`);
-    log(`  ${C.gray}awkit install${C.reset}`);
+    log(`  ${C.gray}awkit install        # Active platform only${C.reset}`);
+    log(`  ${C.gray}awkit install --all  # All supported platforms${C.reset}`);
     log(`  ${C.gray}awkit doctor${C.reset}`);
     log('');
     log(`  ${C.cyan}# Daily usage${C.reset}`);

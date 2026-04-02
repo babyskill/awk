@@ -20,14 +20,17 @@ function generateCodexAgentsMd(sourcePath, destPath) {
  * Generates Codex skills directory structure.
  * Copies SKILL.md and parses it.
  */
-function generateCodexSkills(srcDir, destDir) {
+function generateCodexSkills(srcDir, destDir, selectedSkills = null) {
     if (!fs.existsSync(srcDir)) return;
 
     fs.mkdirSync(destDir, { recursive: true });
     const skills = fs.readdirSync(srcDir);
+    const allowed = selectedSkills ? new Set(selectedSkills) : null;
 
     let count = 0;
     for (const skill of skills) {
+        if (allowed && !allowed.has(skill)) continue;
+
         const skillDir = path.join(srcDir, skill);
         if (!fs.statSync(skillDir).isDirectory()) continue;
 
@@ -59,11 +62,12 @@ function generateCodexSkills(srcDir, destDir) {
 /**
  * Generates Codex custom agents (.toml) for specific skills.
  */
-function generateCodexAgents(srcDir, destDir) {
+function generateCodexAgents(srcDir, destDir, selectedSkills = null) {
     if (!fs.existsSync(srcDir)) return;
 
     fs.mkdirSync(destDir, { recursive: true });
     const skills = fs.readdirSync(srcDir);
+    const allowed = selectedSkills ? new Set(selectedSkills) : null;
 
     const SPECIALIST_SKILLS = [
         'ios-engineer',
@@ -77,6 +81,7 @@ function generateCodexAgents(srcDir, destDir) {
 
     let count = 0;
     for (const skill of skills) {
+        if (allowed && !allowed.has(skill)) continue;
         if (!SPECIALIST_SKILLS.includes(skill)) continue;
 
         const skillDir = path.join(srcDir, skill);

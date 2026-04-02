@@ -18,4 +18,5 @@ Thumbs.db
 # Agent CLI Copies
 .claude/
 .codex/
-
+backup/
+.awkit-install-state.json

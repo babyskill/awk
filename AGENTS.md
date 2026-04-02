@@ -40,7 +40,7 @@ symphony_status                   # Check system status
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **main-awf** (9950 symbols, 26815 relationships, 293 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **main-awf** (8625 symbols, 24171 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -137,6 +137,19 @@ To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
+## Antigravity Integration
+
+> Antigravity agent detected. Skills installed to `.gemini/antigravity/skills/gitnexus/`.
+
+| Task | Read this skill file |
+|------|---------------------|
+| Understand architecture / "How does X work?" | `.gemini/antigravity/skills/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.gemini/antigravity/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.gemini/antigravity/skills/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.gemini/antigravity/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.gemini/antigravity/skills/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.gemini/antigravity/skills/gitnexus/gitnexus-cli/SKILL.md` |
+
 <!-- gitnexus:end -->
 
 <!-- trello-sync:start -->
@@ -190,4 +203,3 @@ awkit trello block "Lý do block..."
 | Task BLOCKED | Label "Blocked" + comment details |
 | `symphony_complete_task` | Mark item ✅ complete + comment result |
 <!-- trello-sync:end -->
-

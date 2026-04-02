@@ -44,14 +44,16 @@ function generateClineWorkflows(srcDir, destDir) {
 /**
  * Copies SKILL.md from each skill directory to the given directory.
  */
-function generateClineSkills(srcDir, destDir) {
+function generateClineSkills(srcDir, destDir, selectedSkills = null) {
     if (!fs.existsSync(srcDir)) return;
 
     fs.mkdirSync(destDir, { recursive: true });
     const skills = fs.readdirSync(srcDir);
+    const allowed = selectedSkills ? new Set(selectedSkills) : null;
 
     let count = 0;
     for (const skill of skills) {
+        if (allowed && !allowed.has(skill)) continue;
         const skillDir = path.join(srcDir, skill);
         if (!fs.statSync(skillDir).isDirectory()) continue;
 
