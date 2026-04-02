@@ -2141,6 +2141,33 @@ async function cmdInit(forceFlag = false) {
         ok('CODEBASE.md created');
     }
 
+    // ── 4.5. .gitignore ────────────────────────────────────────────────────────
+    const gitignorePath = path.join(cwd, '.gitignore');
+    const ignoreRules = ['log.txt', 'tmp/', '.gitnexus/', 'node_modules/'];
+    
+    if (fs.existsSync(gitignorePath)) {
+        let content = fs.readFileSync(gitignorePath, 'utf8');
+        let added = 0;
+        for (const rule of ignoreRules) {
+            // Very simple check to avoid duplicates, might not be perfect for regexes but good for simple literal paths.
+            if (!content.includes(rule)) {
+                if (!content.endsWith('\n') && content.length > 0 && added === 0) content += '\n';
+                content += `${rule}\n`;
+                added++;
+            }
+        }
+        if (added > 0) {
+            fs.writeFileSync(gitignorePath, content);
+            ok('Updated .gitignore with AWKit ignore rules');
+        } else {
+            dim('.gitignore already has AWKit ignore rules');
+        }
+    } else {
+        info('Creating .gitignore...');
+        fs.writeFileSync(gitignorePath, ignoreRules.join('\n') + '\n');
+        ok('.gitignore created');
+    }
+
     // ── 5. Symphony folder ───────────────────────────────────────────────────────
     const symphonyDir = path.join(cwd, '.symphony');
     if (fs.existsSync(symphonyDir) && !forceFlag) {
@@ -2158,6 +2185,29 @@ async function cmdInit(forceFlag = false) {
         }
     }
 
+    // ── 5.5. GitNexus: Code Intelligence Index ──────────────────────────────
+    info('Indexing codebase with GitNexus...');
+    try {
+        // Only index if there are actual source files
+        const hasSource = execSync(
+            `find . -maxdepth 4 \\( -name "*.swift" -o -name "*.kt" -o -name "*.ts" -o -name "*.js" -o -name "*.dart" -o -name "*.py" \\) -not -path "*/node_modules/*" -not -path "*/.build/*" -not -path "*/Pods/*" | head -1`,
+            { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+        ).trim();
+
+        if (hasSource) {
+            execSync('npx -y gitnexus analyze', {
+                cwd,
+                stdio: 'ignore',
+            });
+            ok('GitNexus index created (.gitnexus/)');
+        } else {
+            dim('No source files found — skipping GitNexus index (run later: npx gitnexus analyze)');
+        }
+    } catch (e) {
+        warn(`GitNexus indexing failed: ${e.message}`);
+        dim('Run manually later: npx gitnexus analyze');
+    }
+
     // ── 6. Summary ─────────────────────────────────────────────────────────────
     log('');
     log(`${C.gray}${'─'.repeat(56)}${C.reset}`);
@@ -2166,11 +2216,13 @@ async function cmdInit(forceFlag = false) {
     dim(`Type:       ${projectType}`);
     dim(`Firebase:   analytics, crashlytics, remote-config, auth`);
     dim(`Files:      .project-identity, ${workspaceName}, CODEBASE.md`);
-    dim(`Symphony:     task tracking ready)`);
+    dim(`Symphony:     task tracking ready`);
+    dim(`GitNexus:   code intelligence index`);
     log('');
     log(`${C.cyan}👉 Open ${workspaceName} in VS Code to get started.${C.reset}`);
     log(`${C.cyan}👉 Run '/codebase-sync' in AI chat to keep CODEBASE.md updated.${C.reset}`);
     log(`${C.cyan}👉 Run 'symphony task list' to manage tasks.${C.reset}`);
+    log(`${C.cyan}👉 Run 'npx gitnexus analyze' after major changes to refresh index.${C.reset}`);
     log('');
 }
 
