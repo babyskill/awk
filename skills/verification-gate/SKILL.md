@@ -3,6 +3,8 @@ name: verification-gate
 description: Use BEFORE claiming any work is complete, fixed, or passing. Requires running verification commands and confirming output before making success claims. Evidence before assertions, always. Auto-triggers on task completion, commit, deploy, or any positive status claim.
 ---
 
+<!-- ⚠️ IRON LAW — NO completion claims without FRESH verification evidence. Non-negotiable. -->
+
 # Verification Before Completion
 
 ## Overview

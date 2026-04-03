@@ -22,6 +22,8 @@ activation_keywords:
   - "pencil"
 ---
 
+<!-- ⚠️ GATE 2.5 — Không code UI khi chưa có design approval. Backend-only tasks SKIP gate này. -->
+
 # Visual Design Gate v1.0 (Gate 2.5) — UI/UX Sync Gate
 
 > **Purpose:** Giúp AI và người dùng đồng bộ cách hiểu về ý tưởng giao diện (UI/UX)

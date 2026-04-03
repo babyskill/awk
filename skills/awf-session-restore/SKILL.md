@@ -15,7 +15,9 @@ invocation-type: auto
 priority: 2
 ---
 
-# AWF Session Restore (v7.0 — Symphony Native)
+<!-- ⚠️ INIT CHAIN CRITICAL — File này quyết định thứ tự context loading. Sai = rò rỉ cross-project memory. -->
+
+# AWF Session Restore (v7.2 — Symphony Native + Trigger Index)
 
 > **Purpose:** Silently gather unstructured context (Git, Plans, Memory) at session start.
 > **Key Change v7.0:** Symphony-native. Strict brain scoping.
@@ -117,6 +119,14 @@ symphony task list -P <projectId> -s in_progress --json 2>/dev/null
 Hoặc dùng MCP tool (sau khi brain đã switch):
 ```
 symphony_available_tasks(filter="my")
+```
+
+#### 3e. Skill Trigger Index (v7.2 — Two-Tier Loading)
+```
+Read: ~/.gemini/antigravity/skills/TRIGGER_INDEX.md
+→ Memorize trigger table (~150 tokens)
+→ Load specific SKILL.md files ON DEMAND khi action matches trigger
+→ KHÔNG load toàn bộ SKILL.md files upfront
 ```
 
 ### Step 4: Compose Silent Context

@@ -17,6 +17,8 @@ activation_keywords:
 priority: medium
 ---
 
+<!-- ⚠️ GATE 1 — Brainstorm ONLY. Không code trong phase này. Output = BRIEF.md. -->
+
 # 💡 Brainstorm Agent — Router
 
 > **Purpose:** Biến ý tưởng mơ hồ thành bản thiết kế rõ ràng qua phiên brainstorm có cấu trúc.

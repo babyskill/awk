@@ -19,6 +19,8 @@ allowed-tools:
   - nmem_auto
 ---
 
+<!-- ⚠️ BRAIN ISOLATION — PHẢI switch brain TRƯỚC mọi nmem_* call. Vi phạm = rò rỉ bộ nhớ đa dự án. -->
+
 # NM Memory Sync — Ambient Neural Brain
 
 > Drop-in upgrade for `memory-sync` and `ambient-brain`.

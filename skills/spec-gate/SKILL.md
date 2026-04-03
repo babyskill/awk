@@ -21,6 +21,8 @@ activation_keywords:
   - "API design"
 ---
 
+<!-- ⚠️ GATE 2 — User PHẢI approve design. AI KHÔNG được tự approve. Đọc GEMINI.md § 7-Gate trước khi sửa. -->
+
 # Spec Gate v1.2 — Architecture & Data Design Gate (Router)
 
 > **Purpose:** Chốt thiết kế kỹ thuật (DB Schema, API Contract, State Machine)
