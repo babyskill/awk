@@ -20,3 +20,6 @@ Thumbs.db
 .codex/
 backup/
 .awkit-install-state.json
+log.txt
+tmp/
+.gitnexus/

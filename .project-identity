@@ -64,11 +64,11 @@
   "automation": {
     "telegram": {
       "enabled": true,
-      "chatId": "",
-      "topicId": "",
+      "chatId": "-1001824251833",
+      "topicId": "1",
       "triggers": {
         "git_push": true,
-        "task_complete": false,
+        "task_complete": true,
         "deploy": true
       }
     },
