@@ -280,7 +280,8 @@ function readInstallState(platform = activePlatform) {
     const fallback = {
         version: 1,
         profile: getDefaultSkillProfileName(),
-        enabledPacks: []
+        enabledPacks: [],
+        activeMode: null
     };
     return readJsonFile(getInstallStatePath(platform), fallback) || fallback;
 }
@@ -725,8 +726,7 @@ function cmdInstall(args = []) {
         }
 
         writeInstallState({
-            version: 1,
-            profile: getDefaultSkillProfileName(),
+            ...previousState,
             enabledPacks: activePacks
         }, platform);
         ok(`Install state saved (${desiredSkills.size} active skills)`);
@@ -1421,8 +1421,7 @@ function cmdEnablePack(packName, { autoMode = false } = {}) {
     const enabledPacks = new Set(state.enabledPacks || []);
     enabledPacks.add(packName);
     writeInstallState({
-        version: 1,
-        profile: getDefaultSkillProfileName(),
+        ...state,
         enabledPacks: [...enabledPacks].sort()
     });
 
@@ -1491,12 +1490,144 @@ function cmdDisablePack(packName) {
 
     const state = readInstallState();
     writeInstallState({
-        version: 1,
-        profile: getDefaultSkillProfileName(),
+        ...state,
         enabledPacks: (state.enabledPacks || []).filter(name => name !== packName)
     });
 
     ok(`Skill pack "${packName}" disabled (skills backed up to ${backupDir})`);
+}
+
+function loadWorkModes() {
+    const defaultsPath = path.join(AWK_ROOT, 'core', 'work-modes.json');
+    const userPath = path.join(HOME, '.awkit_modes.json');
+    const modes = readJsonFile(defaultsPath, { modes: {} }).modes || {};
+
+    if (fs.existsSync(userPath)) {
+        const userModes = readJsonFile(userPath, { modes: {} }).modes || {};
+        for (const [key, val] of Object.entries(userModes)) {
+            modes[key] = { ...modes[key], ...val };
+        }
+    }
+    return modes;
+}
+
+function cmdMode(args = []) {
+    const modes = loadWorkModes();
+    const state = readInstallState();
+
+    if (args.length === 0) {
+        log('');
+        log(`${C.cyan}${C.bold}🔄 AWK Work Modes${C.reset}`);
+        log('');
+
+        const active = state.activeMode;
+        if (active && modes[active]) {
+            log(`Current Mode: ${C.green}${C.bold}${active}${C.reset} - ${modes[active].description}`);
+        } else {
+            log(`Current Mode: ${C.yellow}core-only${C.reset}`);
+        }
+        log('');
+        log(`${C.cyan}Available Modes:${C.reset}`);
+        for (const [modeName, data] of Object.entries(modes)) {
+            if (data.hidden && modeName !== active) continue;
+            const marker = modeName === active ? `${C.green}▶${C.reset}` : ` `;
+            log(` ${marker} ${C.green}${modeName.padEnd(15)}${C.reset} ${C.gray}${data.description}${C.reset}`);
+        }
+        log('');
+        log(`${C.cyan}Commands:${C.reset}`);
+        log(`  awkit mode <name>             Switch to a mode`);
+        log(`  awkit mode --create <name> <pack1,pack2,...>`);
+        log(`  awkit mode --delete <name>`);
+        log(`  awkit mode --reset            Back to core-only`);
+        log('');
+        return;
+    }
+
+    const subCmd = args[0];
+
+    if (subCmd === '--reset') {
+        if (!state.activeMode) {
+            info(`Already in core-only mode.`);
+            return;
+        }
+        const activePacks = modes[state.activeMode]?.packs || [];
+        for (const p of activePacks) cmdDisablePack(p);
+
+        state.activeMode = null;
+        writeInstallState(state);
+        ok(`Disabled mode packs. Back to core-only.`);
+        return;
+    }
+
+    if (subCmd === '--create') {
+        const name = args[1];
+        const packsList = args[2];
+        if (!name || !packsList) {
+            err(`Usage: awkit mode --create <name> <pack1,pack2,...>`);
+            return;
+        }
+        const packs = packsList.split(',').map(s => s.trim()).filter(Boolean);
+        const userPath = path.join(HOME, '.awkit_modes.json');
+        const userConfig = readJsonFile(userPath, { version: 1, modes: {} }) || { version: 1, modes: {} };
+        if (!userConfig.modes) userConfig.modes = {};
+        userConfig.modes[name] = {
+            description: "Custom user mode",
+            packs
+        };
+        fs.writeFileSync(userPath, JSON.stringify(userConfig, null, 2));
+        ok(`Created custom mode: ${name} with packs: ${packs.join(', ')}`);
+        return;
+    }
+
+    if (subCmd === '--delete') {
+        const name = args[1];
+        const userPath = path.join(HOME, '.awkit_modes.json');
+        if (fs.existsSync(userPath)) {
+            const userConfig = readJsonFile(userPath, { version: 1, modes: {} });
+            if (userConfig?.modes?.[name]) {
+                delete userConfig.modes[name];
+                fs.writeFileSync(userPath, JSON.stringify(userConfig, null, 2));
+                ok(`Deleted custom mode: ${name}`);
+            } else {
+                err(`Mode '${name}' not found in user configs.`);
+            }
+        } else {
+            err(`No user modes config found.`);
+        }
+        return;
+    }
+
+    // Switch mode
+    const modeName = subCmd;
+    if (!modes[modeName]) {
+        err(`Work mode '${modeName}' not found.`);
+        return;
+    }
+
+    info(`Switching to mode: ${modeName}`);
+
+    const currentActive = state.activeMode;
+    if (currentActive && currentActive !== modeName && modes[currentActive]) {
+        const oldPacks = modes[currentActive].packs || [];
+        // Disable packs that are not in the new mode to avoid toggling what we want to keep
+        const newPacksSet = new Set(modes[modeName].packs || []);
+        for (const p of oldPacks) {
+            if (!newPacksSet.has(p)) {
+                cmdDisablePack(p);
+            }
+        }
+    }
+
+    const newPacks = modes[modeName].packs || [];
+    for (const p of newPacks) {
+        cmdEnablePack(p, { autoMode: true });
+    }
+
+    const freshState = readInstallState();
+    freshState.activeMode = modeName;
+    writeInstallState(freshState);
+
+    ok(`Successfully switched to mode: ${C.bold}${modeName}${C.reset}`);
 }
 
 function cmdListPacks() {
@@ -1888,8 +2019,10 @@ function cmdHelp() {
     log('');
 
     // Packs
-    log(`${C.bold}📦  Skill Packs${C.reset}`);
+    log(`${C.bold}📦  Skill Packs & Modes${C.reset}`);
     log(line);
+    log(`  ${C.green}mode${C.reset}                Show active mode & list modes`);
+    log(`  ${C.green}mode <name>${C.reset}         Switch to a work mode`);
     log(`  ${C.green}list-packs${C.reset}          List available skill packs`);
     log(`  ${C.green}enable-pack${C.reset} <name>  Install a skill pack`);
     log(`  ${C.green}disable-pack${C.reset} <name> Uninstall a skill pack (backed up)`);
@@ -3328,6 +3461,9 @@ const [, , command, ...args] = process.argv;
             break;
         case 'browser':
             cmdBrowser(args);
+            break;
+        case 'mode':
+            cmdMode(args);
             break;
         case 'enable-pack':
             cmdEnablePack(args[0]);

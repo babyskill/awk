@@ -1,0 +1,45 @@
+{
+    "version": 1,
+    "modes": {
+        "mobile": {
+            "description": "Mobile app development (iOS, Android, Flutter)",
+            "packs": [
+                "mobile-ios",
+                "mobile-android",
+                "flutter"
+            ]
+        },
+        "ads": {
+            "description": "Monetization & ads optimization",
+            "packs": [
+                "ads-management"
+            ]
+        },
+        "marketing": {
+            "description": "ASO, UA, app marketing",
+            "packs": [
+                "marketing"
+            ]
+        },
+        "web": {
+            "description": "Web & desktop app development",
+            "packs": [
+                "electron"
+            ]
+        },
+        "game": {
+            "description": "Game & 3D development",
+            "packs": [
+                "cocos2d",
+                "threejs"
+            ]
+        },
+        "mod": {
+            "description": "Reverse engineering & modding",
+            "packs": [
+                "reverse-engineering"
+            ],
+            "hidden": true
+        }
+    }
+}
