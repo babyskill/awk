@@ -2833,6 +2833,24 @@ function tgSend(args) {
     let chatId = config.default_chat_id;
     let topicId = config.default_topic_id || null;
     let parseMode = null;
+
+    // Apply .project-identity automation overrides
+    const pjPath = path.join(process.cwd(), '.project-identity');
+    if (fs.existsSync(pjPath)) {
+        try {
+            const pj = JSON.parse(fs.readFileSync(pjPath, 'utf8'));
+            if (pj?.automation?.telegram) {
+                const tgAuto = pj.automation.telegram;
+                if (tgAuto.enabled === false) {
+                    dim('Telegram notifications are disabled for this project (.project-identity).');
+                    return;
+                }
+                if (tgAuto.chatId) chatId = tgAuto.chatId;
+                if (tgAuto.topicId) topicId = tgAuto.topicId;
+            }
+        } catch (e) { }
+    }
+
     const messageParts = [];
 
     for (let i = 0; i < args.length; i++) {

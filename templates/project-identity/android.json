@@ -24,5 +24,30 @@
     "lineLength": 120
   },
   "createdDate": "{{DATE}}",
-  "lastUpdated": "{{DATE}}"
+  "lastUpdated": "{{DATE}}",
+  "automation": {
+    "telegram": {
+      "enabled": true,
+      "chatId": "",
+      "topicId": "",
+      "triggers": {
+        "git_push": true,
+        "task_complete": false,
+        "deploy": true
+      }
+    },
+    "trello": {
+      "enabled": true,
+      "autoSync": true,
+      "triggers": {
+        "task_complete": true,
+        "milestone": true,
+        "blocked": true
+      }
+    },
+    "git": {
+      "autoCommit": true,
+      "autoPush": true
+    }
+  }
 }

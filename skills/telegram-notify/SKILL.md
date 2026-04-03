@@ -55,3 +55,4 @@ awkit tg send --chat -100xxx --topic 456 --parse-mode md "**Done!**"
 3. **Use Markdown** for formatted messages (`--parse-mode md`)
 4. **Config location**: `~/.gemini/antigravity/.tg_config.json`
 5. If `awkit tg send` returns error about config, tell user to run `awkit tg setup`
+6. **Per-Project Automation**: AWKit CLI automatically reads `.project-identity` > `automation.telegram` to override `chatId`/`topicId` per project, or completely skip sending if `enabled: false`.

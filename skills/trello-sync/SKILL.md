@@ -90,6 +90,13 @@ Lần 3 (vẫn lỗi): báo user "Trello chưa được cấu hình. Vui lòng c
 ### Tự Động Hóa Qua `awkit trello` (BẮT BUỘC)
 
 AI không cần tự inject ENV hay tìm kiếm cấu hình. Công cụ lệnh `awkit trello` v1.3.0+ sẽ TỰ ĐỘNG đọc từ env vars và `.project-identity`. MỌI thao tác Trello phải đi qua `awkit trello`.
+
+> **Proactive Auto-Sync Rule:** Nếu `.project-identity` có `automation.trello.autoSync: true`, AI **BẮT BUỘC** tự động gọi lệnh Trello tại các trigger points mà không cần user yêu cầu:
+> - Từng task complete → `awkit trello complete "<tên>"` + comment progress.
+> - Đạt milestone (chuyển Gate, đạt 40/60/80%) → `awkit trello comment`.
+> - Gặp lỗi Blocked → `awkit trello block`.
+> *(Nếu `autoSync: false` hoặc không có config, AI tiếp tục chế độ bị động).*
+
 ---
 
 ## 📚 Command Reference

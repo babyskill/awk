@@ -49,14 +49,15 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
 
-### Auto-Commit After Build (BẮT BUỘC)
-- Build thành công (0 errors) → **TỰ ĐỘNG** `git add` → `git commit` → `git push`.
-- KHÔNG hỏi user, KHÔNG chờ approval cho commit thường.
+### Auto-Commit & Push (Per-Project Automation)
+- **ĐIỀU KIỆN:** Bắt buộc tuân thủ config `automation.git` trong `.project-identity` (nếu có).
+  - Nếu `autoCommit: false` → **KHÔNG** tự commit.
+  - Nếu `autoPush: false` → **KHÔNG** tự push.
+- Nếu được phép: Build thành công (0 errors) → **TỰ ĐỘNG** `git add` → `git commit` → `git push` (non-force, không chờ approval).
 - Commit message: conventional format (`fix:`, `feat:`, `refactor:`, `chore:`).
-- `git push` (non-force) được phép `SafeToAutoRun=true`.
-- Sau khi commit & push thành công → tự động gửi thông báo Telegram qua tool hoặc lệnh `awkit tg send` (nếu người dùng đã cấu hình Telegram, có thể bỏ qua nếu chưa).
-- Nếu push fail → retry 1 lần với `git pull --rebase && git push`.
-- Nếu vẫn fail → báo user, KHÔNG force push.
+- `git push` (non-force) được phép `SafeToAutoRun=true`. Nếu push fail → retry 1 lần với `git pull --rebase && git push`.
+- **Telegram Notification:** Sau khi push thành công → Đọc config `automation.telegram.triggers.git_push`. Nếu bật (hoặc default true) → tự động báo qua lệnh `awkit tg send`.
+- Cấm force push. Cấm push fail mà không báo cáo.
 
 ### 7-Gate Autonomous System (v12.3)
 - orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.
@@ -123,6 +124,13 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - **Ngoại lệ:** `git add`, `git commit`, `git push` (non-force) được auto-run sau build thành công.
 - Double-confirm với user trước khi chạy destructive command.
 - Nếu không chắc command có destructive hay không → hỏi trước.
+
+### Trello Auto-Sync (Per-Project Automation)
+- Nếu `.project-identity` có `automation.trello.autoSync: true` → AI **PHẢI** tự động kích hoạt Trello tại các trigger:
+  - Task complete → `awkit trello complete "<tên>"` + comment progress.
+  - Milestone (gate transition, 40/60/80%) → `awkit trello comment`.
+  - Blocked → `awkit trello block`.
+- Nếu `autoSync: false` hoặc không có config → chỉ sync khi user yêu cầu rõ ràng.
 
 ### 6 Decision Principles (Auto-decide)
 Khi AI cần tự quyết định mà không hỏi user:
