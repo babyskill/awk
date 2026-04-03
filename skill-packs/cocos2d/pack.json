@@ -1,0 +1,8 @@
+{
+    "name": "cocos2d",
+    "auto_install": false,
+    "description": "Game development capabilities using Cocos2d-x",
+    "skills": [
+        "cocos2d-x"
+    ]
+}

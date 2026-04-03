@@ -1,0 +1,25 @@
+{
+    "name": "threejs",
+    "auto_install": false,
+    "description": "Comprehensive 3D web rendering capabilities using Three.js",
+    "skills": [
+        "threejs-animation",
+        "threejs-audio",
+        "threejs-camera",
+        "threejs-controls",
+        "threejs-dev-setup",
+        "threejs-geometries",
+        "threejs-helpers",
+        "threejs-lights",
+        "threejs-loaders",
+        "threejs-materials",
+        "threejs-math",
+        "threejs-node-tsl",
+        "threejs-objects",
+        "threejs-postprocessing",
+        "threejs-renderers",
+        "threejs-scenes",
+        "threejs-textures",
+        "threejs-webxr"
+    ]
+}

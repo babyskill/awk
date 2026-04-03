@@ -1,0 +1,9 @@
+{
+    "name": "flutter",
+    "auto_install": false,
+    "description": "Cross-platform mobile/UI development using Flutter",
+    "skills": [
+        "flutter",
+        "flutter-project-creater"
+    ]
+}

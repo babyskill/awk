@@ -1,0 +1,9 @@
+{
+    "name": "electron",
+    "auto_install": false,
+    "description": "Desktop application development using Electron and Electron-Egg",
+    "skills": [
+        "electron",
+        "electron-egg"
+    ]
+}
