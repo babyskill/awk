@@ -3,6 +3,8 @@ name: orchestrator
 description: Intelligent dispatcher — analyzes context and delegates to the right skill or workflow
 ---
 
+<!-- ⚠️ ROUTING CORE — Sửa file này ảnh hưởng toàn bộ skill dispatching. Đọc GEMINI.md § Routing trước. -->
+
 # Orchestrator Skill
 
 ## Purpose

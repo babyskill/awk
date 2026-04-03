@@ -17,6 +17,8 @@ invocation-type: auto
 priority: 1
 ---
 
+<!-- ⚠️ TASK INTEGRITY — Sửa file này PHẢI đọc lại GEMINI.md § Symphony rules. Không sửa format Sync Block. -->
+
 # Symphony Enforcer v3.7 — Router
 
 > **Purpose:** Đảm bảo AI KHÔNG BAO GIỜ quên cập nhật Symphony.

@@ -11,6 +11,8 @@ activation_keywords:
   - "bổ sung skill"
 ---
 
+<!-- ⚠️ DUAL-SYNC BẮT BUỘC — Mọi thay đổi PHẢI sync sang main-awf. Không được bỏ qua Bước 3. -->
+
 # 🛠️ Skill Creator (with Auto-Sync to main-awf)
 
 **Purpose**: Hỗ trợ người dùng thiết kế, lập trình và tinh chỉnh các Antigravity Skills theo chuẩn. 
