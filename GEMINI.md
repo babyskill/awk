@@ -1,6 +1,8 @@
-# GEMINI.md — Antigravity v12.3
+<!-- ⚠️ CORE RULES — Không sửa trực tiếp nếu không hiểu rõ hệ thống. Dùng skill-creator hoặc manual edit có chủ đích. -->
 
-> Rules + routing only. Gate details → skills. Updated: 2026-03-25
+# GEMINI.md — Antigravity v12.4
+
+> Rules + routing only. Gate details → skills. Updated: 2026-04-03
 
 ---
 
@@ -20,7 +22,7 @@
 ### Init Chain (BẮT BUỘC)
 
 ```
-symphony-orchestrator → awf-session-restore → nm-memory-sync → orchestrator → action
+symphony-orchestrator → awf-session-restore (gitnexus state) → nm-memory-sync → orchestrator → action
 ```
 
 Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
@@ -37,6 +39,24 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - `nm-memory-sync` auto-save (W1–W4 triggers).
 - Deploy/push → kiểm tra in-progress tasks trước, confirm với user.
 
+### Context Recovery (Chống Amnesia)
+
+Khi context bị truncate hoặc cuộc hội thoại rất dài:
+1. Re-read `.project-identity` của project đang active.
+2. Re-read GEMINI.md (file này) để refresh rules.
+3. Chạy `nmem_recall` với query liên quan đến task đang làm.
+4. Thông báo user: "🔄 Context recovery — đã reload rules + memory."
+
+**File-Level Guards (Defense-in-Depth):**
+
+Khi edit trực tiếp các file sau, AI PHẢI đọc lại rule tương ứng:
+
+| File pattern | PHẢI đọc lại | Lý do |
+|:---|:---|:---|
+| `symphony/**/*.json` | `symphony-enforcer/SKILL.md` | Task integrity |
+| `.project-identity` | `orchestrator/SKILL.md` | Project config |
+| `**/SKILL.md` | `skill-creator/SKILL.md` | Skill format |
+
 ---
 
 ## Rules
@@ -44,11 +64,18 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 ### Code
 - Production quality. File < 500 lines.
 - Không sửa code ngoài scope.
-- Không deploy/push không hỏi.
 - Không hardcode secrets → `.env`.
 - Không `git reset --hard`.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
+
+### Auto-Commit After Build (BẮT BUỘC)
+- Build thành công (0 errors) → **TỰ ĐỘNG** `git add` → `git commit` → `git push`.
+- KHÔNG hỏi user, KHÔNG chờ approval cho commit thường.
+- Commit message: conventional format (`fix:`, `feat:`, `refactor:`, `chore:`).
+- `git push` (non-force) được phép `SafeToAutoRun=true`.
+- Nếu push fail → retry 1 lần với `git pull --rebase && git push`.
+- Nếu vẫn fail → báo user, KHÔNG force push.
 
 ### 7-Gate Autonomous System (v12.3)
 - orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.
@@ -112,8 +139,16 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
   - `docker system prune`, `docker volume rm`
   - `npm publish`, `pod trunk push`
   - Bất kỳ command nào deploy lên production
+- **Ngoại lệ:** `git add`, `git commit`, `git push` (non-force) được auto-run sau build thành công.
 - Double-confirm với user trước khi chạy destructive command.
 - Nếu không chắc command có destructive hay không → hỏi trước.
+
+### Check-Then-Act (Proactive Trigger)
+- TRƯỚC mọi side-effect (edit file, run command, create artifact):
+  1. Scan GEMINI.md rules → có rule nào match action đang làm?
+  2. Check `.project-identity` → có automation config nào cần tuân thủ?
+  3. IF match → đọc skill/rule tương ứng TRƯỚC khi act.
+- Nguyên tắc: **Check THEN act — never act THEN check.**
 
 ### 6 Decision Principles (Auto-decide)
 Khi AI cần tự quyết định mà không hỏi user:
@@ -162,7 +197,7 @@ Khi AI cần tự quyết định mà không hỏi user:
 
 ## Routing
 
-- **Execution order:** `symphony-orchestrator` → `awf-session-restore` → `nm-memory-sync` → `symphony-enforcer` → `orchestrator` (triage + gate-check) → action
+- **Execution order:** `symphony-orchestrator` → `awf-session-restore` (gitnexus state) → `nm-memory-sync` → `symphony-enforcer` → `orchestrator` (triage + gate-check) → action
 - **Gate skills:** `orchestrator` (triage) → `brainstorm-agent` (G1) → `module-spec-writer` (G1.5) → `spec-gate` (G2) → `visual-design-gate` (G2.5) → `symphony-enforcer` (G3) → `verification-gate` (G5)
 - **Code intelligence:** `gitnexus-intelligence` (impact analysis, blast radius, safe refactoring)
 - **Skill catalog:** xem `orchestrator/SKILL.md`
