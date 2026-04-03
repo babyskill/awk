@@ -2487,6 +2487,32 @@ async function cmdInit(forceFlag = false) {
         } catch (_) { /* ignore */ }
     }
 
+    // ── 3.6. Automation config migration ─────────────────────────────────────────
+    try {
+        const currentIdentity = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+        if (!currentIdentity.automation) {
+            currentIdentity.automation = {
+                telegram: {
+                    enabled: true,
+                    chatId: "",
+                    topicId: "",
+                    triggers: { git_push: true, task_complete: false, deploy: true }
+                },
+                trello: {
+                    enabled: true,
+                    autoSync: true,
+                    triggers: { task_complete: true, milestone: true, blocked: true }
+                },
+                git: {
+                    autoCommit: true,
+                    autoPush: true
+                }
+            };
+            fs.writeFileSync(identityPath, JSON.stringify(currentIdentity, null, 2) + '\n');
+            ok('Added Automation config placeholder to .project-identity');
+        }
+    } catch (_) { /* ignore */ }
+
     const trelloCred = trelloLoadCredentials();
     if (!trelloCred) {
         log('');
