@@ -1,0 +1,8 @@
+{
+    "name": "ads-management",
+    "auto_install": false,
+    "description": "App monetization strategies, ASO context, and AdMob ROAS/AARRR optimization",
+    "skills": [
+        "admob-roas"
+    ]
+}

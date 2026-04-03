@@ -1,0 +1,9 @@
+{
+    "name": "reverse-engineering",
+    "auto_install": false,
+    "description": "Android & iOS remote engineering, decompilation, code porting, and smali modding capabilities",
+    "skills": [
+        "smali-to-kotlin",
+        "android-re-analyzer"
+    ]
+}
