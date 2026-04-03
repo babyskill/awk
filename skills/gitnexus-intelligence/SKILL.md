@@ -14,6 +14,8 @@ invocation-type: auto
 priority: 5
 ---
 
+<!-- ⚠️ IMPACT-FIRST — PHẢI chạy gitnexus_impact TRƯỚC khi edit symbol. Chưa index → KHÔNG dùng tools. -->
+
 # GitNexus Intelligence v1.0 — Code-Aware Agent Skill
 
 > **Purpose:** Cung cấp architectural awareness cho AI agent thông qua knowledge graph.

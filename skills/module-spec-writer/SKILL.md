@@ -23,6 +23,8 @@ activation_keywords:
   - "product spec"
 ---
 
+<!-- ⚠️ GATE 1.5 — User PHẢI approve module specs. COMPLEX + >3 modules = MANDATORY. -->
+
 # Module Spec Writer v1.2 — Gate 1.5: Product Specification (Router)
 
 > **Purpose:** Tạo tài liệu product-level cho từng module (screens, flows, rules)

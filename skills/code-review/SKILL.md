@@ -3,6 +3,8 @@ name: code-review
 description: Use when completing tasks, implementing features, or before merging. Dispatch structured code review with severity classification. Auto-triggers after task completion in subagent-driven or single-flow execution.
 ---
 
+<!-- ⚠️ REVIEW GATE — Spec compliance FIRST, then code quality. No merge without review. -->
+
 # Code Review
 
 ## Overview

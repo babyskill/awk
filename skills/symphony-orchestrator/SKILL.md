@@ -20,6 +20,8 @@ invocation-type: auto
 priority: 0
 ---
 
+<!-- ⚠️ GATE 0 — Preflight checklist PHẢI hiển thị. Bỏ qua = VI PHẠM. DB centralized = cross-project. -->
+
 # Symphony Orchestrator Skill — Multi-Project & Agent Orchestration
 
 > **Purpose:** Đảm bảo Symphony server luôn sẵn sàng cho mọi session.

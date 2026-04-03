@@ -15,6 +15,8 @@ invocation-type: auto
 priority: 5
 ---
 
+<!-- ⚠️ INSPECT ONLY — Codex TUYỆT ĐỐI KHÔNG sửa code. Output = .md reports. approval-mode suggest. -->
+
 # 🔍 Codex Conductor — Router
 
 > **Purpose:** Gọi Codex CLI qua terminal khi cần rà soát logic, debug, review code chuyên sâu.
@@ -38,7 +40,7 @@ Codex CLI         = Inspector — debug, review, verify, test
 
 ```bash
 which codex || command -v codex
-# NOTE: If not installed, IMMEDIATELY fallback to IDE context. DO NOT ask user to install.
+# If not installed: npm i -g @openai/codex
 ```
 
 ## 🎯 Trigger Conditions
@@ -88,9 +90,9 @@ cd <PROJECT_ROOT> && timeout 180 codex exec \
 | Event | Action |
 |-------|--------|
 | Success | Parse → save report → summarize → suggest fixes |
-| Timeout | "⏳ Timed out (>120s)" → fallback Antigravity-only smoothly |
-| Error | Fallback Antigravity-only smoothly. Do NOT ask user to install |
-| Not installed | Fallback Antigravity-only smoothly. Do NOT ask user to install |
+| Timeout | "⏳ Timed out (>120s)" → fallback Antigravity-only |
+| Error | Check `codex --version` → suggest install |
+| Not installed | Ask user to install |
 
 ## 📁 Report Structure
 
