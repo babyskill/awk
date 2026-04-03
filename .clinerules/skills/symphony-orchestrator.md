@@ -8,7 +8,7 @@ metadata:
   stage: core
   version: "3.0"
   replaces: null
-  requires: "@leejungkiin/awkit-symphony" (npm i -g @leejungkiin/awkit-symphony)
+  requires: "@leejungkiin/awkit-symphony (npm i -g @leejungkiin/awkit-symphony)"
   tags: [symphony, setup, server, orchestration, core, preflight, multi-project, agent]
 agent: Symphony Conductor
 allowed-tools:
@@ -61,7 +61,7 @@ npm i -g @leejungkiin/awkit-symphony
 ### Bước 2: Verify
 
 ```bash
-symphony --version   # Expected: 0.1.0+
+symphony --version   # Expected: 1.5.0+
 symphony --help      # Shows: preflight, task, agent, dispatch, next, etc.
 ```
 

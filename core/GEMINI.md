@@ -54,6 +54,7 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - KHÔNG hỏi user, KHÔNG chờ approval cho commit thường.
 - Commit message: conventional format (`fix:`, `feat:`, `refactor:`, `chore:`).
 - `git push` (non-force) được phép `SafeToAutoRun=true`.
+- Sau khi commit & push thành công → tự động gửi thông báo Telegram qua tool hoặc lệnh `awkit tg send` (nếu người dùng đã cấu hình Telegram, có thể bỏ qua nếu chưa).
 - Nếu push fail → retry 1 lần với `git pull --rebase && git push`.
 - Nếu vẫn fail → báo user, KHÔNG force push.
 
@@ -157,14 +158,14 @@ Khi AI cần tự quyết định mà không hỏi user:
 - Khi code (Gate 4), PHẢI đối chiếu với `.kiro/specs/<module>/` tương ứng.
 - Chi tiết: xem `orchestrator/SKILL.md` (Kiro Spec Detection section).
 
-### Two-Agent Flow (Conductor)
-- Antigravity CHỦ ĐỘNG gọi `gemini -p "..." --approval-mode plan` khi cần tầm nhìn rộng.
+### Multi-Agent Flow (Conductor / CLI Fallback)
+- Việc gọi CLI bên ngoài (như `gemini`, `codex`) là **HOÀN TOÀN TÙY CHỌN** nhằm tối ưu token và mở rộng góc nhìn.
+- Nếu CLI chưa cài đặt, bị lỗi auth, hoặc timeout → **BỎ QUA NGAY LẬP TỨC** và chạy bằng bộ công cụ chính của IDE. KHÔNG BẮT BUỘC. KHÔNG yêu cầu user cài đặt.
 - CLI dùng **quota pool riêng** → không ảnh hưởng Antigravity quota.
-- Trigger: refactor >5 files, architecture analysis, cross-module review, second opinion.
-- LUÔN dùng `--approval-mode plan` (read-only). CLI KHÔNG ĐƯỢC edit files.
-- Timeout 60s. Fallback gracefully nếu CLI unavailable.
-- Thông báo user: "📡 Đang gọi Gemini CLI..." trước khi gọi.
-- Chi tiết: xem `gemini-conductor/SKILL.md`.
+- Trigger: refactor diện rộng, architecture analysis, cross-module review, kiểm tra logic lỗi.
+- LUÔN dùng chế độ read-only (`--approval-mode plan` hoặc `suggest`). CLI KHÔNG ĐƯỢC phép sửa files trực tiếp.
+- Thông báo user: "📡 Đang gọi CLI..." trước khi gọi. Nếu lỗi, báo cáo fallback nhẹ nhàng.
+- Chi tiết: xem `gemini-conductor/SKILL.md` và `codex-conductor/SKILL.md`.
 
 ---
 

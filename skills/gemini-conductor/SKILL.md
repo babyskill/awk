@@ -194,8 +194,9 @@ on_timeout:
   - Fall back to Antigravity-only analysis
 
 on_error:
-  - Log: "⚠️ CLI invocation failed, continuing without conductor"
-  - Do NOT block the workflow — CLI is enhancement, not dependency
+  - Log: "⚠️ CLI invocation failed or not set up, continuing without conductor"
+  - IMMEDIATELY fallback to Antigravity-only mode
+  - Do NOT ask the user to install or authenticate the CLI. It is strictly optional
 ```
 
 ---

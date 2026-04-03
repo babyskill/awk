@@ -1,6 +1,6 @@
 {
   "name": "@leejungkiin/awkit-symphony",
-  "version": "0.1.0",
+  "version": "1.5.0",
   "description": "Multi-Agent Orchestration for AI Coding Assistants — task management, git isolation, file locking, and real-time dashboard",
   "keywords": [
     "ai",

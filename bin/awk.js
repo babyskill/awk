@@ -522,7 +522,7 @@ function cmdInstall(args = []) {
         } else if (args.length > 0 && !args[0].startsWith('-') && args[0] !== 'all' && args[0] !== '--update') {
             legacyArg = args[0];
         }
-        
+
         if (legacyArg && PLATFORMS[legacyArg] && !selectedPlatforms.includes(legacyArg)) {
             selectedPlatforms.push(legacyArg);
         }
@@ -543,7 +543,7 @@ function cmdInstall(args = []) {
             log(`  5. All of the above`);
             log(`${C.gray}Press Enter to install only the active platform: ${PLATFORMS[defaultPlatform].name}.${C.reset}`);
             const choice = promptChoice('Choice', defaultChoice).trim().toLowerCase();
-            
+
             if (choice === '5' || choice === 'all') {
                 selectedPlatforms = Object.keys(PLATFORMS);
             } else {
@@ -587,73 +587,73 @@ function cmdInstall(args = []) {
         checkSymphony({ silent: platform !== selectedPlatforms[0] });
 
         // 1. Ensure target dirs exist
-    info('Creating directories...');
-    const dirKeys = Object.values(plat.dirs);
-    for (const dir of dirKeys) {
-        const fullPath = path.join(target, dir);
-        if (!fs.existsSync(fullPath)) {
-            fs.mkdirSync(fullPath, { recursive: true });
+        info('Creating directories...');
+        const dirKeys = Object.values(plat.dirs);
+        for (const dir of dirKeys) {
+            const fullPath = path.join(target, dir);
+            if (!fs.existsSync(fullPath)) {
+                fs.mkdirSync(fullPath, { recursive: true });
+            }
         }
-    }
-    ok('Directories ready');
+        ok('Directories ready');
 
-    // 2. Sync rules (platform-specific)
-    if (platform === 'antigravity') {
-        info('Syncing GEMINI.md...');
-        syncGeminiMd();
-    } else if (platform === 'cline') {
-        info('Generating Cline global rules...');
-        generateClineRules(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
-    } else if (platform === 'codex') {
-        info('Generating Codex AGENTS.md...');
-        generateCodexAgentsMd(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
-    } else if (platform === 'claude') {
-        info('Generating Claude Code CLAUDE.md...');
-        const claudeTemplateSrc = path.join(AWK_ROOT, 'core', 'CLAUDE.md');
-        const claudeRulesDest = path.join(target, plat.rulesFile);
-        generateClaudeRules(claudeTemplateSrc, claudeRulesDest);
-    }
+        // 2. Sync rules (platform-specific)
+        if (platform === 'antigravity') {
+            info('Syncing GEMINI.md...');
+            syncGeminiMd();
+        } else if (platform === 'cline') {
+            info('Generating Cline global rules...');
+            generateClineRules(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
+        } else if (platform === 'codex') {
+            info('Generating Codex AGENTS.md...');
+            generateCodexAgentsMd(path.join(AWK_ROOT, 'core', 'GEMINI.md'), plat.rulesFile);
+        } else if (platform === 'claude') {
+            info('Generating Claude Code CLAUDE.md...');
+            const claudeTemplateSrc = path.join(AWK_ROOT, 'core', 'CLAUDE.md');
+            const claudeRulesDest = path.join(target, plat.rulesFile);
+            generateClaudeRules(claudeTemplateSrc, claudeRulesDest);
+        }
 
-    // 3. Backup and install workflows
-    if (plat.dirs.workflows) {
-        info('Installing workflows...');
-        const wfSrc = path.join(AWK_ROOT, 'workflows');
-        const wfDest = path.join(target, plat.dirs.workflows);
+        // 3. Backup and install workflows
+        if (plat.dirs.workflows) {
+            info('Installing workflows...');
+            const wfSrc = path.join(AWK_ROOT, 'workflows');
+            const wfDest = path.join(target, plat.dirs.workflows);
 
-        // Backup existing workflows
-        if (fs.existsSync(wfDest)) {
-            const backupDir = getPlatformBackupRoot(platform);
-            if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+            // Backup existing workflows
+            if (fs.existsSync(wfDest)) {
+                const backupDir = getPlatformBackupRoot(platform);
+                if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const zipFile = path.join(backupDir, `workflows_${timestamp}.bak.zip`);
-            try {
-                execSync(`zip -r "${zipFile}" .`, { cwd: wfDest, stdio: 'ignore' });
-                dim(`Backup: ${zipFile}`);
-            } catch (e) {
-                warn(`Failed to create backup: ${e.message}`);
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const zipFile = path.join(backupDir, `workflows_${timestamp}.bak.zip`);
+                try {
+                    execSync(`zip -r "${zipFile}" .`, { cwd: wfDest, stdio: 'ignore' });
+                    dim(`Backup: ${zipFile}`);
+                } catch (e) {
+                    warn(`Failed to create backup: ${e.message}`);
+                }
+            }
+
+            if (platform === 'cline') {
+                generateClineWorkflows(wfSrc, wfDest);
+            } else if (platform !== 'codex') {
+                const wfCount = flattenWorkflows(wfSrc, wfDest);
+                ok(`${wfCount} workflows installed`);
             }
         }
 
-        if (platform === 'cline') {
-            generateClineWorkflows(wfSrc, wfDest);
-        } else if (platform !== 'codex') {
-            const wfCount = flattenWorkflows(wfSrc, wfDest);
-            ok(`${wfCount} workflows installed`);
+        // 4. Copy AGENTS.md
+        if (platform === 'antigravity' && plat.dirs.workflows) {
+            const agentsSrc = path.join(AWK_ROOT, 'core', 'AGENTS.md');
+            const agentsDest = path.join(target, plat.dirs.workflows, 'AGENTS.md');
+            if (fs.existsSync(agentsSrc)) {
+                fs.copyFileSync(agentsSrc, agentsDest);
+                ok('AGENTS.md installed');
+            }
         }
-    }
 
-    // 4. Copy AGENTS.md
-    if (platform === 'antigravity' && plat.dirs.workflows) {
-        const agentsSrc = path.join(AWK_ROOT, 'core', 'AGENTS.md');
-        const agentsDest = path.join(target, plat.dirs.workflows, 'AGENTS.md');
-        if (fs.existsSync(agentsSrc)) {
-            fs.copyFileSync(agentsSrc, agentsDest);
-            ok('AGENTS.md installed');
-        }
-    }
-
-    // 5. Copy skills
+        // 5. Copy skills
         if (plat.dirs.skills) {
             info('Installing skills...');
             const skillsSrc = path.join(AWK_ROOT, 'skills');
@@ -673,36 +673,36 @@ function cmdInstall(args = []) {
             }
         }
 
-    // 6. Copy orchestrator
-    if (platform === 'antigravity') {
-        const orchSrc = path.join(AWK_ROOT, 'core', 'orchestrator.md');
-        const orchDestDir = path.join(target, plat.dirs.skills, 'orchestrator');
-        if (!fs.existsSync(orchDestDir)) fs.mkdirSync(orchDestDir, { recursive: true });
-        fs.copyFileSync(orchSrc, path.join(orchDestDir, 'SKILL.md'));
-        ok('Orchestrator skill installed');
-    }
+        // 6. Copy orchestrator
+        if (platform === 'antigravity') {
+            const orchSrc = path.join(AWK_ROOT, 'core', 'orchestrator.md');
+            const orchDestDir = path.join(target, plat.dirs.skills, 'orchestrator');
+            if (!fs.existsSync(orchDestDir)) fs.mkdirSync(orchDestDir, { recursive: true });
+            fs.copyFileSync(orchSrc, path.join(orchDestDir, 'SKILL.md'));
+            ok('Orchestrator skill installed');
+        }
 
-    // 7. Copy schemas (always overwrite)
-    if (plat.dirs.schemas) {
-        info('Installing schemas...');
-        const schemaSrc = path.join(AWK_ROOT, 'schemas');
-        const schemaDest = path.join(target, plat.dirs.schemas);
-        const schemaCount = copyDirRecursive(schemaSrc, schemaDest);
-        ok(`${schemaCount} schemas installed`);
-    }
+        // 7. Copy schemas (always overwrite)
+        if (plat.dirs.schemas) {
+            info('Installing schemas...');
+            const schemaSrc = path.join(AWK_ROOT, 'schemas');
+            const schemaDest = path.join(target, plat.dirs.schemas);
+            const schemaCount = copyDirRecursive(schemaSrc, schemaDest);
+            ok(`${schemaCount} schemas installed`);
+        }
 
-    // 8. Copy templates (don't overwrite existing)
-    if (plat.dirs.templates) {
-        info('Installing templates...');
-        const tmplSrc = path.join(AWK_ROOT, 'templates');
-        const tmplDest = path.join(target, plat.dirs.templates);
-        const tmplCount = copyDirRecursive(tmplSrc, tmplDest, { overwrite: false });
-        ok(`${tmplCount} templates installed`);
-    }
+        // 8. Copy templates (don't overwrite existing)
+        if (plat.dirs.templates) {
+            info('Installing templates...');
+            const tmplSrc = path.join(AWK_ROOT, 'templates');
+            const tmplDest = path.join(target, plat.dirs.templates);
+            const tmplCount = copyDirRecursive(tmplSrc, tmplDest, { overwrite: false });
+            ok(`${tmplCount} templates installed`);
+        }
 
-    // 9. Save version
-    fs.writeFileSync(plat.versionFile, AWK_VERSION);
-    ok(`Version ${AWK_VERSION} saved`);
+        // 9. Save version
+        fs.writeFileSync(plat.versionFile, AWK_VERSION);
+        ok(`Version ${AWK_VERSION} saved`);
 
         // 10. Install default skill packs
         const defaultPacks = installDefaultPacks();
@@ -732,35 +732,35 @@ function cmdInstall(args = []) {
         ok(`Install state saved (${desiredSkills.size} active skills)`);
 
         // 11. Summary
-    log('');
-    log(`${C.gray}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
-    log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed for ${plat.name}!${C.reset}`);
-    log('');
-    dim(`Platform:   ${plat.name}`);
-    if (plat.dirs.workflows) dim(`Workflows:  ${path.join(target, plat.dirs.workflows)}`);
-    if (plat.dirs.skills) dim(`Skills:     ${path.join(target, plat.dirs.skills)}`);
-    if (plat.dirs.schemas) dim(`Schemas:    ${path.join(target, plat.dirs.schemas)}`);
-    if (plat.dirs.templates) dim(`Templates:  ${path.join(target, plat.dirs.templates)}`);
-    if (plat.dirs.agents) dim(`Agents:     ${path.join(target, plat.dirs.agents)}`);
+        log('');
+        log(`${C.gray}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}`);
+        log(`${C.yellow}${C.bold}🎉 AWK v${AWK_VERSION} installed for ${plat.name}!${C.reset}`);
+        log('');
+        dim(`Platform:   ${plat.name}`);
+        if (plat.dirs.workflows) dim(`Workflows:  ${path.join(target, plat.dirs.workflows)}`);
+        if (plat.dirs.skills) dim(`Skills:     ${path.join(target, plat.dirs.skills)}`);
+        if (plat.dirs.schemas) dim(`Schemas:    ${path.join(target, plat.dirs.schemas)}`);
+        if (plat.dirs.templates) dim(`Templates:  ${path.join(target, plat.dirs.templates)}`);
+        if (plat.dirs.agents) dim(`Agents:     ${path.join(target, plat.dirs.agents)}`);
 
-    if (plat.rulesFile) {
-        dim(`Global Rules: ${plat.rulesFile}`);
-    }
-    if (activePacks.length > 0) {
-        dim(`Packs:      ${activePacks.join(', ')}`);
-    }
-    if (platform === 'antigravity') {
-        dim(`Symphony:   task tracking ready`);
-    }
-    log('');
+        if (plat.rulesFile) {
+            dim(`Global Rules: ${plat.rulesFile}`);
+        }
+        if (activePacks.length > 0) {
+            dim(`Packs:      ${activePacks.join(', ')}`);
+        }
+        if (platform === 'antigravity') {
+            dim(`Symphony:   task tracking ready`);
+        }
+        log('');
 
-    if (platform === 'antigravity') {
-        log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
-    } else if (platform === 'codex') {
-        log(`${C.cyan}👉 Type '$skill' in Codex to invoke skills.${C.reset}`);
-    }
-    log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
-    log('');
+        if (platform === 'antigravity') {
+            log(`${C.cyan}👉 Run 'awkit init' in any project to initialize it.${C.reset}`);
+        } else if (platform === 'codex') {
+            log(`${C.cyan}👉 Type '$skill' in Codex to invoke skills.${C.reset}`);
+        }
+        log(`${C.cyan}👉 Run 'awkit doctor' to verify installation.${C.reset}`);
+        log('');
     } // End of platform loop
 }
 
@@ -987,7 +987,7 @@ function cmdBrowser(args) {
     }
 
     const recordingsDir = path.join(TARGETS.antigravity, 'browser_recordings');
-    
+
     log('');
     log(`${C.cyan}${C.bold}🧹 AWK Browser Cleanup${C.reset}`);
     log('');
@@ -1016,7 +1016,7 @@ function cmdBrowser(args) {
     } else {
         log(`Cleaning browser recordings older than ${C.yellow}${keepDays} days${C.reset}...`);
     }
-    
+
     const now = Date.now();
     const cutoff = now - (keepDays * 24 * 60 * 60 * 1000);
     let deletedCount = 0;
@@ -1772,7 +1772,7 @@ async function cmdAdmin() {
                 stdio: 'ignore'
             });
             child.unref();
-            
+
             info('Vui lòng đợi 3 giây để service khởi động...');
             await new Promise(r => setTimeout(r, 3000));
         }
@@ -1805,9 +1805,9 @@ async function cmdRestart() {
             // Probably no process running on port 3100
             dim('Không tìm thấy service đang chạy.');
         }
-        
+
         await new Promise(r => setTimeout(r, 1000));
-        
+
         // Auto-build production bundle so code changes take effect
         const symphonyDir = path.join(AWK_ROOT, '..', 'symphony');
         if (fs.existsSync(path.join(symphonyDir, 'package.json'))) {
@@ -1820,17 +1820,17 @@ async function cmdRestart() {
                 dim(buildErr.message?.slice(0, 200));
             }
         }
-        
+
         info('Đang khởi động lại service ngầm...');
         const child = spawn('symphony', ['start'], {
             detached: true,
             stdio: 'ignore'
         });
         child.unref();
-        
+
         info('Vui lòng đợi 3 giây để service khởi động...');
         await new Promise(r => setTimeout(r, 3000));
-        
+
         log(`${C.green}✅ Restart thành công!${C.reset}`);
     } catch (e) {
         err('Lỗi khi restart service: ' + e.message);
@@ -1958,8 +1958,8 @@ function cmdHelp() {
     log(`  ${C.gray}awkit harvest      # Pull live edits → repo${C.reset}`);
     log(`  ${C.gray}awkit sync         # harvest + install in one shot${C.reset}`);
     log('');
-    log(`  ${C.cyan}# Enable NeuralMemory${C.reset}`);
-    log(`  ${C.gray}awkit enable-pack neural-memory${C.reset}`);
+    log(`  ${C.cyan}# Enable Marketing Skills${C.reset}`);
+    log(`  ${C.gray}awkit enable-pack marketing${C.reset}`);
     log('');
     log(`  ${C.cyan}# Repo${C.reset}`);
     log(`  ${C.gray}https://github.com/babyskill/awk${C.reset}`);
@@ -2359,7 +2359,7 @@ async function cmdInit(forceFlag = false) {
         log('');
         warn('Trello API Key & Token are not set.');
         log(`  👉 To setup Trello integration, please get your credentials at: https://trello.com/app-key`);
-        
+
         const readline = require('readline');
         const rl = readline.createInterface({
             input: process.stdin,
@@ -2388,14 +2388,14 @@ async function cmdInit(forceFlag = false) {
                 if (!fs.existsSync(profilePath) && fs.existsSync(path.join(os.homedir(), '.bashrc'))) {
                     profilePath = path.join(os.homedir(), '.bashrc');
                 }
-                
+
                 const exportLines = `\n# Trello API Credentials for AWKit\nexport TRELLO_KEY="${apiKey}"\nexport TRELLO_TOKEN="${apiToken}"\n`;
                 fs.appendFileSync(profilePath, exportLines);
-                
+
                 // Also inject into current process so immediate awkit trello calls work
                 process.env.TRELLO_KEY = apiKey;
                 process.env.TRELLO_TOKEN = apiToken;
-                
+
                 ok(`Credentials saved to ${path.basename(profilePath)} ✅`);
                 log(`  ${C.green}👉 Trello is ready! Credentials are active for this session and all future terminals.${C.reset}`);
             } else {
@@ -2470,7 +2470,7 @@ Additional project context can be found in:
     // ── 4.5. .gitignore ────────────────────────────────────────────────────────
     const gitignorePath = path.join(cwd, '.gitignore');
     const ignoreRules = ['log.txt', 'tmp/', '.gitnexus/', 'node_modules/'];
-    
+
     if (fs.existsSync(gitignorePath)) {
         let content = fs.readFileSync(gitignorePath, 'utf8');
         let added = 0;
@@ -2549,6 +2549,19 @@ Additional project context can be found in:
     log(`${C.cyan}👉 Run 'symphony task list' to manage tasks.${C.reset}`);
     log(`${C.cyan}👉 Run 'npx gitnexus analyze' after major changes to refresh index.${C.reset}`);
     log('');
+
+    // ── 7. Open Documentation ───────────────────────────────────────────────────
+    try {
+        const platform = process.platform;
+        let openCmd = 'xdg-open';
+        if (platform === 'darwin') openCmd = 'open';
+        else if (platform === 'win32') openCmd = 'start ""';
+
+        execSync(`${openCmd} "help.html"`, { cwd, stdio: 'ignore' });
+        dim('Opened help.html in browser');
+    } catch (e) {
+        // Silently ignore if opening fails
+    }
 }
 
 // ─── Telegram Bot API ─────────────────────────────────────────────────────────
@@ -3087,35 +3100,35 @@ function cmdTrello(args) {
                 err("Credentials or config missing for REST API fallback.");
                 break;
             }
-            
+
             // 1. Get checklists
             const clRes = spawnSync('npx', ['--yes', 'trello-cli', 'card:checklists', '--board', cfgItem.board, '--list', cfgItem.list, '--card', cfgItem.card, '--format', 'json'], { env: { ...process.env, TRELLO_KEY: credItem.api_key, TRELLO_TOKEN: credItem.api_token }, encoding: 'utf-8' });
-            
+
             if (clRes.status !== 0) {
                 err(`Failed to get checklists: ${clRes.stderr || clRes.stdout}`);
                 break;
             }
-            
+
             try {
                 // Sometime trello-cli outputs to stdout along with some other logs.
                 // We extract the JSON array part.
                 const outText = clRes.stdout;
                 const jsonStr = outText.substring(outText.indexOf('['));
                 const checklists = JSON.parse(jsonStr);
-                
+
                 if (!checklists || checklists.length === 0) {
                     err("No checklists found on card. Create one first using 'awkit trello checklist <name>'.");
                     break;
                 }
-                
+
                 // Add to the LAST checklist (most recently appended usually)
                 const targetChecklist = checklists[checklists.length - 1];
                 const checklistId = targetChecklist.id;
-                
+
                 // 2. Add item via curl
                 const url = `https://api.trello.com/1/checklists/${checklistId}/checkItems?name=${encodeURIComponent(text)}&key=${credItem.api_key}&token=${credItem.api_token}`;
                 const addRes = spawnSync('curl', ['-s', '-X', 'POST', url], { encoding: 'utf-8' });
-                
+
                 const responseJson = JSON.parse(addRes.stdout);
                 if (responseJson.id) {
                     ok(`Item added successfully to checklist "${targetChecklist.name}".`);
@@ -3192,7 +3205,7 @@ function checkAutoUpdate() {
 
 function cmdServe(args) {
     const http = require('http');
-    
+
     let port = 8080;
     let serveDir = process.cwd();
 

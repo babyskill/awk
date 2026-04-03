@@ -1,6 +1,6 @@
 # AWKit — Antigravity Workflow Kit v1
 
-> **v1.1.9** · Single Source of Truth · Symphony-First · Ambient Memory
+> **v1.5.0** · Single Source of Truth · Symphony-First · Ambient Memory
 
 AWKit là framework điều phối AI agent chuyên nghiệp. Đây là **nơi duy nhất** chứa toàn bộ workflows, skills, GEMINI.md và cấu hình — không còn phân tán giữa nhiều repo.
 
@@ -86,13 +86,13 @@ awkit install --all
 awkit sync
 
 # 3. Commit the snapshot
-git add -A && git commit -m "chore: sync AWKit v1.1.3"
+git add -A && git commit -m "chore: sync AWKit v1.5.0"
 ```
 
 
 
 ```
-main-awf/ (AWKit v1.1.x — Source of Truth)
+main-awf/ (AWKit v1.5.x — Source of Truth)
 ├── bin/
 │   ├── awk.js                  ← CLI entry point
 │   └── awf.js                  ← (legacy, kept for reference)
@@ -130,7 +130,7 @@ main-awf/ (AWKit v1.1.x — Source of Truth)
 ├── templates/                  ← Project templates
 ├── scripts/
 │   └── harvest.js              ← Migration: pull from ~/.gemini/
-├── VERSION                     → 1.1.9
+├── VERSION                     → 1.5.0
 └── package.json                (@leejungkiin/awkit)
 ```
 
@@ -218,7 +218,8 @@ awkit enable-pack creator-studio
 | 5.x | Antigravity v5 | Node.js, Symphony integration |
 | 6.x | AWF v6 | main-awf, multiple sources |
 | **1.1.x** | **AWKit v1.1.9** | **Single source of truth, Native CLI, Telegram Integration** |
+| **1.5.x** | **AWKit v1.5.0** | **Unified Orchestration, Symphony 1.5.0, 7-Gate Intelligence** |
 
 ---
 
-*AWKit v1.1.x — Antigravity Workflow Kit · Created by Kien AI*
+*AWKit v1.5.x — Antigravity Workflow Kit · Created by Kien AI*

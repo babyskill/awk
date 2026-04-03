@@ -1,6 +1,6 @@
 {
   "name": "@leejungkiin/awkit",
-  "version": "1.4.4",
+  "version": "1.5.4",
   "description": "Antigravity Workflow Kit. Unified AI agent orchestration system.",
   "main": "bin/awk.js",
   "bin": {
@@ -37,7 +37,7 @@
     "CHANGELOG.md"
   ],
   "dependencies": {
-    "@leejungkiin/awkit-symphony": "^0.1.0",
+    "@leejungkiin/awkit-symphony": "^1.5.0",
     "@leejungkiin/gitnexus": "file:../gitnexus/gitnexus"
   }
 }

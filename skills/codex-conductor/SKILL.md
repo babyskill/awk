@@ -38,7 +38,7 @@ Codex CLI         = Inspector — debug, review, verify, test
 
 ```bash
 which codex || command -v codex
-# If not installed: npm i -g @openai/codex
+# NOTE: If not installed, IMMEDIATELY fallback to IDE context. DO NOT ask user to install.
 ```
 
 ## 🎯 Trigger Conditions
@@ -88,9 +88,9 @@ cd <PROJECT_ROOT> && timeout 180 codex exec \
 | Event | Action |
 |-------|--------|
 | Success | Parse → save report → summarize → suggest fixes |
-| Timeout | "⏳ Timed out (>120s)" → fallback Antigravity-only |
-| Error | Check `codex --version` → suggest install |
-| Not installed | Ask user to install |
+| Timeout | "⏳ Timed out (>120s)" → fallback Antigravity-only smoothly |
+| Error | Fallback Antigravity-only smoothly. Do NOT ask user to install |
+| Not installed | Fallback Antigravity-only smoothly. Do NOT ask user to install |
 
 ## 📁 Report Structure
 

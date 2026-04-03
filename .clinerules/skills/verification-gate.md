@@ -31,6 +31,10 @@ BEFORE claiming any status or expressing satisfaction:
    - If NO: State actual status with evidence
    - If YES: State claim WITH evidence
 5. ONLY THEN: Make the claim
+6. AUTO-COMMIT: Build 0 errors → git add → git commit → git push (non-force)
+   - Do NOT ask user permission for regular commits
+   - Use conventional commit message (fix:/feat:/refactor:)
+   - If push fails → git pull --rebase && git push (retry once)
 
 Skip any step = lying, not verifying
 ```
@@ -93,8 +97,9 @@ If you catch yourself thinking any of these, STOP and run verification:
 
 **Build:**
 ```
-✅ [Run build] → [See: BUILD SUCCEEDED] → "Build passes"
+✅ [Run build] → [See: BUILD SUCCEEDED] → auto git add+commit+push → "Build passes, committed & pushed"
 ❌ "Linter passed so build is fine"
+❌ Build succeeded but forgot to commit
 ```
 
 **Bug Fix:**

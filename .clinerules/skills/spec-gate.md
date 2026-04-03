@@ -7,7 +7,7 @@ description: >-
   khi Gate 2 chưa thỏa mãn. Hỗ trợ auto-detect .kiro/specs/design.md.
 metadata:
   stage: core
-  version: "1.1"
+  version: "1.2"
   tags: [gate, architecture, database, design, spec-first, core, kiro]
   requires: orchestrator
 agent: Architect
@@ -19,293 +19,83 @@ activation_keywords:
   - "schema design"
   - "data model"
   - "API design"
-  - "architect"
 ---
 
-# Spec Gate v1.0 — Architecture & Data Design Gate
+# Spec Gate v1.2 — Architecture & Data Design Gate (Router)
 
-> **Purpose:** Chốt thiết kế kỹ thuật (DB Schema, API Contract, State Machine) 
-> TRƯỚC KHI viết code. Đảm bảo tất cả persistence changes đã được suy nghĩ kỹ
-> và user đã approve trước khi AI bắt tay implement.
->
-> **Problem it solves:** "Vừa làm vừa sửa database dẫn tới lung tung"
+> **Purpose:** Chốt thiết kế kỹ thuật (DB Schema, API Contract, State Machine)
+> TRƯỚC KHI code. Đảm bảo persistence changes đã được suy nghĩ kỹ + user approved.
 
----
+## ⚠️ SCOPE
 
-## ⚠️ SCOPE CLARITY
+| LÀM | KHÔNG làm |
+|-----|-----------|
+| Data Model (tables, fields, indexes) | Viết code |
+| API Contract (endpoints, req/res) | Tạo BRIEF/spec (brainstorm-agent) |
+| State Machine diagram | Track tasks (symphony-enforcer) |
+| Self-review checklist + user approve | Deploy, sửa lỗi |
 
-| Skill này LÀM | Skill này KHÔNG làm |
-|---------------|---------------------|
-| Phác thảo Data Model (tables, fields, indexes) | Viết code |
-| Thiết kế API Contract (endpoints, request/response) | Tạo BRIEF/spec (việc của brainstorm-agent) |
-| Vẽ State Machine diagram (nếu cần) | Track tasks (việc của symphony-enforcer) |
-| Checklist tự kiểm tra thiết kế | Deploy |
-| Yêu cầu user approve design | Sửa lỗi |
+## 📋 Topic Index
 
----
+| Topic | Khi nào load | File |
+|-------|-------------|------|
+| Design templates (Data/API/State Machine) + Review checklist | Khi tạo design doc | `templates/design-templates.md` |
 
 ## 🚀 ACTIVATION
 
-Skill này được kích hoạt bởi:
-1. **Orchestrator auto-trigger:** Khi Gate 2 check FAIL (không tìm thấy design doc đã approved)
-2. **Explicit command:** `/architect` hoặc `/design-db`
-3. **Keyword trigger:** "thiết kế database", "schema design", "data model"
+- **Orchestrator auto-trigger:** Gate 2 check FAIL
+- **Commands:** `/architect`, `/design-db`
+- **Keywords:** "thiết kế database", "schema design", "data model"
 
----
-
-## 📋 INPUT REQUIREMENTS
-
-Trước khi chạy, PHẢI có:
+## 📋 INPUT
 
 ```
-REQUIRED (theo thứ tự ưu tiên):
-  → CHECK 1 (Kiro): .kiro/specs/<module>/design.md
-    → Nếu tồn tại → AUTO-APPROVE: Load làm pre-approved architecture
-    → Skip Phase 2-7, thẳng Phase 8 (Write to NeuralMemory)
-    → Thông báo: "🔍 Phát hiện .kiro/specs design docs.
-       Thiết kế đã được chốt trong Kiro IDE. Auto-approve → Gate 2 PASS."
-  → CHECK 2: docs/specs/<feature>.md HOẶC BRIEF.md (output từ Gate 1)
-  → .project-identity (projectId, techStack)
+REQUIRED (priority order):
+  1. .kiro/specs/<module>/design.md → AUTO-APPROVE (skip Phase 2-7)
+  2. BRIEF.md hoặc docs/specs/<feature>.md (Gate 1 output)
+  3. .project-identity (projectId, techStack)
 
-OPTIONAL:
-  → docs/specs/TECH-SPEC.md (project-level constraints)
-  → Existing DB schema (nếu project đã có database)
-  → NeuralMemory context (decisions trước đó về architecture)
+OPTIONAL: TECH-SPEC.md, existing DB schema, NeuralMemory context
 ```
 
----
-
-## 🔄 PROCESS
+## 🔄 PROCESS (8 Phases)
 
 ### Phase 1: Context Gathering (Silent)
-
-```
-0. CHECK KIRO SPECS FIRST (HIGHEST PRIORITY):
-   - Scan .kiro/specs/<module>/design.md
-   - Nếu tồn tại:
-     → Load design.md làm approved architecture
-     → Load .kiro/specs/<project>/design.md cho project-wide schema
-     → Load .kiro/specs/<module>/requirements.md cho acceptance criteria
-     → Lưu vào NeuralMemory: "Kiro architecture loaded: <summary>"
-     → SKIP Phase 2-7, thẳng Phase 8 (write decision to NeuralMemory)
-     → Gate 2 AUTO-PASS
-   - Không tồn tại → tiếp Phase 1 bình thường
-
-1. Đọc BRIEF.md / spec document → Extract:
-   - Core entities (Users, Orders, Products...)
-   - Relationships (1-N, N-N)
-   - Business rules (unique constraints, validation rules)
-   - Flows requiring state tracking
-
-2. Đọc .project-identity → Extract:
-   - Tech stack (SQL? NoSQL? ORM?)
-   - Coding standards
-   - Existing patterns
-
-3. Đọc TECH-SPEC.md nếu có → Extract constraints:
-   - Database choice (PostgreSQL, Firestore, GRDB, Realm...)
-   - Performance requirements
-   - Offline-first requirements
-   - Migration strategy
-
-4. NeuralMemory recall → Previous architecture decisions
-```
+- **Kiro check first** → .kiro/specs/design.md → AUTO-PASS Gate 2
+- Fallback: Read BRIEF.md → extract entities, relationships, rules
+- Read .project-identity, TECH-SPEC.md, NeuralMemory
 
 ### Phase 2: Data Model Design
+- Per entity: Fields, Indexes, Relationships, Constraints
+- Template → `templates/design-templates.md`
 
-```
-Cho MỖI entity phát hiện từ spec:
-
-TABLE/COLLECTION: <name>
-├── Fields:
-│   ├── id: <type> (PK)
-│   ├── field_1: <type> [NOT NULL | OPTIONAL]
-│   ├── field_2: <type> [DEFAULT: <value>]
-│   └── ...
-├── Indexes:
-│   ├── idx_<name>_<field> (purpose)
-│   └── ...
-├── Relationships:
-│   ├── belongs_to: <table> (FK: <field>)
-│   └── has_many: <table>
-└── Constraints:
-    ├── UNIQUE: <fields>
-    └── CHECK: <condition>
-```
-
-### Phase 3: API Contract Design (nếu có API)
-
-```
-Cho MỖI endpoint cần thiết:
-
-ENDPOINT: [METHOD] /api/<path>
-├── Purpose: <mô tả ngắn>
-├── Auth: <required | optional | public>
-├── Request:
-│   ├── Headers: <required headers>
-│   ├── Params: <path/query params>
-│   └── Body: { field: type, ... }
-├── Response:
-│   ├── 200: { field: type, ... }
-│   ├── 400: { error: "validation message" }
-│   └── 500: { error: "server error" }
-└── Notes: <edge cases, rate limiting, etc.>
-```
+### Phase 3: API Contract (nếu có API)
+- Per endpoint: Method, Auth, Request, Response, Notes
 
 ### Phase 4: State Machine (nếu có stateful flows)
-
-```
-Cho flows có trạng thái chuyển đổi (order lifecycle, booking flow...):
-
-STATE MACHINE: <name>
-  [initial] → [state_1] → [state_2] → [final]
-       ↓           ↓
-    [error]    [cancelled]
-
-Transitions:
-  initial → state_1: trigger=<event>, guard=<condition>
-  state_1 → state_2: trigger=<event>
-  any → cancelled: trigger=user_cancel
-```
+- States, transitions, triggers, guards
 
 ### Phase 5: Self-Review Checklist
-
-**TRƯỚC KHI present cho user, AI PHẢI tự kiểm tra:**
-
-```yaml
-checklist:
-  data_integrity:
-    - [ ] Mọi entity có Primary Key?
-    - [ ] Foreign Keys đúng direction?
-    - [ ] Không có circular dependencies?
-    - [ ] Cascade delete rules đã define?
-
-  performance:
-    - [ ] Indexes cho frequent queries?
-    - [ ] N+1 query potential identified?
-    - [ ] Pagination strategy cho list endpoints?
-    - [ ] Caching strategy nếu cần?
-
-  consistency:
-    - [ ] Chuẩn với .project-identity tech stack?
-    - [ ] Chuẩn với TECH-SPEC.md constraints?
-    - [ ] Naming convention thống nhất?
-    - [ ] Date/time format thống nhất?
-
-  edge_cases:
-    - [ ] Concurrent access handling?
-    - [ ] Null/empty value handling?
-    - [ ] Soft delete vs hard delete?
-    - [ ] Offline-first sync strategy (nếu mobile)?
-
-  security:
-    - [ ] PII data identified + encrypted?
-    - [ ] Auth rules per endpoint?
-    - [ ] Input validation cho mọi user input?
-```
+- Data integrity, performance, consistency, edge cases, security
+- Full checklist → `templates/design-templates.md`
 
 ### Phase 6: Multi-Role Architecture Review (AI Simulated)
-
-**Trước khi gửi cho user approve, AI TỰ ĐỘNG đóng 5 vai trò chuyên sâu để soát lỗi:**
-
-```
-1. DBA (Database Admin): Đã đánh index các trường queries thường xuyên? Bảng có chuẩn hóa (normalize) chưa? Có issue N+1 query không?
-2. Backend Lead: API có reusable không? Có tính đến rate limit chưa? Transaction boundaries ở đâu?
-3. Security Officer: Có chống SQL Injection không? Data at rest/in transit encrypt thế nào? Cấp quyền Row-level (RBAC)?
-4. QA Automation: Việc setup test data có khó không? Mock API/DB có thuận lợi không?
-5. SRE / DevOps: Nếu data lớn lên, hệ thống có scale nổi? Quá trình migrate db (schema update) có gây downtime không?
-
-*Nếu có P0/P1 issues, AI phải fix bản draft ngay lập tức.*
-```
+- 5 roles: DBA, Backend Lead, Security, QA, SRE
+- P0/P1 issues → fix draft before presenting
 
 ### Phase 7: Present & Approval
-
-```
-Present cho user với format:
-
-───────────────────────────────────
-📐 ARCHITECTURE DESIGN: <Feature Name>
-───────────────────────────────────
-
-## Data Model
-[Phase 2 output]
-
-## API Endpoints  
-[Phase 3 output — nếu có]
-
-## State Machine
-[Phase 4 output — nếu có]
-
-[Phase 7 checklist results]
-
-## Concerns & Trade-offs
-- [Concern 1]: [Mô tả + recommendation]
-- [Concern 2]: [Mô tả + recommendation]
-
-───────────────────────────────────
-⏳ Chờ anh approve thiết kế này trước khi code nhé.
-   Sửa gì cứ nói, tôi update lại.
-───────────────────────────────────
-```
+- Show design doc → user review → approve
 
 ### Phase 8: Write Design Doc
-
-Sau khi user approve:
-
-```
-1. Tạo folder nếu chưa có: docs/architecture/
-2. Write file: docs/architecture/<feature>_design.md
-3. Nội dung = Phase 6 output + approval marker:
-   
-   ## Status: Approved
-   **Approved by:** User
-   **Approved at:** <ISO date>
-   **Conversation:** <conversation-id>
-
-4. Lưu vào NeuralMemory:
-   nmem_remember(
-     content="Architecture design for <feature> approved. Schema: <summary>",
-     type="decision",
-     tags=["architecture", "<projectId>", "<feature>"]
-   )
-
-5. Proceed → orchestrator re-checks Gate 2 → PASS → Gate 3
-```
-
----
+- Save to `docs/architecture/<feature>_design.md`
+- Approval marker + NeuralMemory tag → proceed Gate 3
 
 ## 🔙 DESIGN DEVIATION PROTOCOL
 
-Khi AI đang code (Gate 4) và phát hiện cần sửa schema khác approved design:
-
-```
-1. ⛔ DỪNG CODE NGAY LẬP TỨC
-2. Thông báo user:
-   "Phát hiện cần thêm/sửa [field/table] ngoài thiết kế đã duyệt.
-    Để tôi quay lại update design doc trước nhé."
-3. Mở lại design doc
-4. Highlight phần cần thay đổi + lý do
-5. Yêu cầu user re-approve
-6. Update marker: "## Status: Approved (Revision 2)"
-7. Tiếp tục code
-```
-
----
-
-## 🗣️ Communication Style
-
-```
-❌ "Architecture document required. Please provide data model specification."
-✅ "Đã hiểu yêu cầu! Giờ để tôi phác thảo cấu trúc database cho anh xem 
-    trước — kinh nghiệm cho thấy nếu chốt DB sớm sẽ tiết kiệm rất nhiều 
-    thời gian sửa lại sau."
-
-❌ "Design review requires your explicit approval."
-✅ "Anh xem thiết kế này có ổn không? Sửa gì cứ nói, tôi update lại. 
-    Chốt xong là bắt tay code luôn."
-```
-
----
+Khi đang code (Gate 4) và cần sửa schema khác approved:
+1. ⛔ DỪNG CODE
+2. Thông báo user → update design doc → re-approve
+3. Update marker: "Revision 2" → tiếp tục code
 
 ## 🚫 Anti-Patterns
 
@@ -313,29 +103,25 @@ Khi AI đang code (Gate 4) và phát hiện cần sửa schema khác approved de
 never_do:
   - Tự approve design (user PHẢI approve)
   - Skip self-review checklist
-  - Design quá chi tiết cho trivial features (orchestrator đã filter)
-  - Bắt đầu code trước khi có approval marker
+  - Code trước khi có approval marker
   - Phớt lờ TECH-SPEC.md constraints
 
 always_do:
   - Đọc ALL input sources trước khi design
-  - Chạy self-review checklist 100%
   - Highlight trade-offs và concerns
-  - Ghi lại decisions vào NeuralMemory
+  - Ghi decisions vào NeuralMemory
   - Kiểm tra consistency với existing schema
 ```
 
----
-
-## 🧩 Skill Relationships
+## 🧩 Relationships
 
 ```
 TRIGGERED BY: orchestrator (Gate 2 check fail)
-DEPENDS ON: brainstorm-agent output (Gate 1 must pass first)
-FEEDS INTO: symphony-enforcer (Gate 3 reads design doc to create tasks)
-WORKS WITH: nm-memory-sync (store architectural decisions)
+DEPENDS ON: brainstorm-agent output (Gate 1 must pass)
+FEEDS INTO: symphony-enforcer (Gate 3)
+WORKS WITH: nm-memory-sync
 ```
 
 ---
 
-*spec-gate v1.1 — Architecture & Data Design Gate for AWKit (Kiro Spec Integration)*
+*spec-gate v1.2 — Modular Router Architecture*

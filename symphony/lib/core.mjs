@@ -615,7 +615,7 @@ export function getPreflightStatus(projectParam) {
     return {
         gate_status: overall,
         gates,
-        server: { status: 'running', version: '0.1.0' },
+        server: { status: 'running', version: '1.5.0' },
         active_project: activeProject ? { id: activeProject.id, name: activeProject.name, icon: activeProject.icon } : null,
         projects: projects.map(p => ({ id: p.id, name: p.name, icon: p.icon, active: !!p.is_active })),
         tasks: {

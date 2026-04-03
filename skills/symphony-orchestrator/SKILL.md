@@ -61,7 +61,7 @@ npm i -g @leejungkiin/awkit-symphony
 ### Bước 2: Verify
 
 ```bash
-symphony --version   # Expected: 0.1.0+
+symphony --version   # Expected: 1.5.0+
 symphony --help      # Shows: preflight, task, agent, dispatch, next, etc.
 ```
 
