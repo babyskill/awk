@@ -49,15 +49,23 @@ Mỗi skill tự xử lý gate logic riêng — xem SKILL.md của từng skill.
 - AI models: Gemini 2.5+ only.
 - Firebase: Firebase AI Logic SDK.
 
-### Auto-Commit & Push (Per-Project Automation)
-- **ĐIỀU KIỆN:** Bắt buộc tuân thủ config `automation.git` trong `.project-identity` (nếu có).
-  - Nếu `autoCommit: false` → **KHÔNG** tự commit.
-  - Nếu `autoPush: false` → **KHÔNG** tự push.
-- Nếu được phép: Build thành công (0 errors) → **TỰ ĐỘNG** `git add` → `git commit` → `git push` (non-force, không chờ approval).
-- Commit message: conventional format (`fix:`, `feat:`, `refactor:`, `chore:`).
-- `git push` (non-force) được phép `SafeToAutoRun=true`. Nếu push fail → retry 1 lần với `git pull --rebase && git push`.
-- **Telegram Notification:** Sau khi push thành công → Đọc config `automation.telegram.triggers.git_push`. Nếu bật (hoặc default true) → tự động báo qua lệnh `awkit tg send`.
-- Cấm force push. Cấm push fail mà không báo cáo.
+### Automation Gate (BẮT BUỘC)
+- AI **PHẢI** dùng `awkit gate` thay vì gọi trực tiếp `git commit/push`, `awkit trello`, `awkit tg send`.
+- `awkit gate` tự đọc `.project-identity` → enforce `automation.*` config → execute hoặc block.
+- **Git:**
+  - `awkit gate git auto "message"` — commit + push + telegram notify (nếu enabled).
+  - `awkit gate git commit "message"` — chỉ commit.
+  - `awkit gate git push` — chỉ push.
+  - Commit message: conventional format (`fix:`, `feat:`, `refactor:`, `chore:`).
+  - Push fail → auto-retry 1 lần với `git pull --rebase`. Cấm force push.
+- **Trello:**
+  - `awkit gate trello complete "Task"` — gated trello complete.
+  - `awkit gate trello comment "Note"` — gated trello comment.
+  - `awkit gate trello block "Reason"` — gated trello block.
+- **Telegram:**
+  - `awkit gate telegram send "Message"` — gated telegram send.
+- **Dry-run:** `awkit gate check` — hiển thị trạng thái gate hiện tại (không execute).
+- ⛔ Gọi `git commit/push` hoặc `awkit trello/tg` trực tiếp (bypass gate) = **VI PHẠM**.
 
 ### 7-Gate Autonomous System (v12.3)
 - orchestrator PHẢI triage complexity (TRIVIAL/MODERATE/COMPLEX) trước mọi task.

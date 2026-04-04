@@ -38,6 +38,7 @@ const HOME = process.env.HOME || process.env.USERPROFILE;
 const { generateClineRules, generateClineWorkflows, generateClineSkills } = require('./cline-generators');
 const { generateCodexAgentsMd, generateCodexSkills, generateCodexAgents } = require('./codex-generators');
 const { generateClaudeRules, generateClaudeSkills } = require('./claude-generators');
+const { cmdGate } = require('../scripts/automation-gate');
 
 // ─── Platform Definitions ──────────────────────────────────────────────────
 
@@ -3539,6 +3540,9 @@ const [, , command, ...args] = process.argv;
             break;
         case 'serve':
             cmdServe(args);
+            break;
+        case 'gate':
+            cmdGate(args);
             break;
         case 'admin':
             cmdAdmin();
